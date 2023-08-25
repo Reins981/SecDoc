@@ -8,7 +8,7 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -99,50 +99,55 @@ class DocumentLibraryScreen extends StatelessWidget {
 
                   return Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: Card(
-                      elevation: 2,
-                      child: ExpansionTile(
-                        title: Text(
-                          'Domain: $domain, Category: $category, Year: $year',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        children: [
-                          ListView.builder(
-                            shrinkWrap: true,
-                            itemCount: group.length,
-                            itemBuilder: (context, index) {
-                              final documentData = group[index];
-                              return ListTile(
-                                title: Text(
-                                  documentData['document_name'],
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                subtitle: Text(
-                                  "Status: ${documentData['is_new'] == true ? 'New' : 'Updated'}",
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontStyle: FontStyle.italic,
-                                  ),
-                                ),
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          DocumentDetailScreen(documentData: documentData),
+                    child: Material(
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  DocumentDetailScreen(documentData: group),
+                            ),
+                          );
+                        },
+                        splashColor: Theme.of(context).primaryColor.withOpacity(0.3), // Adjust opacity as needed
+                        child: Card(
+                          elevation: 2,
+                          child: ExpansionTile(
+                            title: Text(
+                              'Domain: $domain, Category: $category, Year: $year',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            children: [
+                              ListView.builder(
+                                shrinkWrap: true,
+                                itemCount: group.length,
+                                itemBuilder: (context, index) {
+                                  final documentData = group[index];
+                                  return ListTile(
+                                    title: Text(
+                                      documentData['document_name'],
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    subtitle: Text(
+                                      "Status: ${documentData['is_new'] == true ? 'New' : 'Updated'}",
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontStyle: FontStyle.italic,
+                                      ),
                                     ),
                                   );
                                 },
-                              );
-                            },
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                     ),
                   );
@@ -196,7 +201,7 @@ class DocumentLibraryScreen extends StatelessWidget {
 }
 
 class DocumentDetailScreen extends StatelessWidget {
-  final Map<String, dynamic>? documentData;
+  final List<Map<String, dynamic>>? documentData;
 
   const DocumentDetailScreen({Key? key, this.documentData}) : super(key: key);
 
@@ -215,11 +220,11 @@ class DocumentDetailScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(documentData?['document_name'] ?? ''),
+        title: Text(documentData?[0]['document_name'] ?? ''),
       ),
       body: Center(
         child: Hero(
-          tag: documentData?['id'] ?? '',
+          tag: documentData?[0]['id'] ?? '',
           child: Card(
             elevation: 4,
             margin: const EdgeInsets.all(16),
@@ -228,7 +233,7 @@ class DocumentDetailScreen extends StatelessWidget {
               child: Column(
                 children: [
                   Text(
-                    documentData?['document_name'] ?? '',
+                    documentData?[0]['document_name'] ?? '',
                     style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
