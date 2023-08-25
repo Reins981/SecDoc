@@ -3,6 +3,23 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'main.dart'; // Import the LoginScreen to navigate back after logout
 
+void main() {
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Document Library',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: DocumentLibraryScreen(),
+    );
+  }
+}
+
 class DocumentLibraryScreen extends StatelessWidget {
   const DocumentLibraryScreen({Key? key}) : super(key: key);
 
@@ -69,51 +86,39 @@ class DocumentLibraryScreen extends StatelessWidget {
               }
 
               final List<DocumentSnapshot> documents = snapshot.data!.docs;
+              final groupedDocuments = groupDocuments(documents);
 
               return ListView.builder(
-                itemCount: documents.length,
+                itemCount: groupedDocuments.length,
                 itemBuilder: (context, index) {
-                  final document = documents[index];
-                  final Map<String, dynamic>? documentData =
-                  document.data() as Map<String, dynamic>?;
+                  final group = groupedDocuments[index];
+                  final domain = group[0]['user_domain'];
+                  final category = group[0]['category'];
+                  final year = group[0]['year'];
 
-                  Timestamp timestamp = documentData?['last_update'];
-                  DateTime dateTime = timestamp.toDate();
-                  String formattedDateTime = dateTime.toString();
-                  String documentState =
-                  documentData?['is_new'] == true ? 'New' : 'Updated';
-
-                  return GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => DocumentDetailScreen(documentData: documentData),
-                        ),
-                      );
-                    },
-                    child: Hero(
-                      tag: document.id,
-                      child: Card(
-                        elevation: 4,
-                        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                documentData?['document_name'] ?? '',
-                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(formattedDateTime ?? ''),
-                              Text("Status: $documentState" ?? ''),
-                            ],
-                          ),
-                        ),
+                  return ExpansionTile(
+                    title: Text('Domain: $domain, Category: $category, Year: $year'),
+                    children: [
+                      ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: group.length,
+                        itemBuilder: (context, index) {
+                          final documentData = group[index];
+                          return ListTile(
+                            title: Text(documentData['document_name']),
+                            subtitle: Text("Status: ${documentData['is_new'] == true ? 'New' : 'Updated'}"),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => DocumentDetailScreen(documentData: documentData),
+                                ),
+                              );
+                            },
+                          );
+                        },
                       ),
-                    ),
+                    ],
                   );
                 },
               );
@@ -139,6 +144,28 @@ class DocumentLibraryScreen extends StatelessWidget {
     }
 
     return await user.getIdTokenResult();
+  }
+
+  List<List<Map<String, dynamic>>> groupDocuments(List<DocumentSnapshot> documents) {
+    final groupedDocuments = <List<Map<String, dynamic>>>[];
+    final tempMap = <String, List<Map<String, dynamic>>>{};
+
+    for (final document in documents) {
+      final documentData = document.data() as Map<String, dynamic>;
+      final domain = documentData['user_domain'];
+      final category = documentData['category'];
+      final year = documentData['year'];
+
+      final key = '$domain-$category-$year';
+      tempMap.putIfAbsent(key, () => []);
+      tempMap[key]!.add(documentData);
+    }
+
+    tempMap.forEach((key, value) {
+      groupedDocuments.add(value);
+    });
+
+    return groupedDocuments;
   }
 }
 
@@ -166,7 +193,7 @@ class DocumentDetailScreen extends StatelessWidget {
       ),
       body: Center(
         child: Hero(
-          tag: documentData?['id'] ?? '', // Make sure to use a unique tag for each document
+          tag: documentData?['id'] ?? '',
           child: Card(
             elevation: 4,
             margin: const EdgeInsets.all(16),
