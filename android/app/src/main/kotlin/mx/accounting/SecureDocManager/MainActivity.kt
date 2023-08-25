@@ -1,4 +1,4 @@
-package bacqroo.mx.sec_doc
+package mx.accounting.SecureDocManager
 
 import io.flutter.embedding.android.FlutterActivity
 import androidx.multidex.MultiDexApplication

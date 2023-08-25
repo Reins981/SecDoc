@@ -1,7 +1,10 @@
 plugins {
-    id "com.android.application"
+    id("com.android.application")
     id "kotlin-android"
     id "dev.flutter.flutter-gradle-plugin"
+    // Add the Google services Gradle plugin
+    id("com.google.gms.google-services")
+
 }
 
 def localProperties = new Properties()
@@ -23,7 +26,7 @@ if (flutterVersionName == null) {
 }
 
 android {
-    namespace "bacqroo.mx.sec_doc"
+    namespace "mx.accounting.SecureDocManager"
     compileSdkVersion flutter.compileSdkVersion
     ndkVersion flutter.ndkVersion
 
@@ -42,13 +45,14 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId "bacqroo.mx.sec_doc"
+        applicationId "mx.accounting.SecureDocManager"
         // You can update the following values to match your application needs.
         // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
         minSdkVersion flutter.minSdkVersion
         targetSdkVersion flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
+        multiDexEnabled true
     }
 
     buildTypes {
@@ -64,4 +68,21 @@ flutter {
     source '../..'
 }
 
-dependencies {}
+dependencies {
+    // ...
+
+    // Import the Firebase BoM
+    implementation(platform("com.google.firebase:firebase-bom:32.2.3"))
+
+    // When using the BoM, you don't specify versions in Firebase library dependencies
+
+    // Add the dependency for the Firebase SDK for Google Analytics
+    implementation("com.google.firebase:firebase-analytics-ktx")
+
+    // TODO: Add the dependencies for any other Firebase products you want to use
+    // See https://firebase.google.com/docs/android/setup#available-libraries
+    // For example, add the dependencies for Firebase Authentication and Cloud Firestore
+    implementation("com.google.firebase:firebase-auth-ktx")
+    implementation("com.google.firebase:firebase-firestore-ktx")
+    implementation 'androidx.multidex:multidex:2.0.1'
+}
