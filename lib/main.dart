@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'document_library_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Ensure that the widgets are initialized
@@ -14,12 +15,25 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Accounting App',
+      title: 'BACQROO Accounting',
       theme: ThemeData(
         primarySwatch: Colors.blue,
         fontFamily: 'Montserrat',
       ),
       home: LoginScreen(),
+      routes: {
+        'document_library_screen': (context) => const DocumentLibraryScreen(),
+        // ... other routes
+      },
+      onGenerateRoute: (settings) {
+        if (settings.name == null) {
+          // This means the app is being closed
+          FirebaseAuth.instance.signOut();
+          // You might want to perform any other cleanup tasks here
+          // before the app is closed
+        }
+        return null;
+      },
     );
   }
 }
@@ -34,6 +48,16 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        actions: [
+          IconButton(
+            onPressed: () async {
+              await _handleLogout(context);
+            },
+            icon: const Icon(Icons.logout),
+          ),
+        ],
+      ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -107,12 +131,18 @@ class LoginScreen extends StatelessWidget {
     );
   }
 
+  Future<void> _handleLogout(BuildContext context) async {
+    await _auth.signOut();
+    // Navigate to the LoginScreen again after logout
+    Navigator.of(context).pushReplacement(MaterialPageRoute(
+      builder: (context) => LoginScreen(),
+    ));
+  }
+
   Future<void> _handleLogin(BuildContext context) async {
     try {
       final String email = _emailController.text.trim();
       final String password = _passwordController.text;
-      print(email);
-      print(password);
 
       if (email.isEmpty || password.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -235,7 +265,7 @@ class _WelcomeDialogState extends State<_WelcomeDialog> with SingleTickerProvide
                         style: TextStyle(fontSize: 18),
                       ),
                     ),
-                  ],
+                  ], // children
                 ),
               ),
             ),
