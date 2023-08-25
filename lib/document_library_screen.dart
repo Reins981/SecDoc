@@ -4,10 +4,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'main.dart'; // Import the LoginScreen to navigate back after logout
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -15,7 +17,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: DocumentLibraryScreen(),
+      home: const DocumentLibraryScreen(),
     );
   }
 }
@@ -29,7 +31,7 @@ class DocumentLibraryScreen extends StatelessWidget {
       future: _getIdTokenResult(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const CircularProgressIndicator();
+          return const Center(child: CircularProgressIndicator());
         }
 
         if (snapshot.hasError) {
@@ -52,7 +54,6 @@ class DocumentLibraryScreen extends StatelessWidget {
           return const Center(child: Text('User not logged in.'));
         }
 
-        // Convert userDomain to lowercase
         String userDomainLowerCase = userDomain?.toLowerCase() ?? 'default_domain';
 
         CollectionReference documentsCollection =
@@ -74,7 +75,7 @@ class DocumentLibraryScreen extends StatelessWidget {
             stream: documentsCollection.snapshots(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const CircularProgressIndicator();
+                return const Center(child: CircularProgressIndicator());
               }
 
               if (snapshot.hasError) {
@@ -96,29 +97,54 @@ class DocumentLibraryScreen extends StatelessWidget {
                   final category = group[0]['category'];
                   final year = group[0]['year'];
 
-                  return ExpansionTile(
-                    title: Text('Domain: $domain, Category: $category, Year: $year'),
-                    children: [
-                      ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: group.length,
-                        itemBuilder: (context, index) {
-                          final documentData = group[index];
-                          return ListTile(
-                            title: Text(documentData['document_name']),
-                            subtitle: Text("Status: ${documentData['is_new'] == true ? 'New' : 'Updated'}"),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => DocumentDetailScreen(documentData: documentData),
+                  return Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Card(
+                      elevation: 2,
+                      child: ExpansionTile(
+                        title: Text(
+                          'Domain: $domain, Category: $category, Year: $year',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        children: [
+                          ListView.builder(
+                            shrinkWrap: true,
+                            itemCount: group.length,
+                            itemBuilder: (context, index) {
+                              final documentData = group[index];
+                              return ListTile(
+                                title: Text(
+                                  documentData['document_name'],
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
+                                subtitle: Text(
+                                  "Status: ${documentData['is_new'] == true ? 'New' : 'Updated'}",
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          DocumentDetailScreen(documentData: documentData),
+                                    ),
+                                  );
+                                },
                               );
                             },
-                          );
-                        },
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   );
                 },
               );
