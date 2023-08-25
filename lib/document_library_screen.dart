@@ -80,27 +80,37 @@ class DocumentLibraryScreen extends StatelessWidget {
                   Timestamp timestamp = documentData?['last_update'];
                   DateTime dateTime = timestamp.toDate();
                   String formattedDateTime = dateTime.toString();
+                  String documentState =
+                  documentData?['is_new'] == true ? 'New' : 'Updated';
 
                   return GestureDetector(
                     onTap: () {
-                      // Handle document click here
-                      // You can navigate to a detailed view of the document
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => DocumentDetailScreen(documentData: documentData),
+                        ),
+                      );
                     },
-                    child: Card(
-                      elevation: 4,
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              documentData?['document_name'] ?? '',
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(formattedDateTime ?? ''),
-                          ],
+                    child: Hero(
+                      tag: document.id,
+                      child: Card(
+                        elevation: 4,
+                        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                documentData?['document_name'] ?? '',
+                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(formattedDateTime ?? ''),
+                              Text("Status: $documentState" ?? ''),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -129,5 +139,53 @@ class DocumentLibraryScreen extends StatelessWidget {
     }
 
     return await user.getIdTokenResult();
+  }
+}
+
+class DocumentDetailScreen extends StatelessWidget {
+  final Map<String, dynamic>? documentData;
+
+  const DocumentDetailScreen({Key? key, this.documentData}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    if (documentData == null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Document Detail'),
+        ),
+        body: const Center(
+          child: Text('Document data not available.'),
+        ),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(documentData?['document_name'] ?? ''),
+      ),
+      body: Center(
+        child: Hero(
+          tag: documentData?['id'] ?? '', // Make sure to use a unique tag for each document
+          child: Card(
+            elevation: 4,
+            margin: const EdgeInsets.all(16),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  Text(
+                    documentData?['document_name'] ?? '',
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  // Add more document details here
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
