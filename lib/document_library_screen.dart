@@ -22,9 +22,14 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class DocumentLibraryScreen extends StatelessWidget {
+class DocumentLibraryScreen extends StatefulWidget {
   const DocumentLibraryScreen({Key? key}) : super(key: key);
 
+  @override
+  _DocumentLibraryScreenState createState() => _DocumentLibraryScreenState();
+}
+
+class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<IdTokenResult>(
@@ -97,55 +102,59 @@ class DocumentLibraryScreen extends StatelessWidget {
                   final category = group[0]['category'];
                   final year = group[0]['year'];
 
-                  return Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Material(
-                      child: InkWell(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  DocumentDetailScreen(documentData: group),
-                            ),
-                          );
-                        },
-                        splashColor: Theme.of(context).primaryColor.withOpacity(0.3), // Adjust opacity as needed
-                        child: Card(
-                          elevation: 2,
-                          child: ExpansionTile(
-                            title: Text(
-                              'Domain: $domain, Category: $category, Year: $year',
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
+                  return GestureDetector(
+                    onLongPress: () => downloadDocument(group[0]),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Material(
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    DocumentDetailScreen(documentData: group),
                               ),
-                            ),
-                            children: [
-                              ListView.builder(
-                                shrinkWrap: true,
-                                itemCount: group.length,
-                                itemBuilder: (context, index) {
-                                  final documentData = group[index];
-                                  return ListTile(
-                                    title: Text(
-                                      documentData['document_name'],
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    subtitle: Text(
-                                      "Status: ${documentData['is_new'] == true ? 'New' : 'Updated'}",
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        fontStyle: FontStyle.italic,
-                                      ),
-                                    ),
-                                  );
-                                },
+                            );
+                          },
+                          splashColor:
+                          Theme.of(context).primaryColor.withOpacity(0.3),
+                          child: Card(
+                            elevation: 2,
+                            child: ExpansionTile(
+                              title: Text(
+                                'Domain: $domain, Category: $category, Year: $year',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ],
+                              children: [
+                                ListView.builder(
+                                  shrinkWrap: true,
+                                  itemCount: group.length,
+                                  itemBuilder: (context, index) {
+                                    final documentData = group[index];
+                                    return ListTile(
+                                      title: Text(
+                                        documentData['document_name'],
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      subtitle: Text(
+                                        "Status: ${documentData['is_new'] == true ? 'New' : 'Updated'}",
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontStyle: FontStyle.italic,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -177,19 +186,21 @@ class DocumentLibraryScreen extends StatelessWidget {
     return await user.getIdTokenResult();
   }
 
-  List<List<Map<String, dynamic>>> groupDocuments(List<DocumentSnapshot> documents) {
+  List<List<Map<String, dynamic>>> groupDocuments(
+      List<DocumentSnapshot> documents) {
     final groupedDocuments = <List<Map<String, dynamic>>>[];
     final tempMap = <String, List<Map<String, dynamic>>>{};
 
     for (final document in documents) {
-      final documentData = document.data() as Map<String, dynamic>;
+      final documentData =
+      document.data() as Map<String, dynamic>; // Extract data from the DocumentSnapshot
       final domain = documentData['user_domain'];
       final category = documentData['category'];
       final year = documentData['year'];
 
       final key = '$domain-$category-$year';
       tempMap.putIfAbsent(key, () => []);
-      tempMap[key]!.add(documentData);
+      tempMap[key]!.add(documentData); // Add the extracted document data to the map
     }
 
     tempMap.forEach((key, value) {
@@ -197,6 +208,13 @@ class DocumentLibraryScreen extends StatelessWidget {
     });
 
     return groupedDocuments;
+  }
+
+  void downloadDocument(Map<String, dynamic> documentData) {
+    // Implement your download logic here
+    // Use the 'documentData' variable to identify the selected document and initiate the download
+    print("aaaaaaaaaaaaa");
+    print(documentData);
   }
 }
 
@@ -234,7 +252,8 @@ class DocumentDetailScreen extends StatelessWidget {
                 children: [
                   Text(
                     documentData?[0]['document_name'] ?? '',
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
                   // Add more document details here
