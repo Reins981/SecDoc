@@ -55,9 +55,15 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
 
         final userRole = customClaims?['role'];
         final userDomain = customClaims?['domain'];
+        final userUid = customClaims?['sub'];
+        print(userRole);
+        print(userDomain);
+        print(userUid);
+
 
         FirebaseAuth auth = FirebaseAuth.instance;
         User? user = auth.currentUser;
+        print(user?.uid);
         if (user == null) {
           return const Center(child: Text('User not logged in.'));
         }
@@ -87,7 +93,9 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
               }
 
               if (snapshot.hasError) {
-                return const Center(child: Text('Error loading documents.'));
+                print(snapshot.data);
+                String errorMessage = snapshot.error?.toString() ?? 'Error loading documents';
+                return Center(child: Text(errorMessage));
               }
 
               if (!snapshot.hasData || snapshot.data?.docs.isEmpty == true) {
