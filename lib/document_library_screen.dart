@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -5,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'main.dart'; // Import the LoginScreen to navigate back after logout
 import 'package:http/http.dart' as http;
 import 'dart:io';
+import 'dart:async'; // Import the async package for using StreamController
 
 void main() {
   runApp(const MyApp());
@@ -33,6 +36,30 @@ class DocumentLibraryScreen extends StatefulWidget {
 }
 
 class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
+  final StreamController<QuerySnapshot> _streamController = StreamController<QuerySnapshot>.broadcast();
+  List<StreamSubscription<QuerySnapshot>> subscriptions = [];
+
+  @override
+  void dispose() {
+    _streamController.close();
+    _cancelSubscriptions();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  void _cancelSubscriptions() {
+    // Cancel previous listener if it exists
+    for (var subscription in subscriptions) {
+      subscription.cancel();
+    }
+    // Clear the list after canceling all subscriptions
+    subscriptions.clear();
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<IdTokenResult>(
@@ -55,23 +82,62 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
 
         final userRole = customClaims?['role'];
         final userDomain = customClaims?['domain'];
-        final userUid = customClaims?['sub'];
-        print(userRole);
-        print(userDomain);
-        print(userUid);
-
 
         FirebaseAuth auth = FirebaseAuth.instance;
         User? user = auth.currentUser;
-        print(user?.uid);
+        final userUid = user?.uid;
         if (user == null) {
           return const Center(child: Text('User not logged in.'));
         }
 
         String userDomainLowerCase = userDomain?.toLowerCase() ?? 'default_domain';
+        CollectionReference documentsCollection;
+        Stream<QuerySnapshot> query;
+        final List<String> domainArray = ['BACQROO-ALL', 'BACQROO-PDC', 'BACQROO-MEX'];
 
-        CollectionReference documentsCollection =
-        FirebaseFirestore.instance.collection('documents_$userDomainLowerCase');
+        if (userRole == 'client') {
+          documentsCollection = FirebaseFirestore.instance.collection('documents_$userDomainLowerCase');
+          query = documentsCollection.where('owner', isEqualTo: userUid).snapshots();
+        } else {
+          List<Stream<QuerySnapshot>> domainStreams = [];
+
+          for (String item in domainArray) {
+            String itemLowerCase = item.toLowerCase();
+            CollectionReference domainCollection =
+            FirebaseFirestore.instance.collection('documents_$itemLowerCase');
+            if (userDomain == 'BACQROO-ALL') {
+              print("super userrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr");
+              print('documents_$itemLowerCase');
+              domainStreams.add(
+                  domainCollection.where(userRole, isEqualTo: 'admin').snapshots());
+            } else {
+              domainStreams.add(
+                  domainCollection.where('', isEqualTo: 'admin').where(
+                      userDomain, isEqualTo: item).snapshots());
+            }
+          }
+          _cancelSubscriptions(); // Cancel previous subscriptions before creating new ones
+          for (Stream<QuerySnapshot> q in domainStreams) {
+            Stream<QuerySnapshot> broadcastStream = q.asBroadcastStream();
+            // Set up a new listener for each domain stream
+            StreamSubscription<QuerySnapshot> subscription = broadcastStream.listen(
+                  (snapshot) {
+                _streamController.add(snapshot);
+              },
+              onError: (error) {
+                print("Listener rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr");
+                print(error.toString());
+              },
+              onDone: () {
+                print("Done processing documents for this domain");
+              },
+            );
+
+            // Add the subscription to the list for later cancellation
+            subscriptions.add(subscription);
+          }
+          query = _streamController.stream;
+        }
 
         return Scaffold(
           appBar: AppBar(
@@ -86,14 +152,20 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
             ],
           ),
           body: StreamBuilder<QuerySnapshot>(
-            stream: documentsCollection.snapshots(),
+            stream: query,
             builder: (context, snapshot) {
+
+
+              if (snapshot.data == null) {
+                String errorMessage = 'Error loading documents';
+                return Center(child: Text(errorMessage));
+              }
+
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
 
               if (snapshot.hasError) {
-                print(snapshot.data);
                 String errorMessage = snapshot.error?.toString() ?? 'Error loading documents';
                 return Center(child: Text(errorMessage));
               }
@@ -234,6 +306,7 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
     // Example:
     downloadFunction(downloadUrl, documentName);
   }
+
   void downloadFunction(String downloadUrl, String documentName) async {
     // Use the 'http' package to initiate the download
     final response = await http.get(Uri.parse(downloadUrl));
@@ -303,4 +376,3 @@ class DocumentDetailScreen extends StatelessWidget {
     );
   }
 }
-
