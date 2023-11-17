@@ -38,11 +38,11 @@ class RegistrationScreen extends StatelessWidget {
               ).toList(),
             ),
             DropdownButton<String>(
-              value: 'BACQROO-MEX',
+              value: 'PV-IBK',
               onChanged: (newValue) {
                 // TODO: Handle dropdown value change
               },
-              items: <String>['BACQROO-MEX', 'BACQROO-PDC', 'BACQROO-ALL']
+              items: <String>['PV-IBK', 'PV-IBK-L', 'PV-IM', 'PV-EXT']
                   .map<DropdownMenuItem<String>>(
                     (String value) {
                   return DropdownMenuItem<String>(
