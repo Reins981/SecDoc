@@ -185,66 +185,58 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
                   final category = group[0]['category'];
                   final year = group[0]['year'];
 
-                  return GestureDetector(
-                    onLongPress: () => downloadDocument(group[0]),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Material(
-                        child: InkWell(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    DocumentDetailScreen(documentData: group),
-                              ),
-                            );
-                          },
-                          splashColor:
-                          Theme.of(context).primaryColor.withOpacity(0.3),
-                          child: Card(
-                            elevation: 2,
-                            child: ExpansionTile(
-                              title: Text(
-                                'Domain: $domain, Category: $category, Year: $year',
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              children: [
-                                ListView.builder(
-                                  shrinkWrap: true,
-                                  itemCount: group.length,
-                                  itemBuilder: (context, index) {
-                                    final documentData = group[index];
-                                    return ListTile(
-                                      title: Text(
-                                        documentData['document_name'],
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      subtitle: Text(
-                                        "Status: ${documentData['is_new'] == true ? 'New' : 'Updated'}",
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          fontStyle: FontStyle.italic,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+                  return ExpansionTile(
+                    title: Text(
+                      'Domain: $domain, Year: $year, Category: $category',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
+                    children: [
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: NeverScrollableScrollPhysics(),
+                        itemCount: group.length,
+                        itemBuilder: (context, index) {
+                          final documentData = group[index];
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                            child: Card(
+                              elevation: 2,
+                              child: ListTile(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => DocumentDetailScreen(documentData: documentData),
+                                    ),
+                                  );
+                                },
+                                title: Text(
+                                  documentData['document_name'],
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  "Status: ${documentData['is_new'] == true ? 'New' : 'Updated'}",
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                   );
                 },
               );
+
             },
           ),
         );
@@ -272,7 +264,7 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
   List<List<Map<String, dynamic>>> groupDocuments(
       List<DocumentSnapshot> documents) {
     final groupedDocuments = <List<Map<String, dynamic>>>[];
-    final tempMap = <String, List<Map<String, dynamic>>>{};
+    final domainMap = <String, Map<int, Map<String, List<Map<String, dynamic>>>>>{};
 
     for (final document in documents) {
       final documentData =
@@ -281,13 +273,31 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
       final category = documentData['category'];
       final year = documentData['year'];
 
-      final key = '$domain-$category-$year';
-      tempMap.putIfAbsent(key, () => []);
-      tempMap[key]!.add(documentData); // Add the extracted document data to the map
+      // Group by domain
+      if (!domainMap.containsKey(domain)) {
+        domainMap[domain] = {};
+      }
+
+      // Grouping by year within domain
+      if (!domainMap[domain]!.containsKey(year)) {
+        domainMap[domain]![year] = {};
+      }
+
+      // Grouping by category within year
+      if (!domainMap[domain]![year]!.containsKey(category)) {
+        domainMap[domain]![year]![category] = [];
+      }
+
+      domainMap[domain]![year]![category]!.add(documentData);
     }
 
-    tempMap.forEach((key, value) {
-      groupedDocuments.add(value);
+    // Add grouped documents according to the desired order (domain -> year -> category)
+    domainMap.forEach((domain, yearMap) {
+      yearMap.forEach((year, categoryMap) {
+        categoryMap.forEach((_, documents) {
+          groupedDocuments.add(documents);
+        });
+      });
     });
 
     return groupedDocuments;
@@ -329,7 +339,7 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
 }
 
 class DocumentDetailScreen extends StatelessWidget {
-  final List<Map<String, dynamic>>? documentData;
+  final Map<String, dynamic>? documentData;
 
   const DocumentDetailScreen({Key? key, this.documentData}) : super(key: key);
 
@@ -348,11 +358,11 @@ class DocumentDetailScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(documentData?[0]['document_name'] ?? ''),
+        title: Text(documentData?['document_name'] ?? ''),
       ),
       body: Center(
         child: Hero(
-          tag: documentData?[0]['id'] ?? '',
+          tag: documentData?['id'] ?? '',
           child: Card(
             elevation: 4,
             margin: const EdgeInsets.all(16),
@@ -361,7 +371,7 @@ class DocumentDetailScreen extends StatelessWidget {
               child: Column(
                 children: [
                   Text(
-                    documentData?[0]['document_name'] ?? '',
+                    documentData?['document_name'] ?? '',
                     style: const TextStyle(
                         fontSize: 20, fontWeight: FontWeight.bold),
                   ),
