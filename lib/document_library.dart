@@ -8,6 +8,7 @@ import 'main.dart'; // Import the LoginScreen to navigate back after logout
 import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'dart:async'; // Import the async package for using StreamController
+import 'package:rxdart/rxdart.dart';
 
 class DocumentLibraryScreen extends StatefulWidget {
   const DocumentLibraryScreen({Key? key}) : super(key: key);
@@ -66,12 +67,19 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
     });
   }
 
-  Stream<QuerySnapshot> _fetchDocuments(String? userRole, String? userDomain, String? userUid) {
+  Future<Stream<QuerySnapshot<Object?>>?> fetchDocuments(String? userRole, String? userDomain, String? userUid) async {
+
+    Stream<QuerySnapshot>? stream = await _fetchDocuments(userRole, userDomain, userUid);
+    return stream;
+
+  }
+
+  Future<Stream<QuerySnapshot<Object?>>?> _fetchDocuments(String? userRole, String? userDomain, String? userUid) async {
 
     String userDomainLowerCase = userDomain?.toLowerCase() ??
         'default_domain';
     CollectionReference documentsCollection;
-    Stream<QuerySnapshot> query;
+    Stream<QuerySnapshot>? stream;
 
     final List<String> domainArray = [
       'PV-ALL',
@@ -89,12 +97,14 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
 
       // Clients can only access their own documents, admins all of them
       if (userRole == 'client') {
-        query = documentsCollection
+        print("role client!!!!!");
+        stream = documentsCollection
             .where('owner', isEqualTo: userUid)
             .snapshots();
       } else {
-        print("domain adminnnnnnnnnnnnnn");
-        query = documentsCollection
+        print("role adminnnnnnnnnnnnnn");
+        stream = documentsCollection
+            .where('user_domain', isEqualTo: userDomain)
             .snapshots();
       }
     } else {
@@ -105,36 +115,47 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
         String domainLowerCase = item.toLowerCase();
         CollectionReference domainCollection =
         FirebaseFirestore.instance.collection('documents_$domainLowerCase');
-
         domainStreams.add(domainCollection.snapshots());
       }
 
-      _cancelSubscriptions(); // Cancel previous subscriptions before creating new ones
-      for (Stream<QuerySnapshot> q in domainStreams) {
-        Stream<QuerySnapshot> broadcastStream = q.asBroadcastStream();
-        // Set up a new listener for each domain stream
-        StreamSubscription<QuerySnapshot> subscription = broadcastStream
-            .listen(
-              (snapshot) {
-            _streamController.add(snapshot);
-          },
-          onError: (error) {
-            print("Listener errrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrror");
-            print(error.toString());
-          },
-          onDone: () {
-            print("Done processing documents for this domain");
-          },
-        );
+      // Create a custom stream controller
+      StreamController<QuerySnapshot> customStreamController = StreamController.broadcast();
+      // Keep track of the number of completed streams
+      int completedStreams = 0;
+      int totalStreams = domainStreams.length;
+      Completer<void> completer = Completer<void>();
 
-        // Add the subscription to the list for later cancellation
-        subscriptions.add(subscription);
+      // Merge multiple streams into a single stream and add snapshots to the custom stream controller
+      for (Stream<QuerySnapshot> stream in domainStreams) {
+        stream.listen((snapshot) {
+          print(snapshot);
+          print(snapshot.docs);
+          print(snapshot.docs.length);
+          customStreamController.add(snapshot);
+          completedStreams++;
+
+          print("Completed Streams:");
+          print(completedStreams);
+          print("Total Streams:");
+          print(totalStreams);
+
+          if (completedStreams == totalStreams) {
+            customStreamController.close();
+            completer.complete();
+            print("All streams completed.");
+
+          }
+        });
       }
-      query = _streamController.stream;
+
+      print("Waiting for completion");
+      await completer.future;
+
+      print("Returning stream.........");
+      return customStreamController.stream;
+
     }
-
-    return query;
-
+    return stream;
   }
 
   @override
@@ -178,234 +199,253 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
           return Center(child: Text(errorMessage));
         }
 
-        Stream<QuerySnapshot> query = _fetchDocuments(userRole, userDomain, userUid);
+        return FutureBuilder<Stream<QuerySnapshot<Object?>>?>(
+          future: fetchDocuments(userRole, userDomain, userUid),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text('Document Library'),
-            actions: [
-              IconButton(
-                onPressed: () async {
-                  await _handleLogout(context);
-                },
-                icon: const Icon(Icons.logout),
+            if (snapshot.hasError) {
+              return const Center(child: Text('Error fetching documents'));
+            }
+
+            if (!snapshot.hasData || snapshot.data == null) {
+              return const Center(child: Text('No documents available.'));
+            }
+
+            Stream<QuerySnapshot>? stream = snapshot.data;
+
+            return Scaffold(
+              appBar: AppBar(
+                title: const Text('Document Library'),
+                actions: [
+                  IconButton(
+                    onPressed: () async {
+                      await _handleLogout(context);
+                    },
+                    icon: const Icon(Icons.logout),
+                  ),
+                  // Add the search bar within the AppBar
+                ],
               ),
-              // Add the search bar within the AppBar
-            ],
-          ),
-          body: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    labelText: 'Enter Document or User Name',
-                    suffixIcon: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.search),
-                          onPressed: () {
-                            _searchDocumentByNames(_searchController.text);
-                          },
+              body: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        labelText: 'Enter Document or User Name',
+                        suffixIcon: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.search),
+                              onPressed: () {
+                                _searchDocumentByNames(_searchController.text);
+                              },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.refresh), // Reset filter icon
+                              onPressed: () {
+                                setState(() {
+                                  _filteredDocuments = [];
+                                });
+                              },
+                            ),
+                          ],
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.refresh), // Reset filter icon
-                          onPressed: () {
-                            setState(() {
-                              _filteredDocuments = [];
-                            });
-                          },
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              ),
-              Expanded(
-                child: StreamBuilder<QuerySnapshot>(
-                  stream: query,
-                  builder: (context, snapshot) {
-                    if (snapshot.data == null) {
-                      String errorMessage = 'Loading...';
-                      return Center(child: Text(errorMessage));
-                    }
+                  Expanded(
+                    child: StreamBuilder<QuerySnapshot>(
+                      stream: stream,
+                      builder: (context, snapshot) {
 
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
 
-                    if (snapshot.hasError) {
-                      String errorMessage = snapshot.error?.toString() ??
-                          'Error loading documents';
-                      return Center(child: Text(errorMessage));
-                    }
+                        if (snapshot.data == null) {
+                          String errorMessage = snapshot.error?.toString() ??
+                              'No documents available.';
+                          return Center(child: Text(errorMessage));
+                        }
 
-                    if (!snapshot.hasData ||
-                        snapshot.data?.docs.isEmpty == true) {
-                      return const Center(
-                          child: Text('No documents available.'));
-                    }
+                        if (snapshot.hasError) {
+                          String errorMessage = snapshot.error?.toString() ??
+                              'Error loading documents';
+                          return Center(child: Text(errorMessage));
+                        }
 
-                    List<DocumentSnapshot> displayDocuments = [];
-                    if (_filteredDocuments != null) {
-                      if (_filteredDocuments!.isEmpty) {
-                        allDocumentsOrig = snapshot.data!.docs;
-                        displayDocuments = allDocumentsOrig;
-                      } else {
-                        displayDocuments = _filteredDocuments!;
-                      }
-                    }
+                        if (!snapshot.hasData ||
+                            snapshot.data?.docs.isEmpty == true) {
+                          return const Center(
+                              child: Text('No documents available.'));
+                        }
 
-                    final domainMap = groupDocuments(displayDocuments);
+                        List<DocumentSnapshot> displayDocuments = [];
+                        if (_filteredDocuments != null) {
+                          if (_filteredDocuments!.isEmpty) {
+                            allDocumentsOrig = snapshot.data!.docs;
+                            displayDocuments = allDocumentsOrig;
+                          } else {
+                            displayDocuments = _filteredDocuments!;
+                          }
+                        }
 
-                    return ListView.builder(
-                      itemCount: domainMap.length,
-                      itemBuilder: (context, index) {
-                        final domain = domainMap.keys.elementAt(index);
-                        final yearMap = domainMap[domain]!;
-                        final yearList = yearMap.keys.toList();
+                        final domainMap = groupDocuments(displayDocuments);
 
-                        return ExpansionTile(
-                          title: Text(
-                            'Domain: $domain',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          children: yearList.map((year) {
-                            final categoryMap = yearMap[year]!;
-                            final categoryList = categoryMap.keys.toList();
+                        return ListView.builder(
+                          itemCount: domainMap.length,
+                          itemBuilder: (context, index) {
+                            final domain = domainMap.keys.elementAt(index);
+                            final yearMap = domainMap[domain]!;
+                            final yearList = yearMap.keys.toList();
 
                             return ExpansionTile(
                               title: Text(
-                                'Year: $year',
+                                'Domain: $domain',
                                 style: const TextStyle(
-                                  fontSize: 16,
+                                  fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              children: categoryList.map((category) {
-                                final userMap = categoryMap[category]!;
-                                final userList = userMap.keys.toList();
+                              children: yearList.map((year) {
+                                final categoryMap = yearMap[year]!;
+                                final categoryList = categoryMap.keys.toList();
 
                                 return ExpansionTile(
                                   title: Text(
-                                    'Category: $category',
+                                    'Year: $year',
                                     style: const TextStyle(
-                                      fontSize: 14,
+                                      fontSize: 16,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                  children: userList.map((user) {
-                                    final documents = userMap[user]!;
+                                  children: categoryList.map((category) {
+                                    final userMap = categoryMap[category]!;
+                                    final userList = userMap.keys.toList();
+
                                     return ExpansionTile(
                                       title: Text(
-                                        'Customer: $user',
+                                        'Category: $category',
                                         style: const TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
-                                      children: [
-                                        ListView.builder(
-                                          shrinkWrap: true,
-                                          physics: NeverScrollableScrollPhysics(),
-                                          itemCount: documents.length,
-                                          itemBuilder: (context, index) {
-                                            final documentData = documents[index];
-                                            return Padding(
-                                              padding: const EdgeInsets
-                                                  .symmetric(horizontal: 8.0),
-                                              child: Card(
-                                                elevation: 2,
-                                                child: Column(
-                                                  crossAxisAlignment: CrossAxisAlignment
-                                                      .start,
-                                                  children: [
-                                                    ListTile(
-                                                      onTap: () {
-                                                        Navigator.push(
-                                                          context,
-                                                          MaterialPageRoute(
-                                                            builder: (
-                                                                context) =>
-                                                                DocumentDetailScreen(
-                                                                    documentData: documentData),
-                                                          ),
-                                                        );
-                                                      },
-                                                      title: Text(
-                                                        documentData['document_name'],
-                                                        style: const TextStyle(
-                                                          fontSize: 16,
-                                                          fontWeight: FontWeight
-                                                              .w500,
-                                                        ),
-                                                      ),
-                                                      subtitle: Text(
-                                                        "Status: ${documentData['is_new'] ==
-                                                            true
-                                                            ? 'New'
-                                                            : 'Updated'}",
-                                                        style: const TextStyle(
-                                                          fontSize: 14,
-                                                          fontStyle: FontStyle
-                                                              .italic,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    ButtonBar(
-                                                      alignment: MainAxisAlignment
-                                                          .spaceBetween,
+                                      children: userList.map((user) {
+                                        final documents = userMap[user]!;
+                                        return ExpansionTile(
+                                          title: Text(
+                                            'Customer: $user',
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          children: [
+                                            ListView.builder(
+                                              shrinkWrap: true,
+                                              physics: NeverScrollableScrollPhysics(),
+                                              itemCount: documents.length,
+                                              itemBuilder: (context, index) {
+                                                final documentData = documents[index];
+                                                return Padding(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(horizontal: 8.0),
+                                                  child: Card(
+                                                    elevation: 2,
+                                                    child: Column(
+                                                      crossAxisAlignment: CrossAxisAlignment
+                                                          .start,
                                                       children: [
-                                                        ElevatedButton.icon(
-                                                          onPressed: () {
-                                                            // Implement download logic for this document
-                                                            downloadDocument(
-                                                                documentData);
+                                                        ListTile(
+                                                          onTap: () {
+                                                            Navigator.push(
+                                                              context,
+                                                              MaterialPageRoute(
+                                                                builder: (
+                                                                    context) =>
+                                                                    DocumentDetailScreen(
+                                                                        documentData: documentData),
+                                                              ),
+                                                            );
                                                           },
-                                                          icon: const Icon(
-                                                              Icons.download),
-                                                          label: const Text(
-                                                              'Download'),
+                                                          title: Text(
+                                                            documentData['document_name'],
+                                                            style: const TextStyle(
+                                                              fontSize: 16,
+                                                              fontWeight: FontWeight
+                                                                  .w500,
+                                                            ),
+                                                          ),
+                                                          subtitle: Text(
+                                                            "Status: ${documentData['is_new'] ==
+                                                                true
+                                                                ? 'New'
+                                                                : 'Updated'}",
+                                                            style: const TextStyle(
+                                                              fontSize: 14,
+                                                              fontStyle: FontStyle
+                                                                  .italic,
+                                                            ),
+                                                          ),
                                                         ),
-                                                        ElevatedButton.icon(
-                                                          onPressed: () {
-                                                            // Implement delete logic for this document
-                                                            //deleteDocument(documentData);
-                                                          },
-                                                          icon: const Icon(
-                                                              Icons.delete),
-                                                          label: const Text(
-                                                              'Delete'),
+                                                        ButtonBar(
+                                                          alignment: MainAxisAlignment
+                                                              .spaceBetween,
+                                                          children: [
+                                                            ElevatedButton.icon(
+                                                              onPressed: () {
+                                                                // Implement download logic for this document
+                                                                downloadDocument(
+                                                                    documentData);
+                                                              },
+                                                              icon: const Icon(
+                                                                  Icons.download),
+                                                              label: const Text(
+                                                                  'Download'),
+                                                            ),
+                                                            ElevatedButton.icon(
+                                                              onPressed: () {
+                                                                // Implement delete logic for this document
+                                                                //deleteDocument(documentData);
+                                                              },
+                                                              icon: const Icon(
+                                                                  Icons.delete),
+                                                              label: const Text(
+                                                                  'Delete'),
+                                                            ),
+                                                          ],
                                                         ),
                                                       ],
                                                     ),
-                                                  ],
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      ],
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          ],
+                                        );
+                                      }).toList(),
                                     );
                                   }).toList(),
                                 );
                               }).toList(),
                             );
-                          }).toList(),
+                          },
                         );
                       },
-                    );
-                  },
-                ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );

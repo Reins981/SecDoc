@@ -156,6 +156,8 @@ class LoginScreen extends StatelessWidget {
         password: password,
       );
 
+      print("user Info!!!!!!!!!:");
+      print(userCredential.additionalUserInfo);
       final User user = userCredential.user!;
       _showWelcomeAnimation(context, user.displayName!);
     } catch (e) {
