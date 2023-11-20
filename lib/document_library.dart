@@ -20,7 +20,7 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
   final StreamController<QuerySnapshot> _streamController = StreamController<QuerySnapshot>.broadcast();
   List<StreamSubscription<QuerySnapshot>> subscriptions = [];
   final TextEditingController _searchController = TextEditingController();
-  late List<DocumentSnapshot> allDocuments = []; // Store all documents here
+  late List<DocumentSnapshot> allDocumentsOrig = []; // Store all documents here
   List<DocumentSnapshot>? _filteredDocuments = [];
 
   @override
@@ -44,11 +44,14 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
     subscriptions.clear();
   }
 
-  void _searchDocument(String documentName) {
+  // Search document by document name or user name
+  void _searchDocumentByNames(String searchText) {
+    List<DocumentSnapshot> allDocumentsCopy = List.from(allDocumentsOrig);
     // Replace this with your logic to filter the document
     // Assuming you have a list of documents called 'documents' and 'documentName' is the search query.
-    List<DocumentSnapshot> filteredDocuments = allDocuments
-        .where((doc) => doc['document_name'].toLowerCase().contains(documentName.toLowerCase())).toList();
+    List<DocumentSnapshot> filteredDocuments = allDocumentsCopy
+        .where((doc) => doc['document_name'].toLowerCase().contains(searchText.toLowerCase())
+        || doc['user_name'].toLowerCase().contains(searchText.toLowerCase())).toList();
 
     print("Filter results:");
     print(filteredDocuments);
@@ -61,6 +64,77 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
         _filteredDocuments = null;
       }
     });
+  }
+
+  Stream<QuerySnapshot> _fetchDocuments(String? userRole, String? userDomain, String? userUid) {
+
+    String userDomainLowerCase = userDomain?.toLowerCase() ??
+        'default_domain';
+    CollectionReference documentsCollection;
+    Stream<QuerySnapshot> query;
+
+    final List<String> domainArray = [
+      'PV-ALL',
+      'PV-IBK',
+      'PV-IBK-L',
+      'PV-IM',
+      'PV-EXT',
+    ];
+
+    // First fetch the documents based on the user domain for clients and domain admins
+    // Fetch all documents regardless of the domain for super admins
+    if (userRole == 'client' || (userRole == 'admin' && userDomain != 'PV-ALL')) {
+      documentsCollection = FirebaseFirestore.instance.collection(
+          'documents_$userDomainLowerCase');
+
+      // Clients can only access their own documents, admins all of them
+      if (userRole == 'client') {
+        query = documentsCollection
+            .where('owner', isEqualTo: userUid)
+            .snapshots();
+      } else {
+        print("domain adminnnnnnnnnnnnnn");
+        query = documentsCollection
+            .snapshots();
+      }
+    } else {
+
+      List<Stream<QuerySnapshot>> domainStreams = [];
+
+      for (String item in domainArray) {
+        String domainLowerCase = item.toLowerCase();
+        CollectionReference domainCollection =
+        FirebaseFirestore.instance.collection('documents_$domainLowerCase');
+
+        domainStreams.add(domainCollection.snapshots());
+      }
+
+      _cancelSubscriptions(); // Cancel previous subscriptions before creating new ones
+      for (Stream<QuerySnapshot> q in domainStreams) {
+        Stream<QuerySnapshot> broadcastStream = q.asBroadcastStream();
+        // Set up a new listener for each domain stream
+        StreamSubscription<QuerySnapshot> subscription = broadcastStream
+            .listen(
+              (snapshot) {
+            _streamController.add(snapshot);
+          },
+          onError: (error) {
+            print("Listener errrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrror");
+            print(error.toString());
+          },
+          onDone: () {
+            print("Done processing documents for this domain");
+          },
+        );
+
+        // Add the subscription to the list for later cancellation
+        subscriptions.add(subscription);
+      }
+      query = _streamController.stream;
+    }
+
+    return query;
+
   }
 
   @override
@@ -89,71 +163,22 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
         FirebaseAuth auth = FirebaseAuth.instance;
         User? user = auth.currentUser;
         final userUid = user?.uid;
+
         if (user == null) {
-          return const Center(child: Text('User not logged in.'));
+          return const Center(child: Text('The user does not exist.'));
         }
 
-        String userDomainLowerCase = userDomain?.toLowerCase() ??
-            'default_domain';
-        CollectionReference documentsCollection;
-        Stream<QuerySnapshot> query;
-
-        final List<String> domainArray = [
-          'PV-ALL',
-          'PV-IBK',
-          'PV-IBK-L',
-          'PV-IM',
-          'PV-EXT',
-        ];
-
-        if (userRole == 'client') {
-          documentsCollection = FirebaseFirestore.instance.collection(
-              'documents_$userDomainLowerCase');
-          query = documentsCollection.where('owner', isEqualTo: userUid)
-              .snapshots();
-        } else {
-          List<Stream<QuerySnapshot>> domainStreams = [];
-
-          for (String item in domainArray) {
-            String itemLowerCase = item.toLowerCase();
-            CollectionReference domainCollection =
-            FirebaseFirestore.instance.collection('documents_$itemLowerCase');
-            if (userDomain == 'PV-ALL') {
-              print("super userrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr");
-              print('documents_$itemLowerCase');
-              domainStreams.add(
-                  domainCollection.where(userRole, isEqualTo: 'admin')
-                      .snapshots());
-            } else {
-              domainStreams.add(
-                  domainCollection.where('', isEqualTo: 'admin').where(
-                      userDomain, isEqualTo: item).snapshots());
-            }
-          }
-
-          _cancelSubscriptions(); // Cancel previous subscriptions before creating new ones
-          for (Stream<QuerySnapshot> q in domainStreams) {
-            Stream<QuerySnapshot> broadcastStream = q.asBroadcastStream();
-            // Set up a new listener for each domain stream
-            StreamSubscription<QuerySnapshot> subscription = broadcastStream
-                .listen(
-                  (snapshot) {
-                _streamController.add(snapshot);
-              },
-              onError: (error) {
-                print("Listener rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr");
-                print(error.toString());
-              },
-              onDone: () {
-                print("Done processing documents for this domain");
-              },
-            );
-
-            // Add the subscription to the list for later cancellation
-            subscriptions.add(subscription);
-          }
-          query = _streamController.stream;
+        if (userRole == null) {
+          final String errorMessage = 'User Role for user $userUid not defined.';
+          return Center(child: Text(errorMessage));
         }
+
+        if (userDomain == null) {
+          final String errorMessage = 'User Domain for user $userUid not defined.';
+          return Center(child: Text(errorMessage));
+        }
+
+        Stream<QuerySnapshot> query = _fetchDocuments(userRole, userDomain, userUid);
 
         return Scaffold(
           appBar: AppBar(
@@ -175,7 +200,7 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
                 child: TextField(
                   controller: _searchController,
                   decoration: InputDecoration(
-                    labelText: 'Enter Document Name',
+                    labelText: 'Enter Document or User Name',
                     suffixIcon: Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       mainAxisSize: MainAxisSize.min,
@@ -183,7 +208,7 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
                         IconButton(
                           icon: const Icon(Icons.search),
                           onPressed: () {
-                            _searchDocument(_searchController.text);
+                            _searchDocumentByNames(_searchController.text);
                           },
                         ),
                         IconButton(
@@ -224,10 +249,17 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
                           child: Text('No documents available.'));
                     }
 
-                    allDocuments = _filteredDocuments!.isEmpty
-                        ? snapshot.data!.docs
-                        : (_filteredDocuments ?? []);
-                    final domainMap = groupDocuments(allDocuments);
+                    List<DocumentSnapshot> displayDocuments = [];
+                    if (_filteredDocuments != null) {
+                      if (_filteredDocuments!.isEmpty) {
+                        allDocumentsOrig = snapshot.data!.docs;
+                        displayDocuments = allDocumentsOrig;
+                      } else {
+                        displayDocuments = _filteredDocuments!;
+                      }
+                    }
+
+                    final domainMap = groupDocuments(displayDocuments);
 
                     return ListView.builder(
                       itemCount: domainMap.length,
