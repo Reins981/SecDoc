@@ -67,19 +67,19 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
     });
   }
 
-  Future<Stream<QuerySnapshot<Object?>>?> fetchDocuments(String? userRole, String? userDomain, String? userUid) async {
+  Future<dynamic> fetchDocuments(String? userRole, String? userDomain, String? userUid) async {
 
-    Stream<QuerySnapshot>? stream = await _fetchDocuments(userRole, userDomain, userUid);
-    return stream;
+    dynamic result = await _fetchDocuments(userRole, userDomain, userUid);
+    return result;
 
   }
 
-  Future<Stream<QuerySnapshot<Object?>>?> _fetchDocuments(String? userRole, String? userDomain, String? userUid) async {
+  Future<dynamic> _fetchDocuments(String? userRole, String? userDomain, String? userUid) async {
 
     String userDomainLowerCase = userDomain?.toLowerCase() ??
         'default_domain';
     CollectionReference documentsCollection;
-    Stream<QuerySnapshot>? stream;
+    var result;
 
     final List<String> domainArray = [
       'PV-ALL',
@@ -97,13 +97,11 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
 
       // Clients can only access their own documents, admins all of them
       if (userRole == 'client') {
-        print("role client!!!!!");
-        stream = documentsCollection
+        result = documentsCollection
             .where('owner', isEqualTo: userUid)
             .snapshots();
       } else {
-        print("role adminnnnnnnnnnnnnn");
-        stream = documentsCollection
+        result = documentsCollection
             .where('user_domain', isEqualTo: userDomain)
             .snapshots();
       }
@@ -118,44 +116,22 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
         domainStreams.add(domainCollection.snapshots());
       }
 
-      // Create a custom stream controller
-      StreamController<QuerySnapshot> customStreamController = StreamController.broadcast();
-      // Keep track of the number of completed streams
-      int completedStreams = 0;
-      int totalStreams = domainStreams.length;
-      Completer<void> completer = Completer<void>();
-
-      // Merge multiple streams into a single stream and add snapshots to the custom stream controller
-      for (Stream<QuerySnapshot> stream in domainStreams) {
-        stream.listen((snapshot) {
-          print(snapshot);
-          print(snapshot.docs);
-          print(snapshot.docs.length);
-          customStreamController.add(snapshot);
-          completedStreams++;
-
-          print("Completed Streams:");
-          print(completedStreams);
-          print("Total Streams:");
-          print(totalStreams);
-
-          if (completedStreams == totalStreams) {
-            customStreamController.close();
-            completer.complete();
-            print("All streams completed.");
-
-          }
-        });
-      }
-
-      print("Waiting for completion");
-      await completer.future;
-
-      print("Returning stream.........");
-      return customStreamController.stream;
+      result = domainStreams;
 
     }
-    return stream;
+
+    return result;
+  }
+
+  void _fillOrigDocumentsFromQuerySnapshotList(List<dynamic> querySnapshotList) {
+
+    allDocumentsOrig.clear();
+
+    querySnapshotList.forEach((querySnapshot) {
+      querySnapshot.docs.forEach((doc) {
+        allDocumentsOrig.add(doc);
+      });
+    });
   }
 
   @override
@@ -199,7 +175,7 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
           return Center(child: Text(errorMessage));
         }
 
-        return FutureBuilder<Stream<QuerySnapshot<Object?>>?>(
+        return FutureBuilder<dynamic>(
           future: fetchDocuments(userRole, userDomain, userUid),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
@@ -207,14 +183,27 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
             }
 
             if (snapshot.hasError) {
-              return const Center(child: Text('Error fetching documents'));
+              return Center(child: Text(snapshot.error.toString()));
             }
 
-            if (!snapshot.hasData || snapshot.data == null) {
+            if (!snapshot.hasData) {
               return const Center(child: Text('No documents available.'));
             }
 
-            Stream<QuerySnapshot>? stream = snapshot.data;
+            if (snapshot.data == null) {
+              String errorMessage = snapshot.error?.toString() ??
+                  'No documents available.';
+              return Center(child: Text(errorMessage));
+            }
+
+            final data = snapshot.data;
+
+            dynamic mergedData;
+            if (data is List<Stream<QuerySnapshot>>) {
+              mergedData = CombineLatestStream.list(data);
+            } else {
+              mergedData = data;
+            }
 
             return Scaffold(
               appBar: AppBar(
@@ -237,6 +226,15 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
                       controller: _searchController,
                       decoration: InputDecoration(
                         labelText: 'Enter Document or User Name',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                          borderSide: const BorderSide(
+                            color: Colors.grey,
+                            width: 1.0,
+                          ),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
                         suffixIcon: Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           mainAxisSize: MainAxisSize.min,
@@ -258,11 +256,11 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
                           ],
                         ),
                       ),
-                    ),
+                    )
                   ),
                   Expanded(
-                    child: StreamBuilder<QuerySnapshot>(
-                      stream: stream,
+                    child: StreamBuilder<dynamic>(
+                      stream: mergedData,
                       builder: (context, snapshot) {
 
                         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -281,8 +279,7 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
                           return Center(child: Text(errorMessage));
                         }
 
-                        if (!snapshot.hasData ||
-                            snapshot.data?.docs.isEmpty == true) {
+                        if (!snapshot.hasData || snapshot.data == null) {
                           return const Center(
                               child: Text('No documents available.'));
                         }
@@ -290,7 +287,12 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
                         List<DocumentSnapshot> displayDocuments = [];
                         if (_filteredDocuments != null) {
                           if (_filteredDocuments!.isEmpty) {
-                            allDocumentsOrig = snapshot.data!.docs;
+                            if (data is List<Stream<QuerySnapshot>>) {
+                              final querySnapshotList = snapshot.data!;
+                              _fillOrigDocumentsFromQuerySnapshotList(querySnapshotList);
+                            } else {
+                              allDocumentsOrig = snapshot.data!.docs;
+                            }
                             displayDocuments = allDocumentsOrig;
                           } else {
                             displayDocuments = _filteredDocuments!;
