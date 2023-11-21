@@ -4,7 +4,6 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
     // Add the Google services Gradle plugin
     id("com.google.gms.google-services")
-
 }
 
 def localProperties = new Properties()
@@ -84,5 +83,6 @@ dependencies {
     // For example, add the dependencies for Firebase Authentication and Cloud Firestore
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-firestore-ktx")
-    implementation 'androidx.multidex:multidex:2.0.1'
+    implementation('androidx.multidex:multidex:2.0.1')
+    implementation('androidx.core:core:1.10.0')
 }

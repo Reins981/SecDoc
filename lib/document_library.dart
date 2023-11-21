@@ -1,14 +1,17 @@
-import 'dart:ffi';
-
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:path_provider/path_provider.dart';
 import 'main.dart'; // Import the LoginScreen to navigate back after logout
-import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'dart:async'; // Import the async package for using StreamController
 import 'package:rxdart/rxdart.dart';
+import 'package:flutter_downloader/flutter_downloader.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:open_file/open_file.dart';
+
 
 class DocumentLibraryScreen extends StatefulWidget {
   const DocumentLibraryScreen({Key? key}) : super(key: key);
@@ -23,6 +26,8 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
   final TextEditingController _searchController = TextEditingController();
   late List<DocumentSnapshot> allDocumentsOrig = []; // Store all documents here
   List<DocumentSnapshot>? _filteredDocuments = [];
+  late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
+  late Map<String?, Map<String, dynamic>> downloadMetaData = {};
 
   @override
   void dispose() {
@@ -34,6 +39,101 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
   @override
   void initState() {
     super.initState();
+    initializeDownloader(); // Call the method to initialize FlutterDownloader
+    initializeNotifications();
+  }
+
+  Future<void> initializeDownloader() async {
+    try {
+      WidgetsFlutterBinding.ensureInitialized();
+      await FlutterDownloader.initialize(debug: true);
+
+      // Register callback for download status updates
+      FlutterDownloader.registerCallback((id, status, progress) async {
+        print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+        print(status);
+        if (status == DownloadTaskStatus.complete) {
+          // Handle download completion here
+          // Show notifications or perform actions upon download completion
+          print('Download completed for task: $id');
+
+          final metaData = downloadMetaData[id];
+          final documentName = metaData?['document_name'] ?? 'DefaultName';
+          final filePath = metaData?['file_path'] ?? 'DefaultPath';
+
+          // Show a custom notification indicating successful download
+          await showCustomNotification(
+          'Download Complete', // Notification title
+          'Document $documentName downloaded successfully', // Notification content
+          filePath
+          );
+        }
+      });
+
+    } catch (e) {
+      // Handle initialization error
+      print("Downloader initialization failed: $e");
+    }
+  }
+
+  void _openFile(String filePath) {
+    // You'll need to use platform-specific code to open the file
+    // For Android, you can use plugins like 'open_file' or 'android_intent'
+    // For iOS, you might use 'open_file' or 'url_launcher'
+
+    // Example for opening a file on Android using the 'open_file' plugin
+    OpenFile.open(filePath);
+  }
+
+  // Handle the notification tap event
+  void onSelectNotification(notification) async {
+    print("onSelectNotification callback triggered");
+    print(notification.payload);
+    if (notification.payload != null) {
+      // Open the file using the saved directory path (payload)
+      // Example: Use platform-specific file opening mechanisms
+      // For Android:
+      // Open the file from the saved directory using the platform's file opener
+      // For iOS:
+      // Use iOS-specific file opening mechanisms
+      _openFile(notification.payload);
+    }
+  }
+
+  Future<void> initializeNotifications() async {
+    flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+
+    const AndroidInitializationSettings initializationSettingsAndroid =
+    AndroidInitializationSettings('@mipmap/ic_launcher');
+    const InitializationSettings initializationSettings =
+    InitializationSettings(android: initializationSettingsAndroid);
+
+    await flutterLocalNotificationsPlugin.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: onSelectNotification,
+    );
+  }
+
+  Future<void> showCustomNotification(
+      String title, String content, String filePath) async {
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+    AndroidNotificationDetails(
+      'document_download',
+      'download_channel',
+      channelDescription: 'Download Channel',
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+    const NotificationDetails notificationDetails =
+    NotificationDetails(android: androidPlatformChannelSpecifics);
+
+    await flutterLocalNotificationsPlugin.show(
+      0, // Unique ID for the notification
+      title,
+      content,
+      notificationDetails,
+      payload: filePath,
+    );
   }
 
   void _cancelSubscriptions() {
@@ -124,9 +224,7 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
   }
 
   void _fillOrigDocumentsFromQuerySnapshotList(List<dynamic> querySnapshotList) {
-
     allDocumentsOrig.clear();
-
     querySnapshotList.forEach((querySnapshot) {
       querySnapshot.docs.forEach((doc) {
         allDocumentsOrig.add(doc);
@@ -386,16 +484,26 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
                                                                   .w500,
                                                             ),
                                                           ),
-                                                          subtitle: Text(
-                                                            "Status: ${documentData['is_new'] ==
-                                                                true
-                                                                ? 'New'
-                                                                : 'Updated'}",
-                                                            style: const TextStyle(
-                                                              fontSize: 14,
-                                                              fontStyle: FontStyle
-                                                                  .italic,
-                                                            ),
+                                                          subtitle: Column(
+                                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                                            children: [
+                                                              Text(
+                                                                "Status: ${documentData['is_new'] == true ? 'New' : 'Updated'}",
+                                                                style: const TextStyle(
+                                                                  fontSize: 14,
+                                                                  fontStyle: FontStyle.italic,
+                                                                ),
+                                                              ),
+                                                              Text(
+                                                                "Last Update: ${documentData['last_update']}",
+                                                                style: const TextStyle(
+                                                                  fontSize: 14,
+                                                                  fontStyle: FontStyle.italic,
+                                                                  color: Colors.blue, // Example customization
+                                                                ),
+                                                              ),
+                                                              // Add more Text widgets for additional subtitles as needed
+                                                            ],
                                                           ),
                                                         ),
                                                         ButtonBar(
@@ -520,30 +628,90 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
     final downloadUrl = documentData['document_url'];
 
     // Perform the actual download using the provided URL
-    // You can use libraries like 'http' or 'dio' for making network requests
-    // Example:
-    downloadFunction(downloadUrl, documentName);
+    // Capture the context before the async call
+    final scaffoldContext = ScaffoldMessenger.of(context);
+    downloadFunction(downloadUrl, documentName, scaffoldContext);
   }
 
-  void downloadFunction(String downloadUrl, String documentName) async {
-    // Use the 'http' package to initiate the download
-    final response = await http.get(Uri.parse(downloadUrl));
-    if (response.statusCode == 200) {
-      // Save the downloaded file to local storage or display the downloaded content
-      // You can use libraries like 'path_provider' to manage local files
-      // Example:
-      final appDocumentsDirectory = await getApplicationDocumentsDirectory();
-      final filePath = '${appDocumentsDirectory.path}/$documentName.pdf';
-      final file = File(filePath);
-      await file.writeAsBytes(response.bodyBytes);
+  void downloadFunction(String downloadUrl, String documentName, ScaffoldMessengerState context) async {
 
-      print("Download completed for $documentName");
-      print("File saved at: $filePath");
-    } else {
-      print("Download failed for $documentName");
-      print(response.statusCode);
+    // Check and request storage permission if needed
+    if (!(await Permission.storage.isGranted)) {
+      await Permission.storage.request();
+    }
+
+    try {
+      Directory? directory;
+      if (Platform.isAndroid) {
+        directory = await getExternalStorageDirectory();
+      } else if (Platform.isIOS) {
+        directory = await getApplicationSupportDirectory();
+      }
+
+      if (directory == null) {
+        print('Could not access download directory');
+        return;
+      }
+
+      final savedDir = directory.path;
+      print("Saving document to dir: $savedDir");
+
+      // Register the download callback before initiating the download
+      FlutterDownloader.registerCallback;
+
+      final taskId = await FlutterDownloader.enqueue(
+        url: downloadUrl,
+        savedDir: savedDir,
+        fileName: documentName,
+        showNotification: false,
+        openFileFromNotification: true,
+      );
+      print("Download task ID: $taskId");
+
+      downloadMetaData.clear();
+      downloadMetaData[taskId] = {
+        'document_name': documentName,
+        'file_path': '$savedDir/$documentName'
+      };
+
+      // Show a SnackBar to indicate the download has started
+      context.showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(width: 20),
+              Expanded(
+                child: Text(
+                  'Downloading $documentName',
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    } on PlatformException catch (e) {
+      // Handle platform exceptions (e.g., missing permission, platform-specific issues)
+      print("Platform Exception during download: $e");
+      // Show a SnackBar for the error
+      context.showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'), // Show the error message in the SnackBar
+        ),
+      );
+    } catch (e) {
+      // Handle other potential exceptions during download
+      // Show a SnackBar for the error
+      context.showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'), // Show the error message in the SnackBar
+        ),
+      );
+      print("Error during download: $e");
     }
   }
+
 }
 
 class DocumentDetailScreen extends StatelessWidget {
