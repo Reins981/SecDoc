@@ -1,18 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:path_provider/path_provider.dart';
 import 'main.dart'; // Import the LoginScreen to navigate back after logout
-import 'dart:io';
 import 'dart:async'; // Import the async package for using StreamController
 import 'package:rxdart/rxdart.dart';
-import 'package:background_downloader/background_downloader.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:open_file/open_file.dart';
-import 'package:dio/dio.dart';
 import 'progress_bar.dart';
+import 'package:provider/provider.dart';
+import 'helpers.dart';
 
 
 class DocumentLibraryScreen extends StatefulWidget {
@@ -23,96 +17,24 @@ class DocumentLibraryScreen extends StatefulWidget {
 }
 
 class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
-  final StreamController<QuerySnapshot> _streamController = StreamController<QuerySnapshot>.broadcast();
-  List<StreamSubscription<QuerySnapshot>> subscriptions = [];
   final TextEditingController _searchController = TextEditingController();
-  late List<DocumentSnapshot> allDocumentsOrig = []; // Store all documents here
+  List<DocumentSnapshot> allDocumentsOrig = []; // Store all documents here
   List<DocumentSnapshot>? _filteredDocuments = [];
-  late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
-  late Map<String, dynamic> _progressNotifierDict = {};
   Timer? _debounceTimer;
+
+  // Global Helper Instances
+  final _helper = Helper();
+  final _documentOperations = DocumentOperations();
 
   @override
   void dispose() {
-    _streamController.close();
-    _cancelSubscriptions();
     super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
-    initializeNotifications();
-  }
-
-  void _openFile(String filePath) {
-    // You'll need to use platform-specific code to open the file
-    // For Android, you can use plugins like 'open_file' or 'android_intent'
-    // For iOS, you might use 'open_file' or 'url_launcher'
-
-    // Example for opening a file on Android using the 'open_file' plugin
-    print("Open file triggered");
-    OpenFile.open(filePath);
-  }
-
-  // Handle the notification tap event
-  void onSelectNotification(notification) async {
-    print("onSelectNotification callback triggered");
-    print(notification.payload);
-    if (notification.payload != null) {
-      // Open the file using the saved directory path (payload)
-      // Example: Use platform-specific file opening mechanisms
-      // For Android:
-      // Open the file from the saved directory using the platform's file opener
-      // For iOS:
-      // Use iOS-specific file opening mechanisms
-      _openFile(notification.payload);
-    }
-  }
-
-  Future<void> initializeNotifications() async {
-    flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-
-    const AndroidInitializationSettings initializationSettingsAndroid =
-    AndroidInitializationSettings('@mipmap/ic_launcher');
-    const InitializationSettings initializationSettings =
-    InitializationSettings(android: initializationSettingsAndroid);
-
-    await flutterLocalNotificationsPlugin.initialize(
-      initializationSettings,
-      onDidReceiveNotificationResponse: onSelectNotification,
-    );
-  }
-
-  Future<void> showCustomNotification(
-      String title, String content, String filePath) async {
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-    AndroidNotificationDetails(
-      'document_download',
-      'download_channel',
-      channelDescription: 'Download Channel',
-      importance: Importance.max,
-      priority: Priority.high,
-    );
-    const NotificationDetails notificationDetails =
-    NotificationDetails(android: androidPlatformChannelSpecifics);
-
-    await flutterLocalNotificationsPlugin.show(
-      0, // Unique ID for the notification
-      title,
-      content,
-      notificationDetails,
-      payload: filePath,
-    );
-  }
-
-  void _cancelSubscriptions() {
-    // Cancel previous listener if it exists
-    for (var subscription in subscriptions) {
-      subscription.cancel();
-    }
-    // Clear the list after canceling all subscriptions
-    subscriptions.clear();
+    _helper.initializeNotifications();
   }
 
   // Search document by document name or user name
@@ -141,60 +63,22 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
     });
   }
 
-  Future<dynamic> fetchDocuments(String? userRole, String? userDomain, String? userUid) async {
-
-    dynamic result = await _fetchDocuments(userRole, userDomain, userUid);
-    return result;
-
-  }
-
-  Future<dynamic> _fetchDocuments(String? userRole, String? userDomain, String? userUid) async {
-
-    String userDomainLowerCase = userDomain?.toLowerCase() ??
-        'default_domain';
-    CollectionReference documentsCollection;
-    var result;
-
-    final List<String> domainArray = [
-      'PV-ALL',
-      'PV-IBK',
-      'PV-IBK-L',
-      'PV-IM',
-      'PV-EXT',
-    ];
-
-    // First fetch the documents based on the user domain for clients and domain admins
-    // Fetch all documents regardless of the domain for super admins
-    if (userRole == 'client' || (userRole == 'admin' && userDomain != 'PV-ALL')) {
-      documentsCollection = FirebaseFirestore.instance.collection(
-          'documents_$userDomainLowerCase');
-
-      // Clients can only access their own documents, admins all of them
-      if (userRole == 'client') {
-        result = documentsCollection
-            .where('owner', isEqualTo: userUid)
-            .snapshots();
+  List<DocumentSnapshot> createDocumentListForDisplayFromSnapshot(AsyncSnapshot<dynamic> snapshot, var origStream) {
+    List<DocumentSnapshot> displayDocuments = [];
+    if (_filteredDocuments != null) {
+      if (_filteredDocuments!.isEmpty) {
+        if (origStream is List<Stream<QuerySnapshot>>) {
+          final querySnapshotList = snapshot.data!;
+          _fillOrigDocumentsFromQuerySnapshotList(querySnapshotList);
+        } else {
+          allDocumentsOrig = snapshot.data!.docs;
+        }
+        displayDocuments = allDocumentsOrig;
       } else {
-        result = documentsCollection
-            .where('user_domain', isEqualTo: userDomain)
-            .snapshots();
+        displayDocuments = _filteredDocuments!;
       }
-    } else {
-
-      List<Stream<QuerySnapshot>> domainStreams = [];
-
-      for (String item in domainArray) {
-        String domainLowerCase = item.toLowerCase();
-        CollectionReference domainCollection =
-        FirebaseFirestore.instance.collection('documents_$domainLowerCase');
-        domainStreams.add(domainCollection.snapshots());
-      }
-
-      result = domainStreams;
-
     }
-
-    return result;
+    return displayDocuments;
   }
 
   void _fillOrigDocumentsFromQuerySnapshotList(List<dynamic> querySnapshotList) {
@@ -216,10 +100,39 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
     });
   }
 
+  void showSnackBarError(String error, ScaffoldMessengerState context) {
+    context.showSnackBar(
+      SnackBar(
+        content: Text('Error: $error'), // Show the error message in the SnackBar
+      ),
+    );
+  }
+
+  void handleDownload(BuildContext context, Map<String, dynamic> documentData) async {
+    final scaffoldContext = ScaffoldMessenger.of(context);
+    String downloadPath = await _documentOperations.createDownloadPathForFile(documentData['document_name']);
+
+    if (downloadPath == "Failed") {
+      showSnackBarError("Could not access download directory", scaffoldContext);
+    } else {
+      _documentOperations.downloadDocument(documentData, downloadPath).then((String status) async {
+        if (status != "Success") {
+          showSnackBarError(status, scaffoldContext);
+        } else {
+          await _helper.showCustomNotificationAndroid(
+              'Download Complete', // Notification title
+              'Document ${documentData['document_name']} downloaded successfully', // Notification content
+              downloadPath
+          );
+        }
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<IdTokenResult>(
-      future: _getIdTokenResult(),
+      future: _helper.getIdTokenResult(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -258,7 +171,7 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
         }
 
         return FutureBuilder<dynamic>(
-          future: fetchDocuments(userRole, userDomain, userUid),
+          future: _documentOperations.fetchDocuments(userRole, userDomain, userUid),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
@@ -363,22 +276,10 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
                               child: Text('No documents available.'));
                         }
 
-                        List<DocumentSnapshot> displayDocuments = [];
-                        if (_filteredDocuments != null) {
-                          if (_filteredDocuments!.isEmpty) {
-                            if (data is List<Stream<QuerySnapshot>>) {
-                              final querySnapshotList = snapshot.data!;
-                              _fillOrigDocumentsFromQuerySnapshotList(querySnapshotList);
-                            } else {
-                              allDocumentsOrig = snapshot.data!.docs;
-                            }
-                            displayDocuments = allDocumentsOrig;
-                          } else {
-                            displayDocuments = _filteredDocuments!;
-                          }
-                        }
+                        List<DocumentSnapshot> displayDocuments =
+                        createDocumentListForDisplayFromSnapshot(snapshot, data);
 
-                        final domainMap = groupDocuments(displayDocuments);
+                        final domainMap = _documentOperations.groupDocuments(displayDocuments);
 
                         return ListView.builder(
                           itemCount: domainMap.length,
@@ -506,10 +407,8 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
                                                               .spaceBetween,
                                                           children: [
                                                             ElevatedButton.icon(
-                                                              onPressed: () {
-                                                                // Implement download logic for this document
-                                                                downloadDocument(
-                                                                    documentData);
+                                                              onPressed: () async {
+                                                                handleDownload(context, documentData);
                                                               },
                                                               icon: const Icon(
                                                                   Icons.download),
@@ -529,7 +428,7 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
                                                           ],
                                                         ),
                                                         ProgressBar(
-                                                          downloadProgress: _progressNotifierDict[documentData['id']],
+                                                          downloadProgress: _documentOperations.getProgressNotifierDict()[documentData['id']],
                                                         ),
                                                       ],
                                                     ),
@@ -566,162 +465,6 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
       builder: (context) => LoginScreen(),
     ));
   }
-
-  Future<IdTokenResult> _getIdTokenResult() async {
-    final User? user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      throw Exception('User not logged in.');
-    }
-
-    return await user.getIdTokenResult();
-  }
-
-  Map<String, Map<int, Map<String, Map<String, List<Map<String, dynamic>>>>>> groupDocuments(
-      List<DocumentSnapshot> documents) {
-
-    final domainMap = <String, Map<int, Map<String, Map<String, List<Map<String, dynamic>>>>>>{};
-
-    for (final document in documents) {
-      final documentData =
-      document.data() as Map<String, dynamic>; // Extract data from the DocumentSnapshot
-      // Add the unique id to the document data
-      documentData['id'] = document.id;
-      final domain = documentData['user_domain'];
-      final category = documentData['category'];
-      final year = documentData['year'];
-      final userMail = documentData['user_email'];
-      final userName = documentData['user_name'];
-      String user = userMail + " (" + userName + ")";
-
-      // Create and assign a ValueNotifier for the current document
-      _progressNotifierDict[document.id] = ValueNotifier<double>(0.0);
-
-      // Group by domain
-      if (!domainMap.containsKey(domain)) {
-        domainMap[domain] = {};
-      }
-
-      // Grouping by year within domain
-      if (!domainMap[domain]!.containsKey(year)) {
-        domainMap[domain]![year] = {};
-      }
-
-      // Grouping by category within year
-      if (!domainMap[domain]![year]!.containsKey(category)) {
-        domainMap[domain]![year]![category] = {};
-      }
-
-      // Grouping by user mail/name within category
-      if (!domainMap[domain]![year]![category]!.containsKey(user)) {
-        domainMap[domain]![year]![category]![user] = [];
-      }
-
-      domainMap[domain]![year]![category]![user]!.add(documentData);
-    }
-
-    return domainMap;
-  }
-
-  void downloadDocument(Map<String, dynamic> documentData) {
-    // Implement your download logic here
-    // Use the 'documentData' variable to identify the selected document and initiate the download
-    print("Download initiated for document:");
-    print(documentData);
-    final documentName = documentData['document_name'];
-    final downloadUrl = documentData['document_url'];
-    final documentId = documentData['id'];
-
-    // Perform the actual download using the provided URL
-    // Capture the context before the async call
-    final scaffoldContext = ScaffoldMessenger.of(context);
-    _downloadFunction(downloadUrl, documentName, documentId, scaffoldContext);
-  }
-
-  void _downloadFunction(
-      String downloadUrl,
-      String documentName,
-      String documentId,
-      ScaffoldMessengerState context) async {
-
-    // First Rest the Progress Bar
-    _progressNotifierDict[documentId].value = 0;
-
-    try {
-      Directory? directory;
-      if (Platform.isAndroid) {
-        // Check and request storage permission if needed
-        if (!(await Permission.storage.isGranted)) {
-          await Permission.storage.request();
-        }
-        directory = await getExternalStorageDirectory();
-      } else if (Platform.isIOS) {
-        directory = await getApplicationDocumentsDirectory();
-      }
-
-      if (directory == null) {
-        context.showSnackBar(
-          const SnackBar(
-            content: Text('Error: Could not access download directory'),
-          ),
-        );
-        return;
-      }
-
-      final savedDir = directory.path;
-      final filePath = '$savedDir/$documentName';
-      print("Saving document $documentName to dir: $savedDir");
-
-      final dio = Dio();
-      final response = await dio.download(
-        downloadUrl,
-        filePath,
-        onReceiveProgress: (received, total) {
-          print("In onReceiveProgress");
-          if (total != -1) {
-              double progress = (received / total) * 100;
-              _progressNotifierDict[documentId].value = progress;
-
-          }
-        },
-      );
-
-      // Act on the result
-      switch (response.statusCode) {
-        case 200:
-          // Show a custom notification indicating successful download
-          await showCustomNotification(
-              'Download Complete', // Notification title
-              'Document $documentName downloaded successfully', // Notification content
-              filePath
-          );
-        default:
-          String errorMessage = '${response.statusMessage} - Status Code: ${response.statusCode}';
-          context.showSnackBar(
-            SnackBar(
-              content: Text(errorMessage),
-            ),
-          );
-      }
-
-    } on PlatformException catch (e) {
-      // Handle platform exceptions (e.g., missing permission, platform-specific issues)
-      // Show a SnackBar for the error
-      context.showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'), // Show the error message in the SnackBar
-        ),
-      );
-    } catch (e) {
-      // Handle other potential exceptions during download
-      // Show a SnackBar for the error
-      context.showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'), // Show the error message in the SnackBar
-        ),
-      );
-    }
-  }
-
 }
 
 class DocumentDetailScreen extends StatelessWidget {
