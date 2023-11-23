@@ -8,9 +8,11 @@ import 'main.dart'; // Import the LoginScreen to navigate back after logout
 import 'dart:io';
 import 'dart:async'; // Import the async package for using StreamController
 import 'package:rxdart/rxdart.dart';
-import 'package:flutter_downloader/flutter_downloader.dart';
+import 'package:background_downloader/background_downloader.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:open_file/open_file.dart';
+import 'package:dio/dio.dart';
+import 'progress_bar.dart';
 
 
 class DocumentLibraryScreen extends StatefulWidget {
@@ -27,7 +29,8 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
   late List<DocumentSnapshot> allDocumentsOrig = []; // Store all documents here
   List<DocumentSnapshot>? _filteredDocuments = [];
   late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
-  late Map<String?, Map<String, dynamic>> downloadMetaData = {};
+  late Map<String, dynamic> _progressNotifierDict = {};
+  Timer? _debounceTimer;
 
   @override
   void dispose() {
@@ -39,41 +42,7 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
   @override
   void initState() {
     super.initState();
-    initializeDownloader(); // Call the method to initialize FlutterDownloader
     initializeNotifications();
-  }
-
-  Future<void> initializeDownloader() async {
-    try {
-      WidgetsFlutterBinding.ensureInitialized();
-      await FlutterDownloader.initialize(debug: true);
-
-      // Register callback for download status updates
-      FlutterDownloader.registerCallback((id, status, progress) async {
-        print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-        print(status);
-        if (status == DownloadTaskStatus.complete) {
-          // Handle download completion here
-          // Show notifications or perform actions upon download completion
-          print('Download completed for task: $id');
-
-          final metaData = downloadMetaData[id];
-          final documentName = metaData?['document_name'] ?? 'DefaultName';
-          final filePath = metaData?['file_path'] ?? 'DefaultPath';
-
-          // Show a custom notification indicating successful download
-          await showCustomNotification(
-          'Download Complete', // Notification title
-          'Document $documentName downloaded successfully', // Notification content
-          filePath
-          );
-        }
-      });
-
-    } catch (e) {
-      // Handle initialization error
-      print("Downloader initialization failed: $e");
-    }
   }
 
   void _openFile(String filePath) {
@@ -82,6 +51,7 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
     // For iOS, you might use 'open_file' or 'url_launcher'
 
     // Example for opening a file on Android using the 'open_file' plugin
+    print("Open file triggered");
     OpenFile.open(filePath);
   }
 
@@ -150,13 +120,17 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
     List<DocumentSnapshot> allDocumentsCopy = List.from(allDocumentsOrig);
     // Replace this with your logic to filter the document
     // Assuming you have a list of documents called 'documents' and 'documentName' is the search query.
-    List<DocumentSnapshot> filteredDocuments = allDocumentsCopy
-        .where((doc) => doc['document_name'].toLowerCase().contains(searchText.toLowerCase())
-        || doc['user_name'].toLowerCase().contains(searchText.toLowerCase())).toList();
 
-    print("Filter results:");
-    print(filteredDocuments);
-    print(filteredDocuments.length);
+    List<DocumentSnapshot> filteredDocuments = allDocumentsCopy
+        .where((doc) =>
+              doc['document_name']
+                  .toLowerCase()
+                  .contains(searchText.toLowerCase())
+              ||
+              doc['user_name']
+                  .toLowerCase()
+                  .contains(searchText.toLowerCase()))
+        .toList();
 
     setState(() {
       if (filteredDocuments.isNotEmpty) {
@@ -229,6 +203,16 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
       querySnapshot.docs.forEach((doc) {
         allDocumentsOrig.add(doc);
       });
+    });
+  }
+
+  void delaySearch(String searchText) {
+    if (_debounceTimer != null && _debounceTimer!.isActive) {
+      _debounceTimer!.cancel(); // Cancel the previous timer if it's active
+    }
+
+    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+      _searchDocumentByNames(searchText); // Perform search after a delay
     });
   }
 
@@ -338,12 +322,6 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
-                              icon: const Icon(Icons.search),
-                              onPressed: () {
-                                _searchDocumentByNames(_searchController.text);
-                              },
-                            ),
-                            IconButton(
                               icon: const Icon(Icons.refresh), // Reset filter icon
                               onPressed: () {
                                 setState(() {
@@ -354,6 +332,9 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
                           ],
                         ),
                       ),
+                      onChanged: (searchText) {
+                        delaySearch(searchText);
+                      },
                     )
                   ),
                   Expanded(
@@ -488,21 +469,35 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
                                                             crossAxisAlignment: CrossAxisAlignment.start,
                                                             children: [
                                                               Text(
-                                                                "Status: ${documentData['is_new'] == true ? 'New' : 'Updated'}",
+                                                                "Last Update: ${documentData['last_update'].toDate()}",
                                                                 style: const TextStyle(
                                                                   fontSize: 14,
                                                                   fontStyle: FontStyle.italic,
                                                                 ),
                                                               ),
-                                                              Text(
-                                                                "Last Update: ${documentData['last_update']}",
-                                                                style: const TextStyle(
-                                                                  fontSize: 14,
-                                                                  fontStyle: FontStyle.italic,
-                                                                  color: Colors.blue, // Example customization
+                                                              Container(
+                                                                decoration: BoxDecoration(
+                                                                  color: documentData['is_new'] ? Colors.yellow : Colors.transparent,
+                                                                  border: documentData['is_new']
+                                                                      ? Border.all(
+                                                                          color: Colors.yellow, // Border color
+                                                                          width: 1.0, // Border width
+                                                                        )
+                                                                      : null,
+                                                                  borderRadius: BorderRadius.circular(4.0), // Border radius
+                                                                ),
+                                                                child: Padding(
+                                                                  padding: const EdgeInsets.all(4.0), // Add padding inside the box
+                                                                  child: Text(
+                                                                    "Status: ${documentData['is_new'] ? 'New' : 'Updated'}",
+                                                                    style: const TextStyle(
+                                                                      fontSize: 14,
+                                                                      fontStyle: FontStyle.italic,
+                                                                      color: Colors.black, // Text color
+                                                                    ),
+                                                                  ),
                                                                 ),
                                                               ),
-                                                              // Add more Text widgets for additional subtitles as needed
                                                             ],
                                                           ),
                                                         ),
@@ -532,6 +527,9 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
                                                                   'Delete'),
                                                             ),
                                                           ],
+                                                        ),
+                                                        ProgressBar(
+                                                          downloadProgress: _progressNotifierDict[documentData['id']],
                                                         ),
                                                       ],
                                                     ),
@@ -586,12 +584,17 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
     for (final document in documents) {
       final documentData =
       document.data() as Map<String, dynamic>; // Extract data from the DocumentSnapshot
+      // Add the unique id to the document data
+      documentData['id'] = document.id;
       final domain = documentData['user_domain'];
       final category = documentData['category'];
       final year = documentData['year'];
       final userMail = documentData['user_email'];
       final userName = documentData['user_name'];
       String user = userMail + " (" + userName + ")";
+
+      // Create and assign a ValueNotifier for the current document
+      _progressNotifierDict[document.id] = ValueNotifier<double>(0.0);
 
       // Group by domain
       if (!domainMap.containsKey(domain)) {
@@ -626,74 +629,82 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
     print(documentData);
     final documentName = documentData['document_name'];
     final downloadUrl = documentData['document_url'];
+    final documentId = documentData['id'];
 
     // Perform the actual download using the provided URL
     // Capture the context before the async call
     final scaffoldContext = ScaffoldMessenger.of(context);
-    downloadFunction(downloadUrl, documentName, scaffoldContext);
+    _downloadFunction(downloadUrl, documentName, documentId, scaffoldContext);
   }
 
-  void downloadFunction(String downloadUrl, String documentName, ScaffoldMessengerState context) async {
+  void _downloadFunction(
+      String downloadUrl,
+      String documentName,
+      String documentId,
+      ScaffoldMessengerState context) async {
 
-    // Check and request storage permission if needed
-    if (!(await Permission.storage.isGranted)) {
-      await Permission.storage.request();
-    }
+    // First Rest the Progress Bar
+    _progressNotifierDict[documentId].value = 0;
 
     try {
       Directory? directory;
       if (Platform.isAndroid) {
+        // Check and request storage permission if needed
+        if (!(await Permission.storage.isGranted)) {
+          await Permission.storage.request();
+        }
         directory = await getExternalStorageDirectory();
       } else if (Platform.isIOS) {
-        directory = await getApplicationSupportDirectory();
+        directory = await getApplicationDocumentsDirectory();
       }
 
       if (directory == null) {
-        print('Could not access download directory');
+        context.showSnackBar(
+          const SnackBar(
+            content: Text('Error: Could not access download directory'),
+          ),
+        );
         return;
       }
 
       final savedDir = directory.path;
-      print("Saving document to dir: $savedDir");
+      final filePath = '$savedDir/$documentName';
+      print("Saving document $documentName to dir: $savedDir");
 
-      // Register the download callback before initiating the download
-      FlutterDownloader.registerCallback;
+      final dio = Dio();
+      final response = await dio.download(
+        downloadUrl,
+        filePath,
+        onReceiveProgress: (received, total) {
+          print("In onReceiveProgress");
+          if (total != -1) {
+              double progress = (received / total) * 100;
+              _progressNotifierDict[documentId].value = progress;
 
-      final taskId = await FlutterDownloader.enqueue(
-        url: downloadUrl,
-        savedDir: savedDir,
-        fileName: documentName,
-        showNotification: false,
-        openFileFromNotification: true,
+          }
+        },
       );
-      print("Download task ID: $taskId");
 
-      downloadMetaData.clear();
-      downloadMetaData[taskId] = {
-        'document_name': documentName,
-        'file_path': '$savedDir/$documentName'
-      };
+      // Act on the result
+      switch (response.statusCode) {
+        case 200:
+          // Show a custom notification indicating successful download
+          await showCustomNotification(
+              'Download Complete', // Notification title
+              'Document $documentName downloaded successfully', // Notification content
+              filePath
+          );
+        default:
+          String errorMessage = '${response.statusMessage} - Status Code: ${response.statusCode}';
+          context.showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+            ),
+          );
+      }
 
-      // Show a SnackBar to indicate the download has started
-      context.showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const CircularProgressIndicator(),
-              const SizedBox(width: 20),
-              Expanded(
-                child: Text(
-                  'Downloading $documentName',
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
     } on PlatformException catch (e) {
       // Handle platform exceptions (e.g., missing permission, platform-specific issues)
-      print("Platform Exception during download: $e");
       // Show a SnackBar for the error
       context.showSnackBar(
         SnackBar(
@@ -708,7 +719,6 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
           content: Text('Error: $e'), // Show the error message in the SnackBar
         ),
       );
-      print("Error during download: $e");
     }
   }
 

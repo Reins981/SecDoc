@@ -156,8 +156,6 @@ class LoginScreen extends StatelessWidget {
         password: password,
       );
 
-      print("user Info!!!!!!!!!:");
-      print(userCredential.additionalUserInfo);
       final User user = userCredential.user!;
       _showWelcomeAnimation(context, user.displayName!);
     } catch (e) {
@@ -253,7 +251,7 @@ class _WelcomeDialogState extends State<_WelcomeDialog> with SingleTickerProvide
                     ElevatedButton(
                       onPressed: () {
                         Navigator.of(context).pop(); // Close the dialog
-                        Navigator.of(context).pushNamed('document_library_screen'); // Navigate to document library
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => DocumentLibraryScreen()));
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,

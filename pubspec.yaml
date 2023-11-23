@@ -35,13 +35,14 @@ dependencies:
   flutter_sequence_animation: ^4.0.0
   cloud_firestore: ^4.9.0
   firebase_storage: ^11.2.6
-  path_provider: ^2.0.4
+  path_provider: ^2.1.1
   http: ^1.1.0
   rxdart: ^0.27.7
-  flutter_downloader: ^1.11.5
+  background_downloader: ^7.12.3
   flutter_local_notifications: ^16.1.0
   permission_handler: ^11.0.1
   open_file: ^3.3.2
+  dio: ^5.3.4
 
 
 
