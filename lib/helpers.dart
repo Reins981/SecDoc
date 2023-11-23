@@ -151,21 +151,27 @@ class DocumentOperations {
     return result;
   }
 
-  Map<String, Map<int, Map<String, Map<String, List<Map<String, dynamic>>>>>> groupDocuments(
+  Map<String, Map<int, Map<String, Map<String, DocumentRepository>>>> groupDocuments(
       List<DocumentSnapshot> documents) {
 
-    final domainMap = <String, Map<int, Map<String, Map<String, List<Map<String, dynamic>>>>>>{};
+    final domainMap = <String, Map<int, Map<String, Map<String, DocumentRepository>>>>{};
 
     for (final document in documents) {
       final documentData =
       document.data() as Map<String, dynamic>; // Extract data from the DocumentSnapshot
       // Add the unique id to the document data
-      documentData['id'] = document.id;
+      final id = document.id;
       final domain = documentData['user_domain'];
       final category = documentData['category'];
       final year = documentData['year'];
       final userMail = documentData['user_email'];
       final userName = documentData['user_name'];
+      final name = documentData['document_name'];
+      final owner = documentData['owner'];
+      final lastUpdate = documentData['last_update'];
+      final isNew= documentData['is_new'];
+      final deletedAt = documentData['deleted_at'];
+      final documentUrl = documentData['document_url'];
       String user = userMail + " (" + userName + ")";
 
       // Create and assign a ValueNotifier for the current document
@@ -188,13 +194,25 @@ class DocumentOperations {
 
       // Grouping by user mail/name within category
       if (!domainMap[domain]![year]![category]!.containsKey(user)) {
-        domainMap[domain]![year]![category]![user] = [];
+        domainMap[domain]![year]![category]![user] = DocumentRepository();
       }
 
       // Create a new Document
-      Document newDoc = Document(domain: domain, category: category, year: year, userMail: userMail, userName: userName);
+      Document newDoc = Document(
+          id: id,
+          name: name,
+          owner: owner,
+          lastUpdate: lastUpdate,
+          isNew: isNew,
+          deletedAt: deletedAt,
+          documentUrl: documentUrl,
+          domain: domain,
+          category: category,
+          year: year,
+          userMail: userMail,
+          userName: userName);
 
-      domainMap[domain]![year]![category]![user]!.add(documentData);
+      domainMap[domain]![year]![category]![user]!.addDocument(newDoc);
     }
 
     return domainMap;
@@ -222,12 +240,12 @@ class DocumentOperations {
 
   }
 
-  Future<String> downloadDocument(Map<String, dynamic> documentData, String downloadPath) async {
+  Future<String> downloadDocument(Document document, String downloadPath) async {
     // Implement your download logic here
     // Use the 'documentData' variable to identify the selected document and initiate the download
-    final documentName = documentData['document_name'];
-    final downloadUrl = documentData['document_url'];
-    final documentId = documentData['id'];
+    final documentName = document.name;
+    final downloadUrl = document.documentUrl;
+    final documentId = document.id;
 
     // Perform the actual download using the provided URL
     return _downloadFunction(downloadUrl, documentName, documentId, downloadPath);

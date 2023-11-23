@@ -7,6 +7,7 @@ import 'package:rxdart/rxdart.dart';
 import 'progress_bar.dart';
 import 'package:provider/provider.dart';
 import 'helpers.dart';
+import 'document.dart';
 
 
 class DocumentLibraryScreen extends StatefulWidget {
@@ -108,20 +109,20 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
     );
   }
 
-  void handleDownload(BuildContext context, Map<String, dynamic> documentData) async {
+  void handleDownload(BuildContext context, Document document) async {
     final scaffoldContext = ScaffoldMessenger.of(context);
-    String downloadPath = await _documentOperations.createDownloadPathForFile(documentData['document_name']);
+    String downloadPath = await _documentOperations.createDownloadPathForFile(document.name);
 
     if (downloadPath == "Failed") {
       showSnackBarError("Could not access download directory", scaffoldContext);
     } else {
-      _documentOperations.downloadDocument(documentData, downloadPath).then((String status) async {
+      _documentOperations.downloadDocument(document, downloadPath).then((String status) async {
         if (status != "Success") {
           showSnackBarError(status, scaffoldContext);
         } else {
           await _helper.showCustomNotificationAndroid(
               'Download Complete', // Notification title
-              'Document ${documentData['document_name']} downloaded successfully', // Notification content
+              'Document ${document.name} downloaded successfully', // Notification content
               downloadPath
           );
         }
@@ -321,7 +322,7 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
                                         ),
                                       ),
                                       children: userList.map((user) {
-                                        final documents = userMap[user]!;
+                                        final documentRepo = userMap[user]!;
                                         return ExpansionTile(
                                           title: Text(
                                             'Customer: $user',
@@ -334,9 +335,9 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
                                             ListView.builder(
                                               shrinkWrap: true,
                                               physics: NeverScrollableScrollPhysics(),
-                                              itemCount: documents.length,
+                                              itemCount: documentRepo.documents.length,
                                               itemBuilder: (context, index) {
-                                                final documentData = documents[index];
+                                                final document = documentRepo.documents[index];
                                                 return Padding(
                                                   padding: const EdgeInsets
                                                       .symmetric(horizontal: 8.0),
@@ -354,12 +355,12 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
                                                                 builder: (
                                                                     context) =>
                                                                     DocumentDetailScreen(
-                                                                        documentData: documentData),
+                                                                        document: document),
                                                               ),
                                                             );
                                                           },
                                                           title: Text(
-                                                            documentData['document_name'],
+                                                            document.name,
                                                             style: const TextStyle(
                                                               fontSize: 16,
                                                               fontWeight: FontWeight
@@ -370,7 +371,7 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
                                                             crossAxisAlignment: CrossAxisAlignment.start,
                                                             children: [
                                                               Text(
-                                                                "Last Update: ${documentData['last_update'].toDate()}",
+                                                                "Last Update: ${document.lastUpdate.toDate()}",
                                                                 style: const TextStyle(
                                                                   fontSize: 14,
                                                                   fontStyle: FontStyle.italic,
@@ -378,8 +379,8 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
                                                               ),
                                                               Container(
                                                                 decoration: BoxDecoration(
-                                                                  color: documentData['is_new'] ? Colors.yellow : Colors.transparent,
-                                                                  border: documentData['is_new']
+                                                                  color: document.isNew ? Colors.yellow : Colors.transparent,
+                                                                  border: document.isNew
                                                                       ? Border.all(
                                                                           color: Colors.yellow, // Border color
                                                                           width: 1.0, // Border width
@@ -390,7 +391,7 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
                                                                 child: Padding(
                                                                   padding: const EdgeInsets.all(4.0), // Add padding inside the box
                                                                   child: Text(
-                                                                    "Status: ${documentData['is_new'] ? 'New' : 'Updated'}",
+                                                                    "Status: ${document.isNew ? 'New' : 'Updated'}",
                                                                     style: const TextStyle(
                                                                       fontSize: 14,
                                                                       fontStyle: FontStyle.italic,
@@ -408,7 +409,7 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
                                                           children: [
                                                             ElevatedButton.icon(
                                                               onPressed: () async {
-                                                                handleDownload(context, documentData);
+                                                                handleDownload(context, document);
                                                               },
                                                               icon: const Icon(
                                                                   Icons.download),
@@ -428,7 +429,7 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
                                                           ],
                                                         ),
                                                         ProgressBar(
-                                                          downloadProgress: _documentOperations.getProgressNotifierDict()[documentData['id']],
+                                                          downloadProgress: _documentOperations.getProgressNotifierDict()[document.id],
                                                         ),
                                                       ],
                                                     ),
@@ -468,30 +469,19 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
 }
 
 class DocumentDetailScreen extends StatelessWidget {
-  final Map<String, dynamic>? documentData;
+  final Document document;
 
-  const DocumentDetailScreen({Key? key, this.documentData}) : super(key: key);
+  const DocumentDetailScreen({Key? key, required this.document}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    if (documentData == null) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('Document Detail'),
-        ),
-        body: const Center(
-          child: Text('Document data not available.'),
-        ),
-      );
-    }
-
     return Scaffold(
       appBar: AppBar(
-        title: Text(documentData?['document_name'] ?? ''),
+        title: Text(document.name),
       ),
       body: Center(
         child: Hero(
-          tag: documentData?['id'] ?? '',
+          tag: document.id,
           child: Card(
             elevation: 4,
             margin: const EdgeInsets.all(16),
@@ -500,7 +490,7 @@ class DocumentDetailScreen extends StatelessWidget {
               child: Column(
                 children: [
                   Text(
-                    documentData?['document_name'] ?? '',
+                    document.name,
                     style: const TextStyle(
                         fontSize: 20, fontWeight: FontWeight.bold),
                   ),
