@@ -8,10 +8,14 @@ import 'progress_bar.dart';
 import 'package:provider/provider.dart';
 import 'helpers.dart';
 import 'document.dart';
+import 'document_provider.dart';
 
 
 class DocumentLibraryScreen extends StatefulWidget {
-  const DocumentLibraryScreen({Key? key}) : super(key: key);
+
+  final DocumentOperations documentOperations;
+
+  DocumentLibraryScreen({Key? key, required this.documentOperations}) : super(key: key);
 
   @override
   _DocumentLibraryScreenState createState() => _DocumentLibraryScreenState();
@@ -20,12 +24,12 @@ class DocumentLibraryScreen extends StatefulWidget {
 class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
   final TextEditingController _searchController = TextEditingController();
   List<DocumentSnapshot> allDocumentsOrig = []; // Store all documents here
-  List<DocumentSnapshot>? _filteredDocuments = [];
-  Timer? _debounceTimer;
+  late List<DocumentSnapshot> displayDocuments;
+  bool _isInitialized = false;
+
 
   // Global Helper Instances
   final _helper = Helper();
-  final _documentOperations = DocumentOperations();
 
   @override
   void dispose() {
@@ -36,49 +40,33 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
   void initState() {
     super.initState();
     _helper.initializeNotifications();
+    displayDocuments = [];
   }
 
-  // Search document by document name or user name
-  void _searchDocumentByNames(String searchText) {
-    List<DocumentSnapshot> allDocumentsCopy = List.from(allDocumentsOrig);
-    // Replace this with your logic to filter the document
-    // Assuming you have a list of documents called 'documents' and 'documentName' is the search query.
+  Future<void> _handleLogout(BuildContext context) async {
+    final FirebaseAuth auth = FirebaseAuth.instance;
+    await auth.signOut();
 
-    List<DocumentSnapshot> filteredDocuments = allDocumentsCopy
-        .where((doc) =>
-              doc['document_name']
-                  .toLowerCase()
-                  .contains(searchText.toLowerCase())
-              ||
-              doc['user_name']
-                  .toLowerCase()
-                  .contains(searchText.toLowerCase()))
-        .toList();
+    // Clean up
+    _isInitialized = false;
+    widget.documentOperations.clearProgressNotifierDict();
 
-    setState(() {
-      if (filteredDocuments.isNotEmpty) {
-        _filteredDocuments = filteredDocuments;
-      } else {
-        _filteredDocuments = null;
-      }
-    });
+    Navigator.of(context).pushReplacement(MaterialPageRoute(
+      builder: (context) => LoginScreen(docOperations: widget.documentOperations),
+    ));
   }
 
   List<DocumentSnapshot> createDocumentListForDisplayFromSnapshot(AsyncSnapshot<dynamic> snapshot, var origStream) {
     List<DocumentSnapshot> displayDocuments = [];
-    if (_filteredDocuments != null) {
-      if (_filteredDocuments!.isEmpty) {
-        if (origStream is List<Stream<QuerySnapshot>>) {
-          final querySnapshotList = snapshot.data!;
-          _fillOrigDocumentsFromQuerySnapshotList(querySnapshotList);
-        } else {
-          allDocumentsOrig = snapshot.data!.docs;
-        }
-        displayDocuments = allDocumentsOrig;
-      } else {
-        displayDocuments = _filteredDocuments!;
-      }
+    if (origStream is List<Stream<QuerySnapshot>>) {
+      final querySnapshotList = snapshot.data!;
+      _fillOrigDocumentsFromQuerySnapshotList(querySnapshotList);
+    } else {
+      allDocumentsOrig = snapshot.data!.docs;
     }
+
+    displayDocuments = allDocumentsOrig;
+
     return displayDocuments;
   }
 
@@ -88,16 +76,6 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
       querySnapshot.docs.forEach((doc) {
         allDocumentsOrig.add(doc);
       });
-    });
-  }
-
-  void delaySearch(String searchText) {
-    if (_debounceTimer != null && _debounceTimer!.isActive) {
-      _debounceTimer!.cancel(); // Cancel the previous timer if it's active
-    }
-
-    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
-      _searchDocumentByNames(searchText); // Perform search after a delay
     });
   }
 
@@ -111,12 +89,12 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
 
   void handleDownload(BuildContext context, Document document) async {
     final scaffoldContext = ScaffoldMessenger.of(context);
-    String downloadPath = await _documentOperations.createDownloadPathForFile(document.name);
+    String downloadPath = await widget.documentOperations.createDownloadPathForFile(document.name);
 
     if (downloadPath == "Failed") {
       showSnackBarError("Could not access download directory", scaffoldContext);
     } else {
-      _documentOperations.downloadDocument(document, downloadPath).then((String status) async {
+      widget.documentOperations.downloadDocument(document, downloadPath).then((String status) async {
         if (status != "Success") {
           showSnackBarError(status, scaffoldContext);
         } else {
@@ -132,6 +110,8 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final documentProvider = Provider.of<DocumentProvider>(context, listen: true);
+
     return FutureBuilder<IdTokenResult>(
       future: _helper.getIdTokenResult(),
       builder: (context, snapshot) {
@@ -172,7 +152,7 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
         }
 
         return FutureBuilder<dynamic>(
-          future: _documentOperations.fetchDocuments(userRole, userDomain, userUid),
+          future: widget.documentOperations.fetchDocuments(userRole, userDomain, userUid),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
@@ -239,7 +219,7 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
                               icon: const Icon(Icons.refresh), // Reset filter icon
                               onPressed: () {
                                 setState(() {
-                                  _filteredDocuments = [];
+                                  _isInitialized = false;
                                 });
                               },
                             ),
@@ -247,7 +227,7 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
                         ),
                       ),
                       onChanged: (searchText) {
-                        delaySearch(searchText);
+                        documentProvider.delaySearch(searchText, allDocumentsOrig);
                       },
                     )
                   ),
@@ -277,176 +257,35 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
                               child: Text('No documents available.'));
                         }
 
-                        List<DocumentSnapshot> displayDocuments =
-                        createDocumentListForDisplayFromSnapshot(snapshot, data);
+                        // Create the original document list and the display document list initially
+                        if (!_isInitialized) {
+                          displayDocuments =
+                              createDocumentListForDisplayFromSnapshot(
+                                  snapshot, data);
+                          final groupedDocuments = widget.documentOperations.groupDocuments(displayDocuments);
+                          _isInitialized = true;
 
-                        final domainMap = _documentOperations.groupDocuments(displayDocuments);
+                          return CustomListWidget(
+                            groupedDocuments: groupedDocuments,
+                            documentOperations: widget.documentOperations,
+                            callback: handleDownload,
+                          );
 
-                        return ListView.builder(
-                          itemCount: domainMap.length,
-                          itemBuilder: (context, index) {
-                            final domain = domainMap.keys.elementAt(index);
-                            final yearMap = domainMap[domain]!;
-                            final yearList = yearMap.keys.toList();
-
-                            return ExpansionTile(
-                              title: Text(
-                                'Domain: $domain',
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              children: yearList.map((year) {
-                                final categoryMap = yearMap[year]!;
-                                final categoryList = categoryMap.keys.toList();
-
-                                return ExpansionTile(
-                                  title: Text(
-                                    'Year: $year',
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  children: categoryList.map((category) {
-                                    final userMap = categoryMap[category]!;
-                                    final userList = userMap.keys.toList();
-
-                                    return ExpansionTile(
-                                      title: Text(
-                                        'Category: $category',
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      children: userList.map((user) {
-                                        final documentRepo = userMap[user]!;
-                                        return ExpansionTile(
-                                          title: Text(
-                                            'Customer: $user',
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          children: [
-                                            ListView.builder(
-                                              shrinkWrap: true,
-                                              physics: NeverScrollableScrollPhysics(),
-                                              itemCount: documentRepo.documents.length,
-                                              itemBuilder: (context, index) {
-                                                final document = documentRepo.documents[index];
-                                                return Padding(
-                                                  padding: const EdgeInsets
-                                                      .symmetric(horizontal: 8.0),
-                                                  child: Card(
-                                                    elevation: 2,
-                                                    child: Column(
-                                                      crossAxisAlignment: CrossAxisAlignment
-                                                          .start,
-                                                      children: [
-                                                        ListTile(
-                                                          onTap: () {
-                                                            Navigator.push(
-                                                              context,
-                                                              MaterialPageRoute(
-                                                                builder: (
-                                                                    context) =>
-                                                                    DocumentDetailScreen(
-                                                                        document: document),
-                                                              ),
-                                                            );
-                                                          },
-                                                          title: Text(
-                                                            document.name,
-                                                            style: const TextStyle(
-                                                              fontSize: 16,
-                                                              fontWeight: FontWeight
-                                                                  .w500,
-                                                            ),
-                                                          ),
-                                                          subtitle: Column(
-                                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                                            children: [
-                                                              Text(
-                                                                "Last Update: ${document.lastUpdate.toDate()}",
-                                                                style: const TextStyle(
-                                                                  fontSize: 14,
-                                                                  fontStyle: FontStyle.italic,
-                                                                ),
-                                                              ),
-                                                              Container(
-                                                                decoration: BoxDecoration(
-                                                                  color: document.isNew ? Colors.yellow : Colors.transparent,
-                                                                  border: document.isNew
-                                                                      ? Border.all(
-                                                                          color: Colors.yellow, // Border color
-                                                                          width: 1.0, // Border width
-                                                                        )
-                                                                      : null,
-                                                                  borderRadius: BorderRadius.circular(4.0), // Border radius
-                                                                ),
-                                                                child: Padding(
-                                                                  padding: const EdgeInsets.all(4.0), // Add padding inside the box
-                                                                  child: Text(
-                                                                    "Status: ${document.isNew ? 'New' : 'Updated'}",
-                                                                    style: const TextStyle(
-                                                                      fontSize: 14,
-                                                                      fontStyle: FontStyle.italic,
-                                                                      color: Colors.black, // Text color
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                        ButtonBar(
-                                                          alignment: MainAxisAlignment
-                                                              .spaceBetween,
-                                                          children: [
-                                                            ElevatedButton.icon(
-                                                              onPressed: () async {
-                                                                handleDownload(context, document);
-                                                              },
-                                                              icon: const Icon(
-                                                                  Icons.download),
-                                                              label: const Text(
-                                                                  'Download'),
-                                                            ),
-                                                            ElevatedButton.icon(
-                                                              onPressed: () {
-                                                                // Implement delete logic for this document
-                                                                //deleteDocument(documentData);
-                                                              },
-                                                              icon: const Icon(
-                                                                  Icons.delete),
-                                                              label: const Text(
-                                                                  'Delete'),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                        ProgressBar(
-                                                          downloadProgress: _documentOperations.getProgressNotifierDict()[document.id],
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                          ],
-                                        );
-                                      }).toList(),
-                                    );
-                                  }).toList(),
-                                );
-                              }).toList(),
-                            );
-                          },
-                        );
+                        } else {
+                          print("Invoking Consumer");
+                          return Consumer<DocumentProvider>(
+                            builder: (context, documentProvider, _) {
+                              final groupedDocuments = documentProvider.groupedDocuments;
+                              print("In Consumer");
+                              print(groupedDocuments);
+                              return CustomListWidget(
+                                groupedDocuments: groupedDocuments,
+                                documentOperations: widget.documentOperations,
+                                callback: handleDownload,
+                              );
+                            },
+                          );
+                        }
                       },
                     ),
                   ),
@@ -458,50 +297,226 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
       },
     );
   }
-
-  Future<void> _handleLogout(BuildContext context) async {
-    final FirebaseAuth auth = FirebaseAuth.instance;
-    await auth.signOut();
-    Navigator.of(context).pushReplacement(MaterialPageRoute(
-      builder: (context) => LoginScreen(),
-    ));
-  }
 }
 
-class DocumentDetailScreen extends StatelessWidget {
-  final Document document;
+class CustomListWidget extends StatelessWidget {
+  final Map<String, Map<int, Map<String, Map<String, DocumentRepository>>>> groupedDocuments;
+  final DocumentOperations documentOperations;
+  final void Function(BuildContext, Document) callback;
 
-  const DocumentDetailScreen({Key? key, required this.document}) : super(key: key);
+  const CustomListWidget({super.key,
+    required this.groupedDocuments,
+    required this.documentOperations,
+    required this.callback
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(document.name),
-      ),
-      body: Center(
-        child: Hero(
-          tag: document.id,
-          child: Card(
-            elevation: 4,
-            margin: const EdgeInsets.all(16),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  Text(
-                    document.name,
-                    style: const TextStyle(
-                        fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-                  // Add more document details here
-                ],
-              ),
+    // Use groupedDocuments to build your custom UI here
+    // ...
+
+    return ListView.builder(
+      itemCount: groupedDocuments.length,
+      itemBuilder: (context, index) {
+        final domain = groupedDocuments.keys.elementAt(
+            index);
+        final yearMap = groupedDocuments[domain]!;
+        final yearList = yearMap.keys.toList();
+
+        return ExpansionTile(
+          title: Text(
+            'Domain: $domain',
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
             ),
           ),
-        ),
-      ),
+          children: yearList.map((year) {
+            final categoryMap = yearMap[year]!;
+            final categoryList = categoryMap.keys
+                .toList();
+
+            return ExpansionTile(
+              title: Text(
+                'Year: $year',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              children: categoryList.map((category) {
+                final userMap = categoryMap[category]!;
+                final userList = userMap.keys
+                    .toList();
+
+                return ExpansionTile(
+                  title: Text(
+                    'Category: $category',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  children: userList.map((user) {
+                    final documentRepo = userMap[user]!;
+                    return ExpansionTile(
+                      title: Text(
+                        'Customer: $user',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      children: [
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: NeverScrollableScrollPhysics(),
+                          itemCount: documentRepo
+                              .documents.length,
+                          itemBuilder: (context,
+                              index) {
+                            final document = documentRepo
+                                .documents[index];
+                            return Padding(
+                              padding: const EdgeInsets
+                                  .symmetric(
+                                  horizontal: 8.0),
+                              child: Card(
+                                elevation: 2,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment
+                                      .start,
+                                  children: [
+                                    ListTile(
+                                      onTap: () {
+                                        Navigator
+                                            .push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (
+                                                context) =>
+                                                DocumentDetailScreen(
+                                                    document: document),
+                                          ),
+                                        );
+                                      },
+                                      title: Text(
+                                        document.name,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight
+                                              .w500,
+                                        ),
+                                      ),
+                                      subtitle: Column(
+                                        crossAxisAlignment: CrossAxisAlignment
+                                            .start,
+                                        children: [
+                                          Text(
+                                            "Last Update: ${document
+                                                .lastUpdate
+                                                .toDate()}",
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontStyle: FontStyle
+                                                  .italic,
+                                            ),
+                                          ),
+                                          Container(
+                                            decoration: BoxDecoration(
+                                              color: document
+                                                  .isNew
+                                                  ? Colors
+                                                  .yellow
+                                                  : Colors
+                                                  .transparent,
+                                              border: document
+                                                  .isNew
+                                                  ? Border
+                                                  .all(
+                                                color: Colors
+                                                    .yellow,
+                                                // Border color
+                                                width: 1.0, // Border width
+                                              )
+                                                  : null,
+                                              borderRadius: BorderRadius
+                                                  .circular(
+                                                  4.0), // Border radius
+                                            ),
+                                            child: Padding(
+                                              padding: const EdgeInsets
+                                                  .all(
+                                                  4.0),
+                                              // Add padding inside the box
+                                              child: Text(
+                                                "Status: ${document
+                                                    .isNew
+                                                    ? 'New'
+                                                    : 'Updated'}",
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  fontStyle: FontStyle
+                                                      .italic,
+                                                  color: Colors
+                                                      .black, // Text color
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    ButtonBar(
+                                      alignment: MainAxisAlignment
+                                          .spaceBetween,
+                                      children: [
+                                        ElevatedButton
+                                            .icon(
+                                          onPressed: () async {
+                                            callback(context, document);
+                                          },
+                                          icon: const Icon(
+                                              Icons
+                                                  .download),
+                                          label: const Text(
+                                              'Download'),
+                                        ),
+                                        ElevatedButton
+                                            .icon(
+                                          onPressed: () {
+                                            // Implement delete logic for this document
+                                            //deleteDocument(documentData);
+                                          },
+                                          icon: const Icon(
+                                              Icons
+                                                  .delete),
+                                          label: const Text(
+                                              'Delete'),
+                                        ),
+                                      ],
+                                    ),
+                                    ProgressBar(
+                                      downloadProgress: documentOperations
+                                          .getProgressNotifierDict()[document
+                                          .id],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                );
+              }).toList(),
+            );
+          }).toList(),
+        );
+      },
     );
   }
 }
+

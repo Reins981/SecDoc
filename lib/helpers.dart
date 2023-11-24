@@ -95,6 +95,10 @@ class DocumentOperations {
     return _progressNotifierDict;
   }
 
+  void clearProgressNotifierDict() {
+    _progressNotifierDict.clear();
+  }
+
   Future<dynamic> fetchDocuments(String? userRole, String? userDomain, String? userUid) async {
 
     dynamic result = await _fetchDocuments(userRole, userDomain, userUid);

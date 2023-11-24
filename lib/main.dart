@@ -2,44 +2,56 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'document_library.dart';
+import 'package:provider/provider.dart';
+import 'helpers.dart';
+import 'document_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Ensure that the widgets are initialized
   await Firebase.initializeApp(); // Initialize Firebase
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  MyApp({super.key});
+
+  final DocumentOperations docOperations = DocumentOperations();
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'PlusVida GmbH',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        fontFamily: 'Montserrat',
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => DocumentProvider(docOperations: docOperations)), // Example provider
+        // Add other providers here as needed
+      ],
+      child: MaterialApp(
+        title: 'PlusVida GmbH',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+          fontFamily: 'Montserrat',
+        ),
+        home: LoginScreen(docOperations: docOperations),
+        routes: {
+          'document_library': (context) => DocumentLibraryScreen(documentOperations: docOperations),
+          // ... other routes
+        },
+        onGenerateRoute: (settings) {
+          if (settings.name == null) {
+            FirebaseAuth.instance.signOut();
+            // Any other cleanup tasks
+          }
+          return null;
+        },
       ),
-      home: LoginScreen(),
-      routes: {
-        'document_library_screen': (context) => const DocumentLibraryScreen(),
-        // ... other routes
-      },
-      onGenerateRoute: (settings) {
-        if (settings.name == null) {
-          // This means the app is being closed
-          FirebaseAuth.instance.signOut();
-          // You might want to perform any other cleanup tasks here
-          // before the app is closed
-        }
-        return null;
-      },
     );
   }
 }
 
 class LoginScreen extends StatelessWidget {
-  LoginScreen({super.key});
+
+  final DocumentOperations docOperations;
+
+  LoginScreen({super.key, required this.docOperations});
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final TextEditingController _emailController = TextEditingController();
@@ -48,16 +60,6 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        actions: [
-          IconButton(
-            onPressed: () async {
-              await _handleLogout(context);
-            },
-            icon: const Icon(Icons.logout),
-          ),
-        ],
-      ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -131,14 +133,6 @@ class LoginScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _handleLogout(BuildContext context) async {
-    await _auth.signOut();
-    // Navigate to the LoginScreen again after logout
-    Navigator.of(context).pushReplacement(MaterialPageRoute(
-      builder: (context) => LoginScreen(),
-    ));
-  }
-
   Future<void> _handleLogin(BuildContext context) async {
     try {
       final String email = _emailController.text.trim();
@@ -175,7 +169,7 @@ class LoginScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return _WelcomeDialog(displayName: displayName);
+        return _WelcomeDialog(displayName: displayName, docOperations: docOperations);
       },
     );
   }
@@ -183,8 +177,9 @@ class LoginScreen extends StatelessWidget {
 
 class _WelcomeDialog extends StatefulWidget {
   final String displayName;
+  final DocumentOperations docOperations;
 
-  const _WelcomeDialog({Key? key, required this.displayName}) : super(key: key);
+  _WelcomeDialog({Key? key, required this.displayName, required this.docOperations}) : super(key: key);
 
   @override
   _WelcomeDialogState createState() => _WelcomeDialogState();
@@ -251,7 +246,7 @@ class _WelcomeDialogState extends State<_WelcomeDialog> with SingleTickerProvide
                     ElevatedButton(
                       onPressed: () {
                         Navigator.of(context).pop(); // Close the dialog
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => DocumentLibraryScreen()));
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => DocumentLibraryScreen(documentOperations: widget.docOperations)));
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,
