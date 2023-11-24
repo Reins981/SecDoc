@@ -23,10 +23,6 @@ class DocumentLibraryScreen extends StatefulWidget {
 
 class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
   final TextEditingController _searchController = TextEditingController();
-  List<DocumentSnapshot> allDocumentsOrig = []; // Store all documents here
-  late List<DocumentSnapshot> displayDocuments;
-  bool _isInitialized = false;
-
 
   // Global Helper Instances
   final _helper = Helper();
@@ -40,15 +36,11 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
   void initState() {
     super.initState();
     _helper.initializeNotifications();
-    displayDocuments = [];
   }
 
   Future<void> _handleLogout(BuildContext context) async {
     final FirebaseAuth auth = FirebaseAuth.instance;
     await auth.signOut();
-
-    // Clean up
-    _isInitialized = false;
     widget.documentOperations.clearProgressNotifierDict();
 
     Navigator.of(context).pushReplacement(MaterialPageRoute(
@@ -56,26 +48,9 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
     ));
   }
 
-  List<DocumentSnapshot> createDocumentListForDisplayFromSnapshot(AsyncSnapshot<dynamic> snapshot, var origStream) {
-    List<DocumentSnapshot> displayDocuments = [];
-    if (origStream is List<Stream<QuerySnapshot>>) {
-      final querySnapshotList = snapshot.data!;
-      _fillOrigDocumentsFromQuerySnapshotList(querySnapshotList);
-    } else {
-      allDocumentsOrig = snapshot.data!.docs;
-    }
-
-    displayDocuments = allDocumentsOrig;
-
-    return displayDocuments;
-  }
-
-  void _fillOrigDocumentsFromQuerySnapshotList(List<dynamic> querySnapshotList) {
-    allDocumentsOrig.clear();
-    querySnapshotList.forEach((querySnapshot) {
-      querySnapshot.docs.forEach((doc) {
-        allDocumentsOrig.add(doc);
-      });
+  void onRefresh() {
+    setState(() {
+      widget.documentOperations.clearProgressNotifierDict();
     });
   }
 
@@ -110,7 +85,6 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final documentProvider = Provider.of<DocumentProvider>(context, listen: true);
 
     return FutureBuilder<IdTokenResult>(
       future: _helper.getIdTokenResult(),
@@ -194,108 +168,172 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
                   // Add the search bar within the AppBar
                 ],
               ),
-              body: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        labelText: 'Enter Document or User Name',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10.0),
-                          borderSide: const BorderSide(
-                            color: Colors.grey,
-                            width: 1.0,
-                          ),
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
-                        suffixIcon: Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.refresh), // Reset filter icon
-                              onPressed: () {
-                                setState(() {
-                                  _isInitialized = false;
-                                });
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                      onChanged: (searchText) {
-                        documentProvider.delaySearch(searchText, allDocumentsOrig);
-                      },
-                    )
-                  ),
-                  Expanded(
-                    child: StreamBuilder<dynamic>(
-                      stream: mergedData,
-                      builder: (context, snapshot) {
-
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Center(child: CircularProgressIndicator());
-                        }
-
-                        if (snapshot.data == null) {
-                          String errorMessage = snapshot.error?.toString() ??
-                              'No documents available.';
-                          return Center(child: Text(errorMessage));
-                        }
-
-                        if (snapshot.hasError) {
-                          String errorMessage = snapshot.error?.toString() ??
-                              'Error loading documents';
-                          return Center(child: Text(errorMessage));
-                        }
-
-                        if (!snapshot.hasData || snapshot.data == null) {
-                          return const Center(
-                              child: Text('No documents available.'));
-                        }
-
-                        // Create the original document list and the display document list initially
-                        if (!_isInitialized) {
-                          displayDocuments =
-                              createDocumentListForDisplayFromSnapshot(
-                                  snapshot, data);
-                          final groupedDocuments = widget.documentOperations.groupDocuments(displayDocuments);
-                          _isInitialized = true;
-
-                          return CustomListWidget(
-                            groupedDocuments: groupedDocuments,
-                            documentOperations: widget.documentOperations,
-                            callback: handleDownload,
-                          );
-
-                        } else {
-                          print("Invoking Consumer");
-                          return Consumer<DocumentProvider>(
-                            builder: (context, documentProvider, _) {
-                              final groupedDocuments = documentProvider.groupedDocuments;
-                              print("In Consumer");
-                              print(groupedDocuments);
-                              return CustomListWidget(
-                                groupedDocuments: groupedDocuments,
-                                documentOperations: widget.documentOperations,
-                                callback: handleDownload,
-                              );
-                            },
-                          );
-                        }
-                      },
-                    ),
-                  ),
-                ],
+              body: DocumentListWidget(
+                mergedData: mergedData,
+                handleLogout: _handleLogout,
+                searchController: _searchController,
+                documentOperations: widget.documentOperations,
+                callbackDownload: handleDownload,
+                onRefresh: onRefresh,
+                origStream: data
               ),
             );
           },
         );
       },
     );
+  }
+}
+
+class DocumentListWidget extends StatefulWidget {
+  final Stream<dynamic> mergedData;
+  final Function(BuildContext) handleLogout;
+  final TextEditingController searchController;
+  final DocumentOperations documentOperations;
+  final void Function(BuildContext, Document) callbackDownload;
+  final void Function() onRefresh;
+  final dynamic origStream;
+
+  const DocumentListWidget({super.key,
+    required this.mergedData,
+    required this.handleLogout,
+    required this.searchController,
+    required this.documentOperations,
+    required this.callbackDownload,
+    required this.onRefresh,
+    required this.origStream
+  });
+
+  @override
+  _DocumentListWidgetState createState() => _DocumentListWidgetState();
+}
+
+class _DocumentListWidgetState extends State<DocumentListWidget> {
+  bool _isInitialized = false;
+  List<DocumentSnapshot> displayDocuments = [];
+  List<DocumentSnapshot> allDocumentsOrig = []; // Store all documents here
+
+  @override
+  Widget build(BuildContext context) {
+    final documentProvider = Provider.of<DocumentProvider>(context, listen: true);
+    return Column(
+      children: [
+        Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              controller: widget.searchController,
+              decoration: InputDecoration(
+                labelText: 'Enter Document or User Name',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.0),
+                  borderSide: const BorderSide(
+                    color: Colors.grey,
+                    width: 1.0,
+                  ),
+                ),
+                filled: true,
+                fillColor: Colors.white,
+                suffixIcon: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.refresh), // Reset filter icon
+                      onPressed: () {
+                        _isInitialized = false;
+                        widget.onRefresh();
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              onChanged: (searchText) {
+                documentProvider.delaySearch(searchText, allDocumentsOrig);
+              },
+            )
+        ),
+        Expanded(
+          child: StreamBuilder<dynamic>(
+            stream: widget.mergedData,
+            builder: (context, snapshot) {
+
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (snapshot.data == null) {
+                String errorMessage = snapshot.error?.toString() ??
+                    'No documents available.';
+                return Center(child: Text(errorMessage));
+              }
+
+              if (snapshot.hasError) {
+                String errorMessage = snapshot.error?.toString() ??
+                    'Error loading documents';
+                return Center(child: Text(errorMessage));
+              }
+
+              if (!snapshot.hasData || snapshot.data == null) {
+                return const Center(
+                    child: Text('No documents available.'));
+              }
+
+              // Create the original document list and the display document list initially
+              if (!_isInitialized) {
+                displayDocuments =
+                    createDocumentListForDisplayFromSnapshot(snapshot, widget.origStream);
+                final groupedDocuments = widget.documentOperations.groupDocuments(displayDocuments);
+                _isInitialized = true;
+
+                return CustomListWidget(
+                  groupedDocuments: groupedDocuments,
+                  documentOperations: widget.documentOperations,
+                  callback: widget.callbackDownload,
+                );
+
+              } else {
+                print("Invoking Consumer");
+                return Consumer<DocumentProvider>(
+                  builder: (context, documentProvider, _) {
+                    final groupedDocuments = documentProvider.groupedDocuments;
+                    print("In Consumer");
+                    print(groupedDocuments);
+                    return CustomListWidget(
+                      groupedDocuments: groupedDocuments,
+                      documentOperations: widget.documentOperations,
+                      callback: widget.callbackDownload,
+                    );
+                  },
+                );
+              }
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  List<DocumentSnapshot> createDocumentListForDisplayFromSnapshot(AsyncSnapshot<dynamic> snapshot, dynamic origStream) {
+    List<DocumentSnapshot> displayDocuments = [];
+    if (origStream is List<Stream<QuerySnapshot>>) {
+      final querySnapshotList = snapshot.data!;
+      _fillOrigDocumentsFromQuerySnapshotList(querySnapshotList);
+    } else {
+      allDocumentsOrig = snapshot.data!.docs;
+    }
+
+    displayDocuments = allDocumentsOrig;
+
+    return displayDocuments;
+  }
+
+  void _fillOrigDocumentsFromQuerySnapshotList(List<dynamic> querySnapshotList) {
+    allDocumentsOrig.clear();
+    querySnapshotList.forEach((querySnapshot) {
+      querySnapshot.docs.forEach((doc) {
+        allDocumentsOrig.add(doc);
+      });
+    });
   }
 }
 
