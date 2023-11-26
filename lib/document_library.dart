@@ -14,8 +14,12 @@ import 'document_provider.dart';
 class DocumentLibraryScreen extends StatefulWidget {
 
   final DocumentOperations documentOperations;
+  final Helper helper;
 
-  DocumentLibraryScreen({Key? key, required this.documentOperations}) : super(key: key);
+  DocumentLibraryScreen({
+    Key? key,
+    required this.documentOperations,
+    required this.helper}) : super(key: key);
 
   @override
   _DocumentLibraryScreenState createState() => _DocumentLibraryScreenState();
@@ -23,9 +27,6 @@ class DocumentLibraryScreen extends StatefulWidget {
 
 class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
   final TextEditingController _searchController = TextEditingController();
-
-  // Global Helper Instances
-  final _helper = Helper();
 
   @override
   void dispose() {
@@ -35,7 +36,7 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
   @override
   void initState() {
     super.initState();
-    _helper.initializeNotifications();
+    widget.helper.initializeNotifications();
   }
 
   Future<void> _handleLogout(BuildContext context) async {
@@ -88,7 +89,7 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
         if (status != "Success") {
           showSnackBar(status, "Error", scaffoldContext);
         } else {
-          await _helper.showCustomNotificationAndroid(
+          await widget.helper.showCustomNotificationAndroid(
               'Download Complete', // Notification title
               'Document ${document.name} downloaded successfully', // Notification content
               downloadPath
@@ -121,7 +122,7 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
   Widget build(BuildContext context) {
 
     return FutureBuilder<IdTokenResult>(
-      future: _helper.getIdTokenResult(),
+      future: widget.helper.getIdTokenResult(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -192,6 +193,12 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
             return Scaffold(
               appBar: AppBar(
                 title: const Text('Document Library'),
+                leading: IconButton(
+                  onPressed: () {
+                    Navigator.pushReplacementNamed(context, '/dashboard');
+                  },
+                  icon: const Icon(Icons.arrow_back),
+                ),
                 actions: [
                   IconButton(
                     onPressed: () async {
@@ -209,7 +216,8 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
                   callbackDownload: handleDownload,
                   callbackDelete: handleDelete,
                   onRefresh: onRefresh,
-                  origStream: data
+                  origStream: data,
+                  helper: widget.helper
               ),
             );
           },
@@ -228,6 +236,7 @@ class DocumentListWidget extends StatefulWidget {
   final Future<String> Function(BuildContext, Document) callbackDelete;
   final void Function() onRefresh;
   final dynamic origStream;
+  final Helper helper;
 
   const DocumentListWidget({super.key,
     required this.mergedData,
@@ -237,7 +246,8 @@ class DocumentListWidget extends StatefulWidget {
     required this.callbackDownload,
     required this.callbackDelete,
     required this.onRefresh,
-    required this.origStream
+    required this.origStream,
+    required this.helper
   });
 
   @override
@@ -247,12 +257,14 @@ class DocumentListWidget extends StatefulWidget {
 class _DocumentListWidgetState extends State<DocumentListWidget> {
   bool _isInitialized = false;
   bool _isSearch = false;
+  bool _isServerUpdate = false;
   List<DocumentSnapshot> displayDocuments = [];
   List<DocumentSnapshot> allDocumentsOrig = []; // Store all documents here
 
   @override
   Widget build(BuildContext context) {
     final documentProvider = Provider.of<DocumentProvider>(context, listen: true);
+
     return Column(
       children: [
         Padding(
@@ -279,6 +291,8 @@ class _DocumentListWidgetState extends State<DocumentListWidget> {
                       onPressed: () {
                         widget.searchController.text = "";
                         _isSearch = false;
+                        _isServerUpdate = false;
+                        _isInitialized = false;
                         widget.onRefresh();
                       },
                     ),
@@ -286,7 +300,11 @@ class _DocumentListWidgetState extends State<DocumentListWidget> {
                 ),
               ),
               onChanged: (searchText) {
-                _isSearch = true;
+                if (searchText.isEmpty) {
+                 _isSearch = false;
+                } else {
+                  _isSearch = true;
+                }
                 documentProvider.delaySearch(searchText, allDocumentsOrig);
               },
             )
@@ -318,9 +336,10 @@ class _DocumentListWidgetState extends State<DocumentListWidget> {
               }
 
               // Create the original document list and the display document list initially
+              displayDocuments =
+                  createDocumentListForDisplayFromSnapshot(snapshot, widget.origStream);
+
               if (!_isInitialized) {
-                displayDocuments =
-                    createDocumentListForDisplayFromSnapshot(snapshot, widget.origStream);
                 final groupedDocuments = widget.documentOperations.groupDocuments(displayDocuments);
                 _isInitialized = true;
 
@@ -330,23 +349,30 @@ class _DocumentListWidgetState extends State<DocumentListWidget> {
                     callbackDownload: widget.callbackDownload,
                     callbackDelete: widget.callbackDelete,
                     isSearch: _isSearch,
-                    documentProvider: documentProvider
+                    isServerUpdate: _isServerUpdate,
+                    documentProvider: documentProvider,
+                    helper: widget.helper,
                 );
 
               } else {
                 print("Invoking Consumer");
+                if (documentProvider.groupedDocuments == null || _isSearch == false) {
+                  documentProvider.groupAndSetDocuments(displayDocuments, notifyL: false);
+                  _isServerUpdate = true;
+                }
+
                 return Consumer<DocumentProvider>(
                   builder: (context, documentProvider, _) {
                     final groupedDocuments = documentProvider.groupedDocuments;
-                    print("In Consumer");
-                    print(groupedDocuments);
                     return CustomListWidget(
-                        groupedDocuments: groupedDocuments,
+                        groupedDocuments: groupedDocuments!,
                         documentOperations: widget.documentOperations,
                         callbackDownload: widget.callbackDownload,
                         callbackDelete: widget.callbackDelete,
                         isSearch: _isSearch,
-                        documentProvider: documentProvider
+                        isServerUpdate: _isServerUpdate,
+                        documentProvider: documentProvider,
+                        helper: widget.helper
                     );
                   },
                 );
@@ -388,7 +414,9 @@ class CustomListWidget extends StatelessWidget {
   final void Function(BuildContext, Document) callbackDownload;
   final Future<String> Function(BuildContext, Document) callbackDelete;
   final bool isSearch;
+  final bool isServerUpdate;
   final DocumentProvider documentProvider;
+  final Helper helper;
 
   const CustomListWidget({super.key,
     required this.groupedDocuments,
@@ -396,7 +424,9 @@ class CustomListWidget extends StatelessWidget {
     required this.callbackDownload,
     required this.callbackDelete,
     required this.isSearch,
-    required this.documentProvider
+    required this.isServerUpdate,
+    required this.documentProvider,
+    required this.helper,
   });
 
   @override
@@ -413,7 +443,7 @@ class CustomListWidget extends StatelessWidget {
         final yearList = yearMap.keys.toList();
 
         return ExpansionTile(
-          initiallyExpanded: isSearch,
+          initiallyExpanded: isSearch || isServerUpdate,
           title: Text(
             'Domain: $domain',
             style: const TextStyle(
@@ -427,7 +457,7 @@ class CustomListWidget extends StatelessWidget {
                 .toList();
 
             return ExpansionTile(
-              initiallyExpanded: isSearch,
+              initiallyExpanded: isSearch || isServerUpdate,
               title: Text(
                 'Year: $year',
                 style: const TextStyle(
@@ -441,7 +471,7 @@ class CustomListWidget extends StatelessWidget {
                     .toList();
 
                 return ExpansionTile(
-                  initiallyExpanded: isSearch,
+                  initiallyExpanded: isSearch || isServerUpdate,
                   title: Text(
                     'Category: $category',
                     style: const TextStyle(
@@ -452,7 +482,7 @@ class CustomListWidget extends StatelessWidget {
                   children: userList.map((user) {
                     final documentRepo = userMap[user]!;
                     return ExpansionTile(
-                      initiallyExpanded: isSearch,
+                      initiallyExpanded: isSearch || isServerUpdate,
                       title: Text(
                         'Customer: $user',
                         style: const TextStyle(
@@ -491,6 +521,7 @@ class CustomListWidget extends StatelessWidget {
                                                 DocumentDetailScreen(
                                                     document: document,
                                                     docOperations: documentOperations,
+                                                    helper: helper
                                                 ),
                                           ),
                                         );

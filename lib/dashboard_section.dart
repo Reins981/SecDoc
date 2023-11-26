@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
 import 'dashboard_card.dart';
+import 'dashboard_item.dart';
+import 'dashboard_details.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'helpers.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'login.dart';
 
 class DashboardSection extends StatefulWidget {
 
-  const DashboardSection({super.key});
+  final DocumentOperations docOperations;
+
+  const DashboardSection({super.key, required this.docOperations});
 
   @override
   _DashboardSectionState createState() => _DashboardSectionState();
@@ -13,6 +20,8 @@ class DashboardSection extends StatefulWidget {
 class _DashboardSectionState extends State<DashboardSection> {
 
   late List<DashboardItem> dashboardItems;
+  // Global Helper Instance
+  final _helper = Helper();
 
   // Mock news data
   @override
@@ -21,13 +30,23 @@ class _DashboardSectionState extends State<DashboardSection> {
     dashboardItems = [
       DashboardItem(
         id: "1",
-        imageUrl: 'assets/news1.jpg',
-        date: "10.03.2023",
+        title: "Document Library",
+        description: "Access all your documents from the cloud..",
+        detailedDescription: "Effortlessly access, download, and seamlessly navigate through your comprehensive document library, "
+            "\n ensuring easy and efficient management of all your important files.",
+        buttonText: "Access your Docs",
+        icon: Icons.folder,
+        itemType: DashboardItemType.library
       ),
       DashboardItem(
         id: "2",
-        imageUrl: 'assets/news2.jpg',
-        date: "04.06.2021",
+        title: "Document Upload",
+        description: "Upload your documents to the cloud..",
+        detailedDescription: "Empower your solar panel planning by effortlessly uploading your own documents to the cloud, "
+          "\nlaying the foundation for personalized solar panel design tailored to your specific needs.",
+        buttonText: "Upload your Docs",
+        icon: Icons.cloud_upload,
+        itemType: DashboardItemType.upload
       ),
       // Add more news items as needed
     ];
@@ -35,15 +54,32 @@ class _DashboardSectionState extends State<DashboardSection> {
 
   int selectedDashboardIndex = 0;
 
+  Future<void> _handleLogout(BuildContext context) async {
+    final FirebaseAuth auth = FirebaseAuth.instance;
+    await auth.signOut();
+    widget.docOperations.clearProgressNotifierDict();
+
+    Navigator.of(context).pushReplacement(MaterialPageRoute(
+      builder: (context) => LoginScreen(docOperations: widget.docOperations),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
 
     return Scaffold(
-      backgroundColor: Colors.grey[200],
       appBar: AppBar(
         title: Text("Dashboard", style: GoogleFonts.lato(fontSize: 20, letterSpacing: 1.0)),
         centerTitle: true,
-        backgroundColor: const Color(0xFFD2B48C),
+        automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            onPressed: () async {
+              await _handleLogout(context);
+            },
+            icon: const Icon(Icons.logout),
+          ),
+        ],
       ),
       body: SingleChildScrollView (
         child: Column(
@@ -60,7 +96,9 @@ class _DashboardSectionState extends State<DashboardSection> {
             ),
             const SizedBox(height: 20),
             if (selectedDashboardIndex < dashboardItems.length)
-              DetailedNewsPage(newsItem: dashboardItems[selectedDashboardIndex]),
+              DetailedDashboardPage(
+                  dashboardItem: dashboardItems[selectedDashboardIndex],
+                  helper: _helper, docOperations: widget.docOperations),
           ],
         ),
       ),
@@ -79,7 +117,7 @@ class DashboardSlider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 200,
+      height: 220,
       child: PageView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: dashboardItems.length,

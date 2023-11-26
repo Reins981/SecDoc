@@ -10,7 +10,7 @@ class Document {
   final String owner;
   final Timestamp lastUpdate;
   final bool isNew;
-  final String? deletedAt;
+  final Timestamp? deletedAt;
   final String documentUrl;
   final String domain;
   final String category;
@@ -45,11 +45,13 @@ class DocumentRepository {
 class DocumentDetailScreen extends StatefulWidget {
   final Document document;
   final DocumentOperations docOperations;
+  final Helper helper;
 
   const DocumentDetailScreen({
     Key? key,
     required this.document,
     required this.docOperations,
+    required this.helper
   }) : super(key: key);
 
   @override
@@ -70,26 +72,6 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     return response;
   }
 
-  Center showDocumentStatus(String status) {
-    return Center(
-      child: Container(
-        padding: EdgeInsets.all(20.0),
-        decoration: BoxDecoration(
-          color: Colors.redAccent,
-          borderRadius: BorderRadius.circular(10.0),
-        ),
-        child: Text(
-          status,
-          style: const TextStyle(
-            fontSize: 18.0,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -105,12 +87,13 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
             return const Center(child: Text('Error loading document'));
           } else {
             var data = snapshot.data!;
-            Uint8List? bytes = data['bytes'];
+            dynamic bytes = data['bytes'];
             bool isPdf = data['isPdf'];
             bool isImg = data['isImg'];
+            bool isTxt = data['isTxt'];
 
             if (bytes == null) {
-              return showDocumentStatus("Unable to show document");
+              return widget.helper.showStatus("Unable to show document");
             }
 
             if (isPdf) {
@@ -121,7 +104,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                   pdfData: bytes,
                 );
               } catch (e) {
-                return showDocumentStatus('$e');
+                return widget.helper.showStatus('$e');
               }
             } else if (isImg) {
               // Handle other types of documents (e.g., images)
@@ -130,10 +113,23 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                 return Image.memory(bytes);
               }
               catch (e) {
-                return showDocumentStatus('$e');
+                return widget.helper.showStatus('$e');
+              }
+            } else if (isTxt) {
+              try {
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    bytes,
+                    style: const TextStyle(fontSize: 16.0),
+                  ),
+                );
+              }
+              catch (e) {
+                return widget.helper.showStatus('$e');
               }
             } else {
-              return showDocumentStatus('Unsupported document format');
+              return widget.helper.showStatus('Unsupported document format');
             }
           }
         },

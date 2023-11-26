@@ -27,6 +27,26 @@ class Helper {
     OpenFile.open(filePath);
   }
 
+  Center showStatus(String status) {
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.all(20.0),
+        decoration: BoxDecoration(
+          color: Colors.redAccent,
+          borderRadius: BorderRadius.circular(10.0),
+        ),
+        child: Text(
+          status,
+          style: const TextStyle(
+            fontSize: 18.0,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
+
   // Handle the notification tap event
   void onSelectNotification(notification) async {
     if (notification.payload != null) {
@@ -251,6 +271,12 @@ class DocumentOperations {
     return imageExtensions.any((ext) => lowerCaseUrl.endsWith(ext));
   }
 
+  bool isText(String documentUrl) {
+    final imageExtensions = ['.doc', '.txt', '.text', '.py', '.docx'];
+    final lowerCaseUrl = documentUrl.toLowerCase();
+    return imageExtensions.any((ext) => lowerCaseUrl.endsWith(ext));
+  }
+
   Future<String> deleteDocument(String documentId, String collectionPath) async {
     try {
       final CollectionReference collectionReference =
@@ -268,29 +294,40 @@ class DocumentOperations {
   Future<Map<String, dynamic>> fetchDocumentContent(String documentUrl, String documentName) async {
     bool isPdf = documentName.endsWith('.pdf');
     bool isImg = false;
+    bool isTxt = false;
     if (!isPdf) {
       isImg = isImage(documentName);
+
+      if (!isImg) {
+        isTxt = isText(documentName);
+      }
     }
-    print(isPdf);
-    print(isImg);
+
     try {
       final response = await http.get(Uri.parse(documentUrl));
 
       if (response.statusCode == 200) {
         return {
-          'bytes': response.bodyBytes, // Document content as Uint8List
+          'bytes': isPdf == false && isImg == false ? response.body.toString() : response.bodyBytes, // Document content as Uint8List
           'isPdf': isPdf, // Boolean indicating if it's a PDF
-          'isImg': isImg
+          'isImg': isImg,
+          'isTxt': isTxt
         };
       } else {
-        return {'bytes': null, 'isPdf': false, 'isImg': false}; // Return null bytes and false for isPdf
+        return {'bytes': null, 'isPdf': false, 'isImg': false, 'isTxt': false}; // Return null bytes and false for isPdf
       }
     } catch (e) {
-      return {'bytes': null, 'isPdf': false, 'isImg': false}; // Return null bytes and false for isPdf on error
+      return {'bytes': null, 'isPdf': false, 'isImg': false, 'isTxt': false}; // Return null bytes and false for isPdf on error
     }
   }
 
+  void selectDocumentsForUpload() {
+    print("test upload select files");
+  }
 
+  void uploadDocuments() {
+    print("test upload");
+  }
 
   Future<String> downloadDocument(Document document, String downloadPath) async {
     // Implement your download logic here

@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'document_library.dart';
-import 'package:provider/provider.dart';
 import 'helpers.dart';
-import 'document_provider.dart';
+import 'dashboard_section.dart';
 
 class LoginScreen extends StatelessWidget {
 
@@ -205,7 +203,7 @@ class _WelcomeDialogState extends State<_WelcomeDialog> with SingleTickerProvide
                     ElevatedButton(
                       onPressed: () {
                         Navigator.of(context).pop(); // Close the dialog
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => DocumentLibraryScreen(documentOperations: widget.docOperations)));
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => DashboardSection(docOperations: widget.docOperations)));
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,

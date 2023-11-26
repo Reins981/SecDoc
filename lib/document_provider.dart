@@ -6,10 +6,10 @@ import 'package:sec_doc/helpers.dart';
 import 'document.dart'; // Import your DocumentRepository class here
 
 class DocumentProvider extends ChangeNotifier {
-  late Map<String, Map<int, Map<String, Map<String, DocumentRepository>>>> _groupedDocuments;
+  Map<String, Map<int, Map<String, Map<String, DocumentRepository>>>>? _groupedDocuments;
   Timer? _debounceTimer;
 
-  Map<String, Map<int, Map<String, Map<String, DocumentRepository>>>> get groupedDocuments => _groupedDocuments;
+  Map<String, Map<int, Map<String, Map<String, DocumentRepository>>>>? get groupedDocuments => _groupedDocuments;
 
   final DocumentOperations docOperations;
 
@@ -29,15 +29,16 @@ class DocumentProvider extends ChangeNotifier {
     _removeDocumentWithId(document.id);
   }
 
-  void groupAndSetDocuments(List<DocumentSnapshot> documents) {
+  void groupAndSetDocuments(List<DocumentSnapshot> documents, {bool notifyL=true}) {
     _groupedDocuments = docOperations.groupDocuments(documents);
-    print(_groupedDocuments);
-    print("Notify listeners");
-    notifyListeners();
+    if (notifyL) {
+      print("Notify listeners");
+      notifyListeners();
+    }
   }
 
   void _removeDocumentWithId(String documentId) {
-    _groupedDocuments.forEach((domain, yearMap) {
+    _groupedDocuments!.forEach((domain, yearMap) {
       yearMap.forEach((year, categoryMap) {
         categoryMap.forEach((category, userMap) {
           userMap.forEach((user, documentRepo) {
