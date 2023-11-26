@@ -10,6 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:async'; // Import the async package for using StreamController
 import 'package:dio/dio.dart';
 import 'document.dart';
+import 'package:http/http.dart' as http;
 
 
 class Helper {
@@ -243,6 +244,53 @@ class DocumentOperations {
     return '$savedDir/$fileName';
 
   }
+
+  bool isImage(String documentUrl) {
+    final imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.ico'];
+    final lowerCaseUrl = documentUrl.toLowerCase();
+    return imageExtensions.any((ext) => lowerCaseUrl.endsWith(ext));
+  }
+
+  Future<String> deleteDocument(String documentId, String collectionPath) async {
+    try {
+      final CollectionReference collectionReference =
+      FirebaseFirestore.instance.collection(collectionPath);
+
+      // Delete the document
+      await collectionReference.doc(documentId).delete();
+      return 'Success';
+    } catch (e) {
+      String errorMessage = '$e';
+      return errorMessage;
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchDocumentContent(String documentUrl, String documentName) async {
+    bool isPdf = documentName.endsWith('.pdf');
+    bool isImg = false;
+    if (!isPdf) {
+      isImg = isImage(documentName);
+    }
+    print(isPdf);
+    print(isImg);
+    try {
+      final response = await http.get(Uri.parse(documentUrl));
+
+      if (response.statusCode == 200) {
+        return {
+          'bytes': response.bodyBytes, // Document content as Uint8List
+          'isPdf': isPdf, // Boolean indicating if it's a PDF
+          'isImg': isImg
+        };
+      } else {
+        return {'bytes': null, 'isPdf': false, 'isImg': false}; // Return null bytes and false for isPdf
+      }
+    } catch (e) {
+      return {'bytes': null, 'isPdf': false, 'isImg': false}; // Return null bytes and false for isPdf on error
+    }
+  }
+
+
 
   Future<String> downloadDocument(Document document, String downloadPath) async {
     // Implement your download logic here

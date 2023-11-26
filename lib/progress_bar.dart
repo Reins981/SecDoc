@@ -20,8 +20,8 @@ class ProgressBarState extends State<ProgressBar> {
         return LinearProgressIndicator(
           value: value,
           minHeight: 10,
-          backgroundColor: Colors.grey,
-          valueColor: const AlwaysStoppedAnimation<Color>(Colors.green),
+          backgroundColor: Colors.grey.shade300,
+          valueColor: AlwaysStoppedAnimation<Color>(Colors.grey.shade600),
         );
       },
     );

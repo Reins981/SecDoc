@@ -15,12 +15,41 @@ class DocumentProvider extends ChangeNotifier {
 
   DocumentProvider({required this.docOperations});
 
+  // Setter for groupedDocuments
+  setGroupedDocuments(Map<String, Map<int, Map<String, Map<String, DocumentRepository>>>> newGroupedDocuments) {
+    // Perform any operations here before setting the value
+    // For example, validation, transformation, etc.
+    // ...
+
+    // Assign the new value to the private variable
+    _groupedDocuments = newGroupedDocuments;
+  }
+
+  void removeDocumentWithId(Document document) {
+    _removeDocumentWithId(document.id);
+  }
+
   void groupAndSetDocuments(List<DocumentSnapshot> documents) {
     _groupedDocuments = docOperations.groupDocuments(documents);
     print(_groupedDocuments);
     print("Notify listeners");
     notifyListeners();
   }
+
+  void _removeDocumentWithId(String documentId) {
+    _groupedDocuments.forEach((domain, yearMap) {
+      yearMap.forEach((year, categoryMap) {
+        categoryMap.forEach((category, userMap) {
+          userMap.forEach((user, documentRepo) {
+            documentRepo.documents.removeWhere((document) => document.id == documentId);
+            notifyListeners();
+          });
+        });
+      });
+    });
+  }
+
+
 
   void delaySearch(String searchText, List<DocumentSnapshot> documentsOrig) {
     if (_debounceTimer != null && _debounceTimer!.isActive) {
@@ -35,8 +64,7 @@ class DocumentProvider extends ChangeNotifier {
   // Search document by document name or user name
   void _searchDocumentByNames(String searchText, List<DocumentSnapshot> documentsOrig) {
     List<DocumentSnapshot> allDocumentsCopy = List.from(documentsOrig);
-    // Replace this with your logic to filter the document
-    // Assuming you have a list of documents called 'documents' and 'documentName' is the search query.
+    // Logic to filter documents by the given Text Input
     print("InFilter");
     print("Documents Orig are:");
     print(documentsOrig);
@@ -47,6 +75,10 @@ class DocumentProvider extends ChangeNotifier {
         .contains(searchText.toLowerCase())
         ||
         doc['user_name']
+            .toLowerCase()
+            .contains(searchText.toLowerCase())
+        ||
+        doc['user_email']
             .toLowerCase()
             .contains(searchText.toLowerCase()))
         .toList();

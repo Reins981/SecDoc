@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'main.dart'; // Import the LoginScreen to navigate back after logout
+import 'login.dart'; // Import the LoginScreen to navigate back after logout
 import 'dart:async'; // Import the async package for using StreamController
 import 'package:rxdart/rxdart.dart';
 import 'progress_bar.dart';
@@ -54,10 +54,25 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
     });
   }
 
-  void showSnackBarError(String error, ScaffoldMessengerState context) {
+  void showSnackBar(String message, String messageType, ScaffoldMessengerState context) {
+    Color backgroundColor = messageType == "Error" ? Colors.red : Colors.yellow;
+    Color fontColor = messageType == "Error" ? Colors.white : Colors.black;
+
     context.showSnackBar(
       SnackBar(
-        content: Text('Error: $error'), // Show the error message in the SnackBar
+        backgroundColor: backgroundColor,
+        behavior: SnackBarBehavior.floating,
+        content: Text(
+          message,
+          style: TextStyle(color: fontColor, fontSize: 16.0),
+        ),
+        duration: const Duration(seconds: 4),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        margin: EdgeInsets.all(10),
+        elevation: 6,
+        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       ),
     );
   }
@@ -67,11 +82,11 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
     String downloadPath = await widget.documentOperations.createDownloadPathForFile(document.name);
 
     if (downloadPath == "Failed") {
-      showSnackBarError("Could not access download directory", scaffoldContext);
+      showSnackBar("Could not access download directory", "Error", scaffoldContext);
     } else {
       widget.documentOperations.downloadDocument(document, downloadPath).then((String status) async {
         if (status != "Success") {
-          showSnackBarError(status, scaffoldContext);
+          showSnackBar(status, "Error", scaffoldContext);
         } else {
           await _helper.showCustomNotificationAndroid(
               'Download Complete', // Notification title
@@ -80,6 +95,25 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
           );
         }
       });
+    }
+  }
+
+  Future<String> handleDelete(BuildContext context, Document document) async {
+    final scaffoldContext = ScaffoldMessenger.of(context);
+    String collectionPath = 'documents_${document.domain.toLowerCase()}';
+
+    try {
+      String status = await widget.documentOperations.deleteDocument(document.id, collectionPath);
+      if (status != "Success") {
+        showSnackBar(status, "Error", scaffoldContext);
+        return 'Failed';
+      } else {
+        showSnackBar("${document.name} deleted successfully", "Success", scaffoldContext);
+        return 'Success';
+      }
+    } catch (e) {
+      showSnackBar('Error: $e', "Error", scaffoldContext);
+      return 'Failed';
     }
   }
 
@@ -165,17 +199,17 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
                     },
                     icon: const Icon(Icons.logout),
                   ),
-                  // Add the search bar within the AppBar
                 ],
               ),
               body: DocumentListWidget(
-                mergedData: mergedData,
-                handleLogout: _handleLogout,
-                searchController: _searchController,
-                documentOperations: widget.documentOperations,
-                callbackDownload: handleDownload,
-                onRefresh: onRefresh,
-                origStream: data
+                  mergedData: mergedData,
+                  handleLogout: _handleLogout,
+                  searchController: _searchController,
+                  documentOperations: widget.documentOperations,
+                  callbackDownload: handleDownload,
+                  callbackDelete: handleDelete,
+                  onRefresh: onRefresh,
+                  origStream: data
               ),
             );
           },
@@ -191,6 +225,7 @@ class DocumentListWidget extends StatefulWidget {
   final TextEditingController searchController;
   final DocumentOperations documentOperations;
   final void Function(BuildContext, Document) callbackDownload;
+  final Future<String> Function(BuildContext, Document) callbackDelete;
   final void Function() onRefresh;
   final dynamic origStream;
 
@@ -200,6 +235,7 @@ class DocumentListWidget extends StatefulWidget {
     required this.searchController,
     required this.documentOperations,
     required this.callbackDownload,
+    required this.callbackDelete,
     required this.onRefresh,
     required this.origStream
   });
@@ -210,6 +246,7 @@ class DocumentListWidget extends StatefulWidget {
 
 class _DocumentListWidgetState extends State<DocumentListWidget> {
   bool _isInitialized = false;
+  bool _isSearch = false;
   List<DocumentSnapshot> displayDocuments = [];
   List<DocumentSnapshot> allDocumentsOrig = []; // Store all documents here
 
@@ -223,7 +260,7 @@ class _DocumentListWidgetState extends State<DocumentListWidget> {
             child: TextField(
               controller: widget.searchController,
               decoration: InputDecoration(
-                labelText: 'Enter Document or User Name',
+                labelText: 'Enter Document, User or Email',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10.0),
                   borderSide: const BorderSide(
@@ -240,7 +277,8 @@ class _DocumentListWidgetState extends State<DocumentListWidget> {
                     IconButton(
                       icon: const Icon(Icons.refresh), // Reset filter icon
                       onPressed: () {
-                        _isInitialized = false;
+                        widget.searchController.text = "";
+                        _isSearch = false;
                         widget.onRefresh();
                       },
                     ),
@@ -248,6 +286,7 @@ class _DocumentListWidgetState extends State<DocumentListWidget> {
                 ),
               ),
               onChanged: (searchText) {
+                _isSearch = true;
                 documentProvider.delaySearch(searchText, allDocumentsOrig);
               },
             )
@@ -286,9 +325,12 @@ class _DocumentListWidgetState extends State<DocumentListWidget> {
                 _isInitialized = true;
 
                 return CustomListWidget(
-                  groupedDocuments: groupedDocuments,
-                  documentOperations: widget.documentOperations,
-                  callback: widget.callbackDownload,
+                    groupedDocuments: groupedDocuments,
+                    documentOperations: widget.documentOperations,
+                    callbackDownload: widget.callbackDownload,
+                    callbackDelete: widget.callbackDelete,
+                    isSearch: _isSearch,
+                    documentProvider: documentProvider
                 );
 
               } else {
@@ -299,9 +341,12 @@ class _DocumentListWidgetState extends State<DocumentListWidget> {
                     print("In Consumer");
                     print(groupedDocuments);
                     return CustomListWidget(
-                      groupedDocuments: groupedDocuments,
-                      documentOperations: widget.documentOperations,
-                      callback: widget.callbackDownload,
+                        groupedDocuments: groupedDocuments,
+                        documentOperations: widget.documentOperations,
+                        callbackDownload: widget.callbackDownload,
+                        callbackDelete: widget.callbackDelete,
+                        isSearch: _isSearch,
+                        documentProvider: documentProvider
                     );
                   },
                 );
@@ -340,12 +385,18 @@ class _DocumentListWidgetState extends State<DocumentListWidget> {
 class CustomListWidget extends StatelessWidget {
   final Map<String, Map<int, Map<String, Map<String, DocumentRepository>>>> groupedDocuments;
   final DocumentOperations documentOperations;
-  final void Function(BuildContext, Document) callback;
+  final void Function(BuildContext, Document) callbackDownload;
+  final Future<String> Function(BuildContext, Document) callbackDelete;
+  final bool isSearch;
+  final DocumentProvider documentProvider;
 
   const CustomListWidget({super.key,
     required this.groupedDocuments,
     required this.documentOperations,
-    required this.callback
+    required this.callbackDownload,
+    required this.callbackDelete,
+    required this.isSearch,
+    required this.documentProvider
   });
 
   @override
@@ -362,6 +413,7 @@ class CustomListWidget extends StatelessWidget {
         final yearList = yearMap.keys.toList();
 
         return ExpansionTile(
+          initiallyExpanded: isSearch,
           title: Text(
             'Domain: $domain',
             style: const TextStyle(
@@ -375,6 +427,7 @@ class CustomListWidget extends StatelessWidget {
                 .toList();
 
             return ExpansionTile(
+              initiallyExpanded: isSearch,
               title: Text(
                 'Year: $year',
                 style: const TextStyle(
@@ -388,6 +441,7 @@ class CustomListWidget extends StatelessWidget {
                     .toList();
 
                 return ExpansionTile(
+                  initiallyExpanded: isSearch,
                   title: Text(
                     'Category: $category',
                     style: const TextStyle(
@@ -398,6 +452,7 @@ class CustomListWidget extends StatelessWidget {
                   children: userList.map((user) {
                     final documentRepo = userMap[user]!;
                     return ExpansionTile(
+                      initiallyExpanded: isSearch,
                       title: Text(
                         'Customer: $user',
                         style: const TextStyle(
@@ -434,7 +489,9 @@ class CustomListWidget extends StatelessWidget {
                                             builder: (
                                                 context) =>
                                                 DocumentDetailScreen(
-                                                    document: document),
+                                                    document: document,
+                                                    docOperations: documentOperations,
+                                                ),
                                           ),
                                         );
                                       },
@@ -512,7 +569,7 @@ class CustomListWidget extends StatelessWidget {
                                         ElevatedButton
                                             .icon(
                                           onPressed: () async {
-                                            callback(context, document);
+                                            callbackDownload(context, document);
                                           },
                                           icon: const Icon(
                                               Icons
@@ -522,9 +579,15 @@ class CustomListWidget extends StatelessWidget {
                                         ),
                                         ElevatedButton
                                             .icon(
-                                          onPressed: () {
-                                            // Implement delete logic for this document
-                                            //deleteDocument(documentData);
+                                          onPressed: () async {
+                                            // Avoid uninitialized groupedDocuments from the Provider
+                                            documentProvider.setGroupedDocuments(groupedDocuments);
+                                            String status = await callbackDelete(context, document);
+                                            if (status == 'Success') {
+                                              documentProvider
+                                                  .removeDocumentWithId(
+                                                  document);
+                                            }
                                           },
                                           icon: const Icon(
                                               Icons
