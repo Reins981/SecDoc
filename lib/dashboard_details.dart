@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'helpers.dart';
 import 'document_library.dart';
 import 'progress_bar.dart';
+import 'biometric_setup.dart';
 
 class DetailedDashboardPage extends StatelessWidget {
   final DashboardItem dashboardItem;
@@ -126,6 +127,31 @@ class DetailedDashboardPage extends StatelessWidget {
                             ),
                         ),
                         Visibility(
+                          visible: dashboardItem.itemType == DashboardItemType.bio,
+                          child:
+                          ElevatedButton(
+                            onPressed: () {
+                              Navigator.of(context).pushReplacement(MaterialPageRoute(
+                                builder: (context) => BiometricSetupScreen()));
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.yellow.withOpacity(1.0),
+                              foregroundColor: Colors.black, // Text color
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 12,
+                                horizontal: 24,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: Text(
+                              dashboardItem.buttonText,
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                          ),
+                        ),
+                        Visibility(
                           visible: dashboardItem.itemType == DashboardItemType.upload,
                           child:
                           ElevatedButton(
@@ -156,7 +182,7 @@ class DetailedDashboardPage extends StatelessWidget {
                         ),
                         dashboardItem.itemType == DashboardItemType.library ? const SizedBox(height: 8) : const SizedBox(height: 16),
                         Visibility(
-                          visible: dashboardItem.itemType == DashboardItemType.upload,
+                          visible: dashboardItem.itemType == DashboardItemType.upload && userRole == "client",
                           child: ProgressBar(
                             progress: docOperations
                                 .getProgressNotifierDict()[documentId],

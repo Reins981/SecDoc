@@ -4,6 +4,7 @@ enum DashboardItemType {
   library,
   upload,
   ai,
+  bio,
 }
 
 class DashboardItem {

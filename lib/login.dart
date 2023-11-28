@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'document_library.dart';
 import 'helpers.dart';
 import 'dashboard_section.dart';
 
@@ -13,6 +12,7 @@ class LoginScreen extends StatelessWidget {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final Helper _helper = Helper();
 
   @override
   Widget build(BuildContext context) {
@@ -91,14 +91,14 @@ class LoginScreen extends StatelessWidget {
   }
 
   Future<void> _handleLogin(BuildContext context) async {
+    ScaffoldMessengerState scaffoldContext = ScaffoldMessenger.of(context);
+
     try {
       final String email = _emailController.text.trim();
       final String password = _passwordController.text;
 
       if (email.isEmpty || password.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter both email and password.')),
-        );
+        _helper.showSnackBar('Please enter both email and password.', 'Error', scaffoldContext);
         return;
       }
 
@@ -115,12 +115,9 @@ class LoginScreen extends StatelessWidget {
       if (e is FirebaseAuthException) {
         errorMessage = e.message ?? errorMessage;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorMessage)),
-      );
+      _helper.showSnackBar(errorMessage, 'Error', scaffoldContext);
     }
   }
-
 
   void _showWelcomeAnimation(BuildContext context, String displayName) {
     showDialog(

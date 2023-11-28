@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'helpers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'login.dart';
+import 'package:carousel_slider/carousel_slider.dart';
 
 class DashboardSection extends StatefulWidget {
 
@@ -31,7 +32,7 @@ class _DashboardSectionState extends State<DashboardSection> {
       DashboardItem(
         id: "1",
         title: "Document Library",
-        description: "Access all your documents..",
+        description: "Seamless Access",
         detailedDescription: "Effortlessly access, download, and seamlessly navigate through our comprehensive document library, "
             "\n ensuring easy and efficient management of all your important files.",
         buttonText: "Access your Docs",
@@ -41,12 +42,23 @@ class _DashboardSectionState extends State<DashboardSection> {
       DashboardItem(
         id: "2",
         title: "Document Upload",
-        description: "Upload your documents..",
+        description: "Easy Upload",
         detailedDescription: "Empower your solar panel planning by effortlessly uploading your own documents to our cloud, "
           "\nlaying the foundation for personalized solar panel design tailored to your specific needs.",
         buttonText: "Upload your Docs",
         icon: Icons.cloud_upload,
         itemType: DashboardItemType.upload
+      ),
+      DashboardItem(
+          id: "3",
+          title: "Biometric Login",
+          description: "Easy Login",
+          detailedDescription: "Experience the convenience of secure and effortless access with our biometric login feature. "
+              "\nWith just a touch of your fingerprint, gain instant and secure access to your account. "
+              "\nOur biometric login ensures a seamless authentication process, allowing you to skip entering passwords and providing a hassle-free way to access your account.",
+          buttonText: "Set Up Your Biometrics",
+          icon: Icons.fingerprint,
+          itemType: DashboardItemType.bio
       ),
       // Add more news items as needed
     ];
@@ -66,7 +78,6 @@ class _DashboardSectionState extends State<DashboardSection> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(
         title: Text("Dashboard", style: GoogleFonts.lato(fontSize: 20, letterSpacing: 1.0)),
@@ -106,27 +117,29 @@ class _DashboardSectionState extends State<DashboardSection> {
   }
 }
 
-
 class DashboardSlider extends StatelessWidget {
   final List<DashboardItem> dashboardItems;
   final Function(int) onDashboardSelected;
   final int selectedDashboardIndex;
 
-  DashboardSlider({required this.dashboardItems, required this.onDashboardSelected, required this.selectedDashboardIndex});
+  DashboardSlider({
+    required this.dashboardItems,
+    required this.onDashboardSelected,
+    required this.selectedDashboardIndex,
+  });
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 220,
-      child: PageView.builder(
-        scrollDirection: Axis.horizontal,
+      height: 250,
+      child: CarouselSlider.builder(
         itemCount: dashboardItems.length,
-        controller: PageController(
+        options: CarouselOptions(
           initialPage: selectedDashboardIndex,
-          viewportFraction: (dashboardItems.length > 2) ? 0.5: 0.9,
+          viewportFraction: (dashboardItems.length > 2) ? 0.5 : 0.9,
+          onPageChanged: (index, _) => onDashboardSelected(index),
         ),
-        onPageChanged: onDashboardSelected,
-        itemBuilder: (context, index) {
+        itemBuilder: (context, index, _) {
           return DashboardCard(
             dashboardItem: dashboardItems[index],
           );
@@ -135,4 +148,5 @@ class DashboardSlider extends StatelessWidget {
     );
   }
 }
+
 
