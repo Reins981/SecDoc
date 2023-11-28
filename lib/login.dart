@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'helpers.dart';
 import 'dashboard_section.dart';
+import 'biometric_setup.dart';
 
 class LoginScreen extends StatelessWidget {
 
@@ -75,7 +76,7 @@ class LoginScreen extends StatelessWidget {
                       const SizedBox(height: 10),
                       TextButton(
                         onPressed: () {
-                          // TODO: Implement password recovery logic
+                        // TODO: Implement password recovery logic
                         },
                         child: const Text('Forgot Password?'),
                       ),
