@@ -4,11 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:sec_doc/helpers.dart';
 
+
 class Document {
   final String id;
   final String name;
   final String owner;
-  final Timestamp lastUpdate;
+  final Timestamp? lastUpdate;
   final bool isNew;
   final Timestamp? deletedAt;
   final String documentUrl;

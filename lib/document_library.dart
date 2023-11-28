@@ -55,39 +55,16 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
     });
   }
 
-  void showSnackBar(String message, String messageType, ScaffoldMessengerState context) {
-    Color backgroundColor = messageType == "Error" ? Colors.red : Colors.yellow;
-    Color fontColor = messageType == "Error" ? Colors.white : Colors.black;
-
-    context.showSnackBar(
-      SnackBar(
-        backgroundColor: backgroundColor,
-        behavior: SnackBarBehavior.floating,
-        content: Text(
-          message,
-          style: TextStyle(color: fontColor, fontSize: 16.0),
-        ),
-        duration: const Duration(seconds: 4),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        margin: EdgeInsets.all(10),
-        elevation: 6,
-        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      ),
-    );
-  }
-
   void handleDownload(BuildContext context, Document document) async {
     final scaffoldContext = ScaffoldMessenger.of(context);
     String downloadPath = await widget.documentOperations.createDownloadPathForFile(document.name);
 
     if (downloadPath == "Failed") {
-      showSnackBar("Could not access download directory", "Error", scaffoldContext);
+      widget.helper.showSnackBar("Could not access download directory", "Error", scaffoldContext);
     } else {
       widget.documentOperations.downloadDocument(document, downloadPath).then((String status) async {
         if (status != "Success") {
-          showSnackBar(status, "Error", scaffoldContext);
+          widget.helper.showSnackBar(status, "Error", scaffoldContext);
         } else {
           await widget.helper.showCustomNotificationAndroid(
               'Download Complete', // Notification title
@@ -106,14 +83,14 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
     try {
       String status = await widget.documentOperations.deleteDocument(document.id, collectionPath);
       if (status != "Success") {
-        showSnackBar(status, "Error", scaffoldContext);
+        widget.helper.showSnackBar(status, "Error", scaffoldContext);
         return 'Failed';
       } else {
-        showSnackBar("${document.name} deleted successfully", "Success", scaffoldContext);
+        widget.helper.showSnackBar("${document.name} deleted successfully", "Success", scaffoldContext);
         return 'Success';
       }
     } catch (e) {
-      showSnackBar('Error: $e', "Error", scaffoldContext);
+      widget.helper.showSnackBar('Error: $e', "Error", scaffoldContext);
       return 'Failed';
     }
   }
@@ -129,7 +106,7 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
         }
 
         if (snapshot.hasError) {
-          return const Center(child: Text('Error loading data'));
+          return Center(child: Text('Error loading data: ${snapshot.error}'));
         }
 
         if (!snapshot.hasData) {
@@ -539,9 +516,7 @@ class CustomListWidget extends StatelessWidget {
                                             .start,
                                         children: [
                                           Text(
-                                            "Last Update: ${document
-                                                .lastUpdate
-                                                .toDate()}",
+                                            "Last Update: ${document.lastUpdate?.toDate()}",
                                             style: const TextStyle(
                                               fontSize: 14,
                                               fontStyle: FontStyle
@@ -629,9 +604,8 @@ class CustomListWidget extends StatelessWidget {
                                       ],
                                     ),
                                     ProgressBar(
-                                      downloadProgress: documentOperations
-                                          .getProgressNotifierDict()[document
-                                          .id],
+                                      progress: documentOperations
+                                          .getProgressNotifierDict()[document.id],
                                     ),
                                   ],
                                 ),

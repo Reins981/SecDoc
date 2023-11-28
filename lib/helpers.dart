@@ -1,3 +1,4 @@
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:open_file/open_file.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -11,7 +12,9 @@ import 'dart:async'; // Import the async package for using StreamController
 import 'package:dio/dio.dart';
 import 'document.dart';
 import 'package:http/http.dart' as http;
-
+import 'package:file_picker/file_picker.dart';
+import 'package:randomstring_dart/randomstring_dart.dart';
+import 'dart:convert';
 
 class Helper {
 
@@ -25,6 +28,88 @@ class Helper {
     // Example for opening a file on Android using the 'open_file' plugin
     print("Open file triggered");
     OpenFile.open(filePath);
+  }
+
+  String getRandomString() {
+    final rs = RandomString();
+    return rs.getRandomString(
+      lowersCount: 10,
+      uppersCount: 10,
+      numbersCount: 2,
+      specialsCount: 3,
+      specials: '_%&?!}[]{<>-',
+      canSpecialRepeat: false,
+    );
+  }
+
+  Future<Map<String, String>> getSignedUrl(String documentPath, String token) async {
+    const String serverUrl = 'YOUR_FLASK_SERVER_URL/get_signed_url';
+    Map<String, String> result = {};
+
+    Map<String, dynamic> requestData = {'document_path': documentPath};
+
+    final response = await http.post(
+      Uri.parse(serverUrl),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(requestData),
+    );
+
+    if (response.statusCode == 200) {
+      Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+      String signedUrl = jsonResponse['signed_url']; // Extracting the signed URL
+      return {
+        'status': 'Success',
+        'signedUrl': signedUrl,
+        'error': ""
+      };
+    } else if (response.statusCode == 401) {
+      return {
+        'status': 'Failed',
+        'signedUrl': "",
+        'error': "The Client token either is invalid or does not exist"
+      };
+    } else {
+      return {
+        'status': 'Failed',
+        'signedUrl': "",
+        'error': "The server responded with Status Code: ${response.statusCode.toString()}"
+      };
+    }
+  }
+
+  Future<int> getTotalBytes(List<File> files) async {
+    int totalBytes = 0;
+    for (File file in files) {
+      int size = await file.length();
+      totalBytes += size;
+    }
+    return totalBytes;
+  }
+
+  void showSnackBar(String message, String messageType, ScaffoldMessengerState context, {int duration = 4}) {
+    Color backgroundColor = messageType == "Error" ? Colors.red : Colors.yellow;
+    Color fontColor = messageType == "Error" ? Colors.white : Colors.black;
+
+    context.showSnackBar(
+      SnackBar(
+        backgroundColor: backgroundColor,
+        behavior: SnackBarBehavior.floating,
+        content: Text(
+          message,
+          style: TextStyle(color: fontColor, fontSize: 16.0),
+        ),
+        duration: Duration(seconds: duration),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        margin: EdgeInsets.all(10),
+        elevation: 6,
+        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      ),
+    );
   }
 
   Center showStatus(String status) {
@@ -99,11 +184,39 @@ class Helper {
   Future<IdTokenResult> getIdTokenResult() async {
     final User? user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      throw Exception('User not logged in.');
+      throw Exception('User does not exist!');
     }
 
     return await user.getIdTokenResult();
   }
+
+  Future<Map<String, dynamic>> getCurrentUserDetails() async {
+
+    IdTokenResult idTokenResult = await getIdTokenResult();
+
+    FirebaseAuth auth = FirebaseAuth.instance;
+    User? user = auth.currentUser;
+
+    final userUid = user!.uid;
+    final userEmail = user.email;
+    final userName = user.displayName;
+
+    final token = idTokenResult.token;
+    final customClaims = idTokenResult.claims;
+    final userRole = customClaims?['role'];
+    final userDomain = customClaims?['domain'];
+
+    return {
+      'userUid': userUid,
+      'userEmail': userEmail,
+      'userName': userName,
+      'userRole': userRole,
+      'userDomain': userDomain,
+      'token': token
+    };
+
+  }
+
 }
 
 
@@ -114,6 +227,10 @@ class DocumentOperations {
 
   Map<String, dynamic> getProgressNotifierDict() {
     return _progressNotifierDict;
+  }
+
+  void setProgressNotifierDictValue(String documentId) {
+    _progressNotifierDict[documentId] = ValueNotifier<double>(0.0);
   }
 
   void clearProgressNotifierDict() {
@@ -272,7 +389,7 @@ class DocumentOperations {
   }
 
   bool isText(String documentUrl) {
-    final imageExtensions = ['.doc', '.txt', '.text', '.py', '.docx'];
+    final imageExtensions = ['.doc', '.txt', '.text', '.py'];
     final lowerCaseUrl = documentUrl.toLowerCase();
     return imageExtensions.any((ext) => lowerCaseUrl.endsWith(ext));
   }
@@ -292,7 +409,7 @@ class DocumentOperations {
   }
 
   Future<Map<String, dynamic>> fetchDocumentContent(String documentUrl, String documentName) async {
-    bool isPdf = documentName.endsWith('.pdf');
+    bool isPdf = documentName.endsWith('.pdf') || documentName.endsWith('.docx');
     bool isImg = false;
     bool isTxt = false;
     if (!isPdf) {
@@ -321,12 +438,202 @@ class DocumentOperations {
     }
   }
 
-  void selectDocumentsForUpload() {
-    print("test upload select files");
+  Future<List<File>> selectDocumentsForUpload() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(allowMultiple: true);
+    List<File> files = [];
+
+    if (result != null) {
+      files = result.files.map((file) => File(file.path!)).toList();
+    }
+    return files;
   }
 
-  void uploadDocuments() {
-    print("test upload");
+  Future<Map<String, String>> _addDocument(
+      Reference ref,
+      Map<String, dynamic> userDetails,
+      String documentName,
+      String category,
+      ) async {
+    String userDomain = userDetails['userDomain'];
+    String userRole = userDetails['userRole'];
+    String userDomainLowerCase = userDomain.toLowerCase();
+    DateTime expirationTime = DateTime.now().add(const Duration(days: 365)); // 1 year from now
+    String downloadURL = await ref.getDownloadURL();
+    String errorMessage = "";
+    bool isError = false;
+
+    try {
+      // Check if the document exists
+      QuerySnapshot existingDocs = userRole == 'client'
+          ? await FirebaseFirestore.instance
+            .collection('documents_$userDomainLowerCase')
+            .where('owner', isEqualTo: userDetails['userUid'])
+            .where('category', isEqualTo: category)
+            .where('document_name', isEqualTo: documentName)
+            .where('user_domain', isEqualTo: userDomain)
+            .get()
+          : await FirebaseFirestore.instance
+          .collection('documents_$userDomainLowerCase')
+          .where('owner', isEqualTo: userDetails['userUid'])
+          .where('category', isEqualTo: category)
+          .where('document_name', isEqualTo: documentName)
+          .where('user_domain', isEqualTo: userDomain)
+          .get() ;
+
+      if (existingDocs.docs.isNotEmpty) {
+        print('Updating existing document...: $documentName');
+        // Update the existing document
+        String docId = existingDocs.docs[0].id;
+        DocumentReference documentRef =
+        FirebaseFirestore.instance.collection('documents_$userDomainLowerCase').doc(
+            docId);
+
+        await documentRef.update({
+          "last_update": FieldValue.serverTimestamp(),
+          "is_new": false
+          // Add fields to update here as needed
+        });
+
+        print('Updated existing document: $documentName');
+      } else {
+        print('Adding new document: $documentName');
+        print('documents_$userDomainLowerCase');
+        // Create a new document
+        await FirebaseFirestore.instance.collection('documents_$userDomainLowerCase')
+            .add({
+          "user_name": userDetails['userName'],
+          "user_email": userDetails['userEmail'],
+          "owner": userDetails['userUid'],
+          "category": category,
+          "user_domain": userDomain,
+          "document_name": documentName,
+          "document_url": downloadURL,
+          "year": DateTime
+              .now()
+              .year,
+          "deleted_at": null,
+          "last_update": FieldValue.serverTimestamp(),
+          "is_new": true,
+        });
+
+        print('Added new document...: $documentName');
+      }
+    } catch (e) {
+      errorMessage = '$e';
+      isError = true;
+    }
+
+    return isError ? {
+      'status': 'Error',
+      'message': errorMessage
+    } : {
+      'status': 'Success',
+      'message': ""
+    };
+
+  }
+
+  Future<void> uploadDocuments(String? documentId, ScaffoldMessengerState context) async {
+    Helper _helper = Helper();
+    List<File> files = await selectDocumentsForUpload();
+    String? errorMessage;
+
+    if (files.isEmpty) {
+      errorMessage = "No Documents available for upload";
+      _helper.showSnackBar(errorMessage, 'Error', context);
+      return;
+    }
+
+    if (documentId == null) {
+      errorMessage = "Document Id must not be null";
+      _helper.showSnackBar(errorMessage, 'Error', context);
+      return;
+    }
+
+    int totalBytes = await _helper.getTotalBytes(files);
+    int totalBytesTransferred = 0;
+
+    try {
+      Map<String, dynamic> userDetails = await _helper.getCurrentUserDetails();
+      String category = "YourUploads";
+      int year = DateTime.now().year;
+      String userDomain = userDetails['userDomain'].toLowerCase();
+      String token = userDetails['token'];
+
+      // First Reset the Progress Bar
+      _progressNotifierDict[documentId].value = 0.0;
+      double progress = 0.0;
+
+      for (File file in files) {
+        String documentName = file.path.split('/').last; // Get the document name
+        String documentPath =
+            '$userDomain/'
+            '$category/'
+            '$year/'
+            '/${userDetails['userUid']}/'
+            '${userDetails['userName']}/'
+            '$documentName';
+
+        //Map<String, dynamic> result = await _helper.getSignedUrl(documentPath, token);
+
+        // TODO and use instead of getDownloadURL
+        /*if (result['status'] == 'Failed') {
+          return result['error'];
+        }
+        signedUrl = result['signedUrl'];
+         */
+
+        Reference ref = FirebaseStorage.instance.ref().child(documentPath);
+        try {
+          ref.putFile(file).snapshotEvents.listen((taskSnapshot) async {
+            switch (taskSnapshot.state) {
+              case TaskState.running:
+                totalBytesTransferred += taskSnapshot.bytesTransferred;
+                // Might happen if the event is triggered several times for the same file
+                if (totalBytesTransferred >= totalBytes) {
+                  progress = 100.0;
+                } else {
+                  progress = (totalBytesTransferred / totalBytes) * 100.0;
+                }
+                _progressNotifierDict[documentId].value = progress;
+                break;
+              case TaskState.paused:
+                String errorMessage = "Upload task is paused for $documentName";
+                _helper.showSnackBar(errorMessage, 'Error', context);
+                break;
+              case TaskState.success:
+                Map<String, String> result = await _addDocument(ref, userDetails, documentName, category);
+                if (result['status'] == 'Error') {
+                  _progressNotifierDict[documentId].value = 0.0;
+                  String? errorMessage = result['message'];
+                  _helper.showSnackBar(errorMessage ?? "Default Error Message", 'Error', context);
+                } else {
+                  _helper.showSnackBar("Document $documentName uploaded successfully", 'Success', context);
+                }
+                break;
+              case TaskState.canceled:
+                String errorMessage = "Upload task is cancelled for $documentName";
+                _helper.showSnackBar(errorMessage, 'Error', context);
+                break;
+              case TaskState.error:
+                String errorMessage = "Upload task produced and error for $documentName";
+                _helper.showSnackBar(errorMessage, 'Error', context);
+                break;
+              default:
+                String errorMessage = "Upload task produced and error for $documentName";
+                _helper.showSnackBar(errorMessage, 'Error', context);
+                break;
+            }
+          });
+        } catch (e) {
+          _helper.showSnackBar('$e', 'Error', context);
+          return;
+        }
+      }
+    } catch (e) {
+      _helper.showSnackBar('$e', 'Error', context);
+      return;
+    }
   }
 
   Future<String> downloadDocument(Document document, String downloadPath) async {

@@ -31,8 +31,8 @@ class _DashboardSectionState extends State<DashboardSection> {
       DashboardItem(
         id: "1",
         title: "Document Library",
-        description: "Access all your documents from the cloud..",
-        detailedDescription: "Effortlessly access, download, and seamlessly navigate through your comprehensive document library, "
+        description: "Access all your documents..",
+        detailedDescription: "Effortlessly access, download, and seamlessly navigate through our comprehensive document library, "
             "\n ensuring easy and efficient management of all your important files.",
         buttonText: "Access your Docs",
         icon: Icons.folder,
@@ -41,8 +41,8 @@ class _DashboardSectionState extends State<DashboardSection> {
       DashboardItem(
         id: "2",
         title: "Document Upload",
-        description: "Upload your documents to the cloud..",
-        detailedDescription: "Empower your solar panel planning by effortlessly uploading your own documents to the cloud, "
+        description: "Upload your documents..",
+        detailedDescription: "Empower your solar panel planning by effortlessly uploading your own documents to our cloud, "
           "\nlaying the foundation for personalized solar panel design tailored to your specific needs.",
         buttonText: "Upload your Docs",
         icon: Icons.cloud_upload,
