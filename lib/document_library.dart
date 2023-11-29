@@ -408,7 +408,7 @@ class CustomListWidget extends StatelessWidget {
           title: Text(
             'Domain: $domain',
             style: const TextStyle(
-              fontSize: 18,
+              fontSize: 24,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -422,7 +422,7 @@ class CustomListWidget extends StatelessWidget {
               title: Text(
                 'Year: $year',
                 style: const TextStyle(
-                  fontSize: 16,
+                  fontSize: 22,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -436,7 +436,7 @@ class CustomListWidget extends StatelessWidget {
                   title: Text(
                     'Category: $category',
                     style: const TextStyle(
-                      fontSize: 14,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -447,7 +447,7 @@ class CustomListWidget extends StatelessWidget {
                       title: Text(
                         'Customer: $user',
                         style: const TextStyle(
-                          fontSize: 14,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
