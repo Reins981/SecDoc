@@ -184,7 +184,7 @@ class Helper {
   Future<IdTokenResult> getIdTokenResult() async {
     final User? user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      throw Exception('User does not exist!');
+      throw Exception('User is not signed in!');
     }
 
     return await user.getIdTokenResult();
@@ -389,9 +389,15 @@ class DocumentOperations {
   }
 
   bool isText(String documentUrl) {
-    final imageExtensions = ['.doc', '.txt', '.text', '.py'];
+    final imageExtensions = ['.txt', '.py'];
     final lowerCaseUrl = documentUrl.toLowerCase();
     return imageExtensions.any((ext) => lowerCaseUrl.endsWith(ext));
+  }
+
+  bool isDoc(String documentUrl) {
+    final docExtensions = ['.doc', '.docx'];
+    final lowerCaseUrl = documentUrl.toLowerCase();
+    return docExtensions.any((ext) => lowerCaseUrl.endsWith(ext));
   }
 
   Future<String> deleteDocument(String documentId, String collectionPath) async {
@@ -409,32 +415,46 @@ class DocumentOperations {
   }
 
   Future<Map<String, dynamic>> fetchDocumentContent(String documentUrl, String documentName) async {
-    bool isPdf = documentName.endsWith('.pdf') || documentName.endsWith('.docx');
+    bool isPdf = documentName.endsWith('.pdf');
     bool isImg = false;
     bool isTxt = false;
-    if (!isPdf) {
-      isImg = isImage(documentName);
+    bool isDocx = false;
+    isImg = isImage(documentName);
+    isTxt = isText(documentName);
+    isDocx = isDoc(documentName);
 
-      if (!isImg) {
-        isTxt = isText(documentName);
-      }
-    }
+    String downloadPath = await createDownloadPathForFile(documentName);
 
     try {
       final response = await http.get(Uri.parse(documentUrl));
 
       if (response.statusCode == 200) {
+
+        dynamic content;
+        if (isPdf) {
+          content = response.bodyBytes;
+        } else if (isTxt) {
+          content = response.body.toString();
+        } else if (isDocx) {
+          Uint8List bytes = response.bodyBytes;
+          await File(downloadPath).writeAsBytes(bytes);
+          content = downloadPath;
+        } else {
+          content = null;
+        }
+
         return {
-          'bytes': isPdf == false && isImg == false ? response.body.toString() : response.bodyBytes, // Document content as Uint8List
+          'bytes': content, // Document content
           'isPdf': isPdf, // Boolean indicating if it's a PDF
           'isImg': isImg,
-          'isTxt': isTxt
+          'isTxt': isTxt,
+          'isDocx': isDocx
         };
       } else {
-        return {'bytes': null, 'isPdf': false, 'isImg': false, 'isTxt': false}; // Return null bytes and false for isPdf
+        return {'bytes': null, 'isPdf': false, 'isImg': false, 'isTxt': false, 'isDocx': false}; // Return null bytes and false for isPdf
       }
     } catch (e) {
-      return {'bytes': null, 'isPdf': false, 'isImg': false, 'isTxt': false}; // Return null bytes and false for isPdf on error
+      return {'bytes': null, 'isPdf': false, 'isImg': false, 'isTxt': false, 'isDocx': false}; // Return null bytes and false for isPdf on error
     }
   }
 
@@ -530,7 +550,6 @@ class DocumentOperations {
       'status': 'Success',
       'message': ""
     };
-
   }
 
   Future<void> uploadDocuments(String? documentId, ScaffoldMessengerState context) async {

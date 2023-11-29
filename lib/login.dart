@@ -2,96 +2,150 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'helpers.dart';
 import 'dashboard_section.dart';
-import 'biometric_setup.dart';
+import 'biometric_service.dart';
 
-class LoginScreen extends StatelessWidget {
+
+class LoginScreen extends StatefulWidget {
 
   final DocumentOperations docOperations;
 
-  LoginScreen({super.key, required this.docOperations});
+  const LoginScreen({
+    super.key,
+    required this.docOperations});
 
+  @override
+  _LoginScreenState createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final Helper _helper = Helper();
+  bool _biometricsEnabled = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.blue, Colors.indigo],
-          ),
-        ),
-        child: Center(
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                const SizedBox(height: 80),
-                Image.asset(
-                  'assets/logo.jpg',
-                  width: 120,
-                  height: 120,
-                ),
-                const SizedBox(height: 20),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 30),
-                  child: Column(
-                    children: [
-                      TextFormField(
-                        controller: _emailController,
-                        decoration: const InputDecoration(
-                          prefixIcon: Icon(Icons.email),
-                          labelText: 'Email',
+      backgroundColor: Colors.white,
+      body: Center(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: 80),
+              Image.asset(
+                'assets/logo.jpg',
+                width: 120,
+                height: 120,
+              ),
+              const SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 30),
+                child: Column(
+                  children: [
+                    TextFormField(
+                      controller: _emailController,
+                      decoration: InputDecoration(
+                        prefixIcon: Icon(Icons.email),
+                        labelText: 'Email',
+                        fillColor: Colors.yellow[200],
+                        filled: true,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide.none,
                         ),
                       ),
-                      const SizedBox(height: 15),
-                      TextFormField(
-                        controller: _passwordController,
-                        obscureText: true,
-                        decoration: const InputDecoration(
-                          prefixIcon: Icon(Icons.lock),
-                          labelText: 'Password',
+                      style: const TextStyle(color: Colors.black),
+                    ),
+                    const SizedBox(height: 15),
+                    TextFormField(
+                      controller: _passwordController,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        prefixIcon: Icon(Icons.lock),
+                        labelText: 'Password',
+                        fillColor: Colors.yellow[200],
+                        filled: true,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide.none,
                         ),
                       ),
-                      const SizedBox(height: 20),
-                      ElevatedButton(
-                        onPressed: () async {
-                          await _handleLogin(context);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          foregroundColor: Colors.blue,
-                          backgroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          textStyle: const TextStyle(fontSize: 18),
-                          minimumSize: const Size(double.infinity, 60),
+                      style: TextStyle(color: Colors.black),
+                    ),
+                    const SizedBox(height: 20),
+                    SwitchListTile(
+                      title: const Text(
+                        'Enable Biometrics',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 18.0,
                         ),
-                        child: const Text('Login'),
                       ),
-                      const SizedBox(height: 10),
-                      TextButton(
-                        onPressed: () {
+                      value: _biometricsEnabled,
+                      onChanged: (value) {
+                        setState(() {
+                          _biometricsEnabled = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: _biometricsEnabled
+                          ? () async {
+                        await _handleLogin(context, true);
+                      }
+                          : () async {
+                        await _handleLogin(context, false);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        textStyle: TextStyle(fontSize: 18),
+                        minimumSize: Size(double.infinity, 60),
+                      ),
+                      child: const Text(
+                        'Login',
+                        style: TextStyle(
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    TextButton(
+                      onPressed: () {
                         // TODO: Implement password recovery logic
-                        },
-                        child: const Text('Forgot Password?'),
+                      },
+                      child: const Text(
+                        'Forgot Password?',
+                        style: TextStyle(
+                          color: Colors.black,
+                        ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Future<void> _handleLogin(BuildContext context) async {
+  Future<void> _handleLogin(BuildContext context, bool preserveAuthenticationState) async {
+
+    if (preserveAuthenticationState) {
+      print("Persist Authentication state");
+      BiometricsService.setBiometricsEnabled(true);
+    } else {
+      print("Authentication state will not be preserved");
+      BiometricsService.setBiometricsEnabled(false);
+    }
+
     ScaffoldMessengerState scaffoldContext = ScaffoldMessenger.of(context);
 
     try {
@@ -124,7 +178,7 @@ class LoginScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return _WelcomeDialog(displayName: displayName, docOperations: docOperations);
+        return _WelcomeDialog(displayName: displayName, docOperations: widget.docOperations);
       },
     );
   }

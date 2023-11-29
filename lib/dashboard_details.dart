@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'helpers.dart';
 import 'document_library.dart';
 import 'progress_bar.dart';
-import 'biometric_setup.dart';
 
 class DetailedDashboardPage extends StatelessWidget {
   final DashboardItem dashboardItem;
@@ -19,8 +18,8 @@ class DetailedDashboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<IdTokenResult>(
-        future: helper.getIdTokenResult(),
+    return FutureBuilder<Map<String, dynamic>>(
+        future: helper.getCurrentUserDetails(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -34,16 +33,8 @@ class DetailedDashboardPage extends StatelessWidget {
             return helper.showStatus('No user data available');
           }
 
-          final idTokenResult = snapshot.data!;
-          final customClaims = idTokenResult.claims;
-          final userRole = customClaims?['role'];
-
-          FirebaseAuth auth = FirebaseAuth.instance;
-          User? user = auth.currentUser;
-
-          if (user == null) {
-            return helper.showStatus('The user does not exist.');
-          }
+          Map<String, dynamic> userDetails = snapshot.data!;
+          final userRole = userDetails['userRole'];
 
           String documentId = "uploadDocIdDefault";
           docOperations.setProgressNotifierDictValue(documentId);
@@ -127,12 +118,12 @@ class DetailedDashboardPage extends StatelessWidget {
                             ),
                         ),
                         Visibility(
-                          visible: dashboardItem.itemType == DashboardItemType.bio,
+                          visible: dashboardItem.itemType == DashboardItemType.ai,
                           child:
                           ElevatedButton(
                             onPressed: () {
-                              Navigator.of(context).pushReplacement(MaterialPageRoute(
-                                builder: (context) => BiometricSetupScreen()));
+                              /*Navigator.of(context).pushReplacement(MaterialPageRoute(
+                                builder: (context) => AIPlanningScreen()));*/
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.yellow.withOpacity(1.0),

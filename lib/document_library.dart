@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'login.dart'; // Import the LoginScreen to navigate back after logout
 import 'dart:async'; // Import the async package for using StreamController
 import 'package:rxdart/rxdart.dart';
 import 'progress_bar.dart';
@@ -43,10 +42,7 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
     final FirebaseAuth auth = FirebaseAuth.instance;
     await auth.signOut();
     widget.documentOperations.clearProgressNotifierDict();
-
-    Navigator.of(context).pushReplacement(MaterialPageRoute(
-      builder: (context) => LoginScreen(docOperations: widget.documentOperations),
-    ));
+    Navigator.pushReplacementNamed(context, '/login');
   }
 
   void onRefresh() {
@@ -148,14 +144,8 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
               return Center(child: Text(snapshot.error.toString()));
             }
 
-            if (!snapshot.hasData) {
+            if (!snapshot.hasData || snapshot.data == null) {
               return const Center(child: Text('No documents available.'));
-            }
-
-            if (snapshot.data == null) {
-              String errorMessage = snapshot.error?.toString() ??
-                  'No documents available.';
-              return Center(child: Text(errorMessage));
             }
 
             final data = snapshot.data;
@@ -293,12 +283,6 @@ class _DocumentListWidgetState extends State<DocumentListWidget> {
 
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
-              }
-
-              if (snapshot.data == null) {
-                String errorMessage = snapshot.error?.toString() ??
-                    'No documents available.';
-                return Center(child: Text(errorMessage));
               }
 
               if (snapshot.hasError) {

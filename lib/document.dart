@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:sec_doc/helpers.dart';
+import 'package:flutter_filereader/flutter_filereader.dart';
 
 
 class Document {
@@ -92,6 +93,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
             bool isPdf = data['isPdf'];
             bool isImg = data['isImg'];
             bool isTxt = data['isTxt'];
+            bool isDoxc = data['isDocx'];
 
             if (bytes == null) {
               return widget.helper.showStatus("Unable to show document");
@@ -124,6 +126,15 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                     bytes,
                     style: const TextStyle(fontSize: 16.0),
                   ),
+                );
+              }
+              catch (e) {
+                return widget.helper.showStatus('$e');
+              }
+            } else if (isDoxc) {
+              try {
+                return FileReaderView(
+                  filePath: bytes, // Use null as a placeholder
                 );
               }
               catch (e) {

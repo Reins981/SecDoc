@@ -51,14 +51,12 @@ class _DashboardSectionState extends State<DashboardSection> {
       ),
       DashboardItem(
           id: "3",
-          title: "Biometric Login",
-          description: "Easy Login",
-          detailedDescription: "Experience the convenience of secure and effortless access with our biometric login feature. "
-              "\nWith just a touch of your fingerprint, gain instant and secure access to your account. "
-              "\nOur biometric login ensures a seamless authentication process, allowing you to skip entering passwords and providing a hassle-free way to access your account.",
-          buttonText: "Set Up Your Biometrics",
-          icon: Icons.fingerprint,
-          itemType: DashboardItemType.bio
+          title: "Solar AI",
+          description: "Plan with AI",
+          detailedDescription: "Next generation AI planning of solar panels",
+          buttonText: "Calculate your requirements",
+          icon: Icons.code,
+          itemType: DashboardItemType.ai
       ),
       // Add more news items as needed
     ];
@@ -70,10 +68,7 @@ class _DashboardSectionState extends State<DashboardSection> {
     final FirebaseAuth auth = FirebaseAuth.instance;
     await auth.signOut();
     widget.docOperations.clearProgressNotifierDict();
-
-    Navigator.of(context).pushReplacement(MaterialPageRoute(
-      builder: (context) => LoginScreen(docOperations: widget.docOperations),
-    ));
+    Navigator.pushReplacementNamed(context, '/login');
   }
 
   @override

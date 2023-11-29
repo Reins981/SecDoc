@@ -7,23 +7,61 @@ import 'package:provider/provider.dart';
 import 'helpers.dart';
 import 'document_provider.dart';
 import 'dashboard_section.dart';
+import 'biometric_setup.dart';
+import 'biometric_service.dart';
+
+class AppLifecycleObserver with WidgetsBindingObserver {
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    /*if (state == AppLifecycleState.paused) {
+      print('App is about to enter state $state');
+    }*/
+  }
+}
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Ensure that the widgets are initialized
+  var observer = AppLifecycleObserver();
+  WidgetsBinding.instance.addObserver(observer);
   await Firebase.initializeApp(); // Initialize Firebase
   runApp(MyApp());
 }
 
-class MyApp extends StatelessWidget {
-  MyApp({super.key});
+class MyApp extends StatefulWidget {
+  MyApp({Key? key}) : super(key: key);
 
+  @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
   final DocumentOperations docOperations = DocumentOperations();
+  final AppLifecycleObserver appObserver = AppLifecycleObserver();
+  bool _biometricsEnabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkBiometricsEnabled();
+  }
+
+  Future<void> _checkBiometricsEnabled() async {
+    // Check if biometrics are enabled for the user
+    // Fetch from shared preferences
+    bool biometricsEnabled = await BiometricsService.getBiometricsEnabled();
+
+    setState(() {
+      _biometricsEnabled = biometricsEnabled;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => DocumentProvider(docOperations: docOperations)), // Example provider
+        ChangeNotifierProvider(create: (_) => DocumentProvider(docOperations: docOperations)),
         // Add other providers here as needed
       ],
       child: MaterialApp(
@@ -32,10 +70,11 @@ class MyApp extends StatelessWidget {
           primarySwatch: Colors.blue,
           fontFamily: 'Montserrat',
         ),
-        home: LoadingPage(),
+        home: LoadingPage(biometricsEnabled: _biometricsEnabled),
         routes: {
           '/login': (context) => LoginScreen(docOperations: docOperations),
           '/dashboard': (context) => DashboardSection(docOperations: docOperations),
+          '/biometric': (context) => AuthenticatedScreen(),
           // ... other routes
         },
         onGenerateRoute: (settings) {
@@ -50,7 +89,13 @@ class MyApp extends StatelessWidget {
   }
 }
 
+
 class LoadingPage extends StatefulWidget {
+
+  final bool biometricsEnabled;
+
+  LoadingPage({Key? key, required this.biometricsEnabled});
+
   @override
   _LoadingPageState createState() => _LoadingPageState();
 }
@@ -77,7 +122,14 @@ class _LoadingPageState extends State<LoadingPage>
     );
 
     Timer(const Duration(seconds: 2), () {
-      Navigator.pushReplacementNamed(context, '/login');
+      User? user = FirebaseAuth.instance.currentUser;
+
+      if (user != null && widget.biometricsEnabled) {
+        // User is signed in and biometrics have been enabled
+        Navigator.pushReplacementNamed(context, '/biometric');
+      } else {
+        Navigator.pushReplacementNamed(context, '/login');
+      }
     });
   }
 
