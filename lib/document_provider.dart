@@ -66,9 +66,6 @@ class DocumentProvider extends ChangeNotifier {
   void _searchDocumentByNames(String searchText, List<DocumentSnapshot> documentsOrig) {
     List<DocumentSnapshot> allDocumentsCopy = List.from(documentsOrig);
     // Logic to filter documents by the given Text Input
-    print("InFilter");
-    print("Documents Orig are:");
-    print(documentsOrig);
     List<DocumentSnapshot> filteredDocuments = allDocumentsCopy
         .where((doc) =>
     doc['document_name']
@@ -80,6 +77,10 @@ class DocumentProvider extends ChangeNotifier {
             .contains(searchText.toLowerCase())
         ||
         doc['user_email']
+            .toLowerCase()
+            .contains(searchText.toLowerCase())
+        ||
+        doc['category']
             .toLowerCase()
             .contains(searchText.toLowerCase()))
         .toList();

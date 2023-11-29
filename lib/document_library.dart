@@ -239,7 +239,7 @@ class _DocumentListWidgetState extends State<DocumentListWidget> {
             child: TextField(
               controller: widget.searchController,
               decoration: InputDecoration(
-                labelText: 'Enter Document, User or Email',
+                labelText: 'Enter Document, User, Email or Category',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10.0),
                   borderSide: const BorderSide(

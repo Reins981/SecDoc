@@ -574,7 +574,7 @@ class DocumentOperations {
 
     try {
       Map<String, dynamic> userDetails = await _helper.getCurrentUserDetails();
-      String category = "YourUploads";
+      String category = "Customer";
       int year = DateTime.now().year;
       String userDomain = userDetails['userDomain'].toLowerCase();
       String token = userDetails['token'];
