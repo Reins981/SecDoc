@@ -49,7 +49,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       decoration: InputDecoration(
                         prefixIcon: Icon(Icons.email),
                         labelText: 'Email',
-                        fillColor: Colors.yellow[200],
+                        fillColor: Colors.yellow,
                         filled: true,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -65,7 +65,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       decoration: InputDecoration(
                         prefixIcon: Icon(Icons.lock),
                         labelText: 'Password',
-                        fillColor: Colors.yellow[200],
+                        fillColor: Colors.yellow,
                         filled: true,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
