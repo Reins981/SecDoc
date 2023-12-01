@@ -57,7 +57,7 @@ class DocumentProvider extends ChangeNotifier {
       _debounceTimer!.cancel(); // Cancel the previous timer if it's active
     }
 
-    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
       _searchDocumentByNames(searchText, documentsOrig); // Perform search after a delay
     });
   }
