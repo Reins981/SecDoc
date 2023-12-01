@@ -4,7 +4,6 @@ import 'helpers.dart';
 import 'dashboard_section.dart';
 import 'biometric_service.dart';
 
-
 class LoginScreen extends StatefulWidget {
 
   final DocumentOperations docOperations;
@@ -115,16 +114,32 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    TextButton(
-                      onPressed: () {
-                        // TODO: Implement password recovery logic
-                      },
-                      child: const Text(
-                        'Forgot Password?',
-                        style: TextStyle(
-                          color: Colors.black,
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            // TODO: Implement password recovery logic
+                          },
+                          child: const Text(
+                            'Forgot Password?',
+                            style: TextStyle(
+                              color: Colors.black,
+                            ),
+                          ),
                         ),
-                      ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pushReplacementNamed(context, '/registration');
+                          },
+                          child: const Text(
+                            'Not yet registered?',
+                            style: TextStyle(
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
