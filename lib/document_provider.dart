@@ -64,6 +64,14 @@ class DocumentProvider extends ChangeNotifier {
 
   // Search document by document name or user name
   void _searchDocumentByNames(String searchText, List<DocumentSnapshot> documentsOrig) {
+
+    String? documentStatus;
+    if (searchText.toLowerCase() == "new") {
+      documentStatus = "true";
+    } else if (searchText.toLowerCase() == "updated") {
+      documentStatus = "false";
+    }
+
     List<DocumentSnapshot> allDocumentsCopy = List.from(documentsOrig);
     // Logic to filter documents by the given Text Input
     List<DocumentSnapshot> filteredDocuments = allDocumentsCopy
@@ -82,7 +90,11 @@ class DocumentProvider extends ChangeNotifier {
         ||
         doc['category']
             .toLowerCase()
-            .contains(searchText.toLowerCase()))
+            .contains(searchText.toLowerCase())
+        ||
+        documentStatus != null && doc['is_new']
+            .toString()
+            .contains(documentStatus.toLowerCase()))
         .toList();
 
     if (filteredDocuments.isNotEmpty) {

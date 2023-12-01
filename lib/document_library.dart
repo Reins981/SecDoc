@@ -236,45 +236,45 @@ class _DocumentListWidgetState extends State<DocumentListWidget> {
       children: [
         Padding(
             padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              controller: widget.searchController,
-              decoration: InputDecoration(
-                labelText: 'Enter Document, User, Email or Category',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.0),
-                  borderSide: const BorderSide(
-                    color: Colors.grey,
-                    width: 1.0,
-                  ),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10.0),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(15.0),
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.5),
+                  spreadRadius: 1,
+                  blurRadius: 5,
+                  offset: const Offset(0, 2), // changes position of shadow
                 ),
-                filled: true,
-                fillColor: Colors.white,
-                suffixIcon: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.refresh), // Reset filter icon
-                      onPressed: () {
-                        widget.searchController.text = "";
-                        _isSearch = false;
-                        _isServerUpdate = false;
-                        _isInitialized = false;
-                        widget.onRefresh();
-                      },
-                    ),
-                  ],
+              ],
+            ),
+            child: TextFormField(
+              controller: widget.searchController,
+              style: const TextStyle(fontSize: 18.0), // Adjust font size
+              decoration: InputDecoration(
+                labelText: 'Enter Document, Status, User, Email, or Category',
+                border: InputBorder.none,
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.refresh), // Reset filter icon
+                  onPressed: () {
+                    widget.searchController.text = '';
+                    _isSearch = false;
+                    _isServerUpdate = false;
+                    _isInitialized = false;
+                    widget.onRefresh();
+                  },
                 ),
               ),
               onChanged: (searchText) {
-                if (searchText.isEmpty) {
-                 _isSearch = false;
-                } else {
-                  _isSearch = true;
-                }
+                setState(() {
+                  _isSearch = searchText.isNotEmpty;
+                });
                 documentProvider.delaySearch(searchText, allDocumentsOrig);
               },
-            )
+            ),
+          ),
         ),
         Expanded(
           child: StreamBuilder<dynamic>(
@@ -394,7 +394,6 @@ class CustomListWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     // Use groupedDocuments to build your custom UI here
     // ...
-
     return ListView.builder(
       itemCount: groupedDocuments.length,
       itemBuilder: (context, index) {
