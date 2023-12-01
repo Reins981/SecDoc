@@ -383,30 +383,60 @@ class DocumentOperations {
   }
 
   bool isImage(String documentUrl) {
-    final imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.ico'];
+    final imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.ico', '.svg'];
     final lowerCaseUrl = documentUrl.toLowerCase();
     return imageExtensions.any((ext) => lowerCaseUrl.endsWith(ext));
   }
 
   bool isText(String documentUrl) {
-    final imageExtensions = ['.txt', '.py'];
+    final textExtensions = ['.txt'];
     final lowerCaseUrl = documentUrl.toLowerCase();
-    return imageExtensions.any((ext) => lowerCaseUrl.endsWith(ext));
+    return textExtensions.any((ext) => lowerCaseUrl.endsWith(ext));
   }
 
-  bool isDoc(String documentUrl) {
-    final docExtensions = ['.doc', '.docx'];
+  bool isPdf(String documentUrl) {
+    final pdfExtensions = ['.pdf'];
     final lowerCaseUrl = documentUrl.toLowerCase();
-    return docExtensions.any((ext) => lowerCaseUrl.endsWith(ext));
+    return pdfExtensions.any((ext) => lowerCaseUrl.endsWith(ext));
   }
 
-  Future<String> deleteDocument(String documentId, String collectionPath) async {
+  Future<String> deleteDocument(String documentId, Document document, String collectionPath) async {
     try {
       final CollectionReference collectionReference =
       FirebaseFirestore.instance.collection(collectionPath);
 
       // Delete the document
       await collectionReference.doc(documentId).delete();
+
+      String status = await deleteFileFromStorage(document);
+
+      return status == 'Success' ? 'Success' : status;
+    } catch (e) {
+      String errorMessage = '$e';
+      return errorMessage;
+    }
+  }
+
+  Future<String> deleteFileFromStorage(Document document) async {
+
+    String userDomain = document.domain.toLowerCase();
+    String userName = document.userName;
+    int year = document.year;
+    String category = document.category;
+    String owner = document.owner;
+    String documentName = document.name;
+
+    String documentPath =
+        '$userDomain/'
+        '$category/'
+        '$year/'
+        '$owner/'
+        '$userName/'
+        '$documentName';
+
+    try {
+      final Reference ref = FirebaseStorage.instance.ref().child(documentPath);
+      await ref.delete();
       return 'Success';
     } catch (e) {
       String errorMessage = '$e';
@@ -414,14 +444,11 @@ class DocumentOperations {
     }
   }
 
+
   Future<Map<String, dynamic>> fetchDocumentContent(String documentUrl, String documentName) async {
-    bool isPdf = documentName.endsWith('.pdf');
-    bool isImg = false;
-    bool isTxt = false;
-    bool isDocx = false;
-    isImg = isImage(documentName);
-    isTxt = isText(documentName);
-    isDocx = isDoc(documentName);
+    bool isDocPdf = isPdf(documentName);
+    bool isImg = isImage(documentName);
+    bool isTxt = isText(documentName);
 
     String downloadPath = await createDownloadPathForFile(documentName);
 
@@ -431,30 +458,26 @@ class DocumentOperations {
       if (response.statusCode == 200) {
 
         dynamic content;
-        if (isPdf) {
-          content = response.bodyBytes;
+        if (isDocPdf || isImg) {
+          Uint8List bytes = response.bodyBytes;
+          content = bytes;
         } else if (isTxt) {
           content = response.body.toString();
-        } else if (isDocx) {
-          Uint8List bytes = response.bodyBytes;
-          await File(downloadPath).writeAsBytes(bytes);
-          content = downloadPath;
         } else {
           content = null;
         }
 
         return {
-          'bytes': content, // Document content
-          'isPdf': isPdf, // Boolean indicating if it's a PDF
+          'content': content, // Document content
+          'isPdf': isDocPdf, // Boolean indicating if it's a PDF
           'isImg': isImg,
           'isTxt': isTxt,
-          'isDocx': isDocx
         };
       } else {
-        return {'bytes': null, 'isPdf': false, 'isImg': false, 'isTxt': false, 'isDocx': false}; // Return null bytes and false for isPdf
+        return {'bytes': null, 'isPdf': false, 'isImg': false, 'isTxt': false}; // Return null bytes and false for error cases
       }
     } catch (e) {
-      return {'bytes': null, 'isPdf': false, 'isImg': false, 'isTxt': false, 'isDocx': false}; // Return null bytes and false for isPdf on error
+      return {'bytes': null, 'isPdf': false, 'isImg': false, 'isTxt': false}; // Return null bytes and false for error cases
     }
   }
 
@@ -589,7 +612,7 @@ class DocumentOperations {
             '$userDomain/'
             '$category/'
             '$year/'
-            '/${userDetails['userUid']}/'
+            '${userDetails['userUid']}/'
             '${userDetails['userName']}/'
             '$documentName';
 

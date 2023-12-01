@@ -77,7 +77,7 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
     String collectionPath = 'documents_${document.domain.toLowerCase()}';
 
     try {
-      String status = await widget.documentOperations.deleteDocument(document.id, collectionPath);
+      String status = await widget.documentOperations.deleteDocument(document.id, document, collectionPath);
       if (status != "Success") {
         widget.helper.showSnackBar(status, "Error", scaffoldContext);
         return 'Failed';
