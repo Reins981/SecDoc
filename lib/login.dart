@@ -23,6 +23,52 @@ class _LoginScreenState extends State<LoginScreen> {
   final Helper _helper = Helper();
   bool _biometricsEnabled = false;
 
+  // Function to show an input dialog for the email address
+  Future<void> _showEmailInputDialog(BuildContext context) async {
+    TextEditingController _emailController = TextEditingController();
+
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Reset Password'),
+          content: TextField(
+            controller: _emailController,
+            decoration: const InputDecoration(hintText: 'Enter your email'),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                String email = _emailController.text.trim();
+                Navigator.of(context).pop();
+                await resetPassword(email, context);
+              },
+              child: const Text('Send'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> resetPassword(String email, BuildContext context) async {
+    final scaffoldContext = ScaffoldMessenger.of(context);
+    FirebaseAuth auth = FirebaseAuth.instance;
+
+    try {
+      await auth.sendPasswordResetEmail(email: email);
+      _helper.showSnackBar("A notification has been sent to your email account", "Success", scaffoldContext, duration: 6);
+    } catch (e) {
+      _helper.showSnackBar('$e', "Error", scaffoldContext);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -114,12 +160,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
+                    Wrap(
+                      spacing: 5, // Space between buttons
+                      runSpacing: 5, // Additional space if buttons wrap to the next line
                       children: [
                         TextButton(
-                          onPressed: () {
-                            // TODO: Implement password recovery logic
+                          onPressed: () async {
+                            await _showEmailInputDialog(context);
                           },
                           child: const Text(
                             'Forgot Password?',
