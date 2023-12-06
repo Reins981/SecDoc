@@ -38,6 +38,9 @@ class DetailedDashboardPage extends StatelessWidget {
 
           String documentId = "uploadDocIdDefault";
           docOperations.setProgressNotifierDictValue(documentId);
+          String detailedDescription = userRole == 'client'
+              ? dashboardItem.detailedDescription
+              : dashboardItem.detailedDescriptionAdmin;
 
           return Card(
             elevation: 4,
@@ -82,7 +85,7 @@ class DetailedDashboardPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          dashboardItem.detailedDescription,
+                          detailedDescription,
                           style: GoogleFonts.lato(
                             fontSize: 16,
                             letterSpacing: 1.0,
@@ -151,7 +154,7 @@ class DetailedDashboardPage extends StatelessWidget {
                                 if (userRole == 'client') {
                                   await docOperations.uploadDocuments(documentId, scaffoldContext);
                                 } else {
-                                  await docOperations.uploadDocuments(documentId, scaffoldContext);
+                                  Navigator.pushReplacementNamed(context, '/details');
                                 }
                             },
                             style: ElevatedButton.styleFrom(

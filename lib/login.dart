@@ -34,7 +34,17 @@ class _LoginScreenState extends State<LoginScreen> {
           title: const Text('Reset Password'),
           content: TextField(
             controller: _emailController,
-            decoration: const InputDecoration(hintText: 'Enter your email'),
+            decoration: InputDecoration(
+                hintText: 'Enter your email',
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Colors.yellow, width: 2.0),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Colors.yellow, width: 2.0),
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
           ),
           actions: <Widget>[
             TextButton(

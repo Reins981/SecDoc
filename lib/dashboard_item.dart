@@ -11,6 +11,7 @@ class DashboardItem {
   final String title;
   final String description;
   final String detailedDescription;
+  final String detailedDescriptionAdmin;
   final String buttonText;
   final IconData? icon;
   final dynamic itemType;
@@ -20,6 +21,7 @@ class DashboardItem {
     required this.title,
     required this.description,
     required this.detailedDescription,
+    required this.detailedDescriptionAdmin,
     required this.buttonText,
     required this.icon,
     required this.itemType

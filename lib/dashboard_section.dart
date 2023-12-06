@@ -5,7 +5,6 @@ import 'dashboard_details.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'helpers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'login.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 
 class DashboardSection extends StatefulWidget {
@@ -35,7 +34,9 @@ class _DashboardSectionState extends State<DashboardSection> {
         description: "Seamless Access",
         detailedDescription: "Effortlessly access, download, and seamlessly navigate through our comprehensive document library, "
             "\n ensuring easy and efficient management of all your important files.",
-        buttonText: "Access your Docs",
+        detailedDescriptionAdmin: "Effortlessly access, download, and seamlessly navigate through our comprehensive document library, "
+            "\n ensuring easy and efficient management of all your important files.",
+        buttonText: "Access Documents Now",
         icon: Icons.folder,
         itemType: DashboardItemType.library
       ),
@@ -45,7 +46,9 @@ class _DashboardSectionState extends State<DashboardSection> {
         description: "Easy Upload",
         detailedDescription: "Empower your solar panel planning by effortlessly uploading your own documents to our cloud, "
           "\nlaying the foundation for personalized solar panel design tailored to your specific needs.",
-        buttonText: "Upload your Docs",
+        detailedDescriptionAdmin: "Empower customer solar panel planning by effortlessly uploading Plans and Offers to our cloud, "
+            "\nlaying the foundation for personalized solar panel design tailored to customers specific needs.",
+        buttonText: "Upload Documents Now",
         icon: Icons.cloud_upload,
         itemType: DashboardItemType.upload
       ),
@@ -54,6 +57,7 @@ class _DashboardSectionState extends State<DashboardSection> {
           title: "Solar AI",
           description: "Plan with AI",
           detailedDescription: "Next generation AI planning of solar panels",
+          detailedDescriptionAdmin: "Next generation AI planning of solar panels",
           buttonText: "Calculate your requirements",
           icon: Icons.code,
           itemType: DashboardItemType.ai

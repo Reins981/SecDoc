@@ -10,6 +10,7 @@ import 'dashboard_section.dart';
 import 'biometric_setup.dart';
 import 'biometric_service.dart';
 import 'registration.dart';
+import 'user_details.dart';
 
 class AppLifecycleObserver with WidgetsBindingObserver {
 
@@ -77,6 +78,7 @@ class _MyAppState extends State<MyApp> {
           '/dashboard': (context) => DashboardSection(docOperations: docOperations),
           '/biometric': (context) => AuthenticatedScreen(),
           '/registration': (context) => const RegistrationScreen(),
+          '/details': (context) => UserDetailsScreen(docOperations: docOperations)
           // ... other routes
         },
         onGenerateRoute: (settings) {

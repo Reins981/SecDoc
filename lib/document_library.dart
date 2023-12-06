@@ -95,7 +95,7 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
   Widget build(BuildContext context) {
 
     return FutureBuilder<IdTokenResult>(
-      future: widget.helper.getIdTokenResult(),
+      future: widget.helper.getIdTokenResult(null),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());

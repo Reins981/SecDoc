@@ -179,6 +179,12 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Registration'),
+        leading: IconButton(
+          onPressed: () {
+            Navigator.pushReplacementNamed(context, '/login');
+          },
+          icon: const Icon(Icons.arrow_back),
+        ),
       ),
       body: SingleChildScrollView(
           child: !registrationSuccess ?
@@ -368,7 +374,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     ),
                     SizedBox(height: 20),
                     Text(
-                      'The next steps are:\n- Close this App\n- Verify your email address with the verification link sent to you by email\n- Login with your email address and password',
+                      'The next steps are:\n- Close this App or Return to the Login Screen\n- Verify your email address with the verification link sent to you by email\n- Login with your email address and password',
                       style: TextStyle(fontSize: 16),
                     ),
                   ],

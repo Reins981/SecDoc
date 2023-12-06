@@ -123,7 +123,7 @@ class Helper {
         child: Text(
           status,
           style: const TextStyle(
-            fontSize: 18.0,
+            fontSize: 10.0,
             fontWeight: FontWeight.bold,
             color: Colors.white,
           ),
@@ -181,8 +181,8 @@ class Helper {
     );
   }
 
-  Future<IdTokenResult> getIdTokenResult() async {
-    final User? user = FirebaseAuth.instance.currentUser;
+  Future<IdTokenResult> getIdTokenResult(User? thisUser) async {
+    final User? user = thisUser ?? FirebaseAuth.instance.currentUser;
     if (user == null) {
       throw Exception('User is not signed in!');
     }
@@ -192,29 +192,66 @@ class Helper {
 
   Future<Map<String, dynamic>> getCurrentUserDetails() async {
 
-    IdTokenResult idTokenResult = await getIdTokenResult();
+    try {
+      IdTokenResult idTokenResult = await getIdTokenResult(null);
 
-    FirebaseAuth auth = FirebaseAuth.instance;
-    User? user = auth.currentUser;
+      FirebaseAuth auth = FirebaseAuth.instance;
+      User? user = auth.currentUser;
 
-    final userUid = user!.uid;
-    final userEmail = user.email;
-    final userName = user.displayName;
+      final userUid = user!.uid;
+      final userEmail = user.email;
+      final userName = user.displayName;
 
-    final token = idTokenResult.token;
-    final customClaims = idTokenResult.claims;
-    final userRole = customClaims?['role'];
-    final userDomain = customClaims?['domain'];
+      final token = idTokenResult.token;
+      final customClaims = idTokenResult.claims;
+      final userRole = customClaims?['role'];
+      final userDomain = customClaims?['domain'];
+      final disabled = customClaims?['disabled'];
+      final verified = customClaims?['verified'];
 
-    return {
-      'userUid': userUid,
-      'userEmail': userEmail,
-      'userName': userName,
-      'userRole': userRole,
-      'userDomain': userDomain,
-      'token': token
-    };
+      return {
+        'userUid': userUid,
+        'userEmail': userEmail,
+        'userName': userName,
+        'userRole': userRole,
+        'userDomain': userDomain,
+        'token': token,
+        'disabled': disabled,
+        'verified': verified
+      };
+    } catch (e) {
+      rethrow;
+    }
+  }
 
+  Future<List<Map<String, dynamic>>> getUserDetails(List<Map<String, dynamic>> users) async {
+
+    List<Map<String, dynamic>> userDetails = [];
+    for (Map<String, dynamic> user in users) {
+      try {
+        final userUid = user['uid'];
+        final userEmail = user['email'];
+        final userName = user['display_name'];
+
+        final userRole = user['customClaims']['role'];
+        final userDomain = user['customClaims']['domain'];
+        final disabled = user['customClaims']['disabled'];
+        final verified = user['customClaims']['verified'];
+
+        userDetails.add( {
+          'userUid': userUid,
+          'userEmail': userEmail,
+          'userName': userName,
+          'userRole': userRole,
+          'userDomain': userDomain,
+          'disabled': disabled,
+          'verified': verified
+        });
+      } catch (e) {
+        rethrow;
+      }
+    }
+    return userDetails;
   }
 
 }
