@@ -56,9 +56,9 @@ class _DashboardSectionState extends State<DashboardSection> {
           id: "3",
           title: "Solar AI",
           description: "Plan with AI",
-          detailedDescription: "Next generation AI planning of solar panels",
-          detailedDescriptionAdmin: "Next generation AI planning of solar panels",
-          buttonText: "Calculate Requirements",
+          detailedDescription: "Revolutionizing solar panel planning through cutting-edge AI technology",
+          detailedDescriptionAdmin: "Revolutionizing solar panel planning through cutting-edge AI technology",
+          buttonText: "Calculate Requirements Now",
           icon: Icons.code,
           itemType: DashboardItemType.ai
       ),
