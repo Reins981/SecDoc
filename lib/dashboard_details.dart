@@ -125,8 +125,7 @@ class DetailedDashboardPage extends StatelessWidget {
                           child:
                           ElevatedButton(
                             onPressed: () {
-                              /*Navigator.of(context).pushReplacement(MaterialPageRoute(
-                                builder: (context) => AIPlanningScreen()));*/
+                              Navigator.pushReplacementNamed(context, '/solar');
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.yellow.withOpacity(1.0),

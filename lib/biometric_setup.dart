@@ -138,7 +138,7 @@ class _AuthenticatedScreenState extends State<AuthenticatedScreen> {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    primary: Colors.blue,
+                    backgroundColor: Colors.blue,
                     padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 14.0),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30.0),

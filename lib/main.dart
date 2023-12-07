@@ -11,6 +11,7 @@ import 'biometric_setup.dart';
 import 'biometric_service.dart';
 import 'registration.dart';
 import 'user_details.dart';
+import 'solar_ai.dart';
 
 class AppLifecycleObserver with WidgetsBindingObserver {
 
@@ -78,7 +79,8 @@ class _MyAppState extends State<MyApp> {
           '/dashboard': (context) => DashboardSection(docOperations: docOperations),
           '/biometric': (context) => AuthenticatedScreen(),
           '/registration': (context) => const RegistrationScreen(),
-          '/details': (context) => UserDetailsScreen(docOperations: docOperations)
+          '/details': (context) => UserDetailsScreen(docOperations: docOperations),
+          '/solar': (context) => SolarDataFetcher()
           // ... other routes
         },
         onGenerateRoute: (settings) {
