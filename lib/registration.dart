@@ -200,6 +200,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       labelText: 'Username',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide.none,
                       ),
                       filled: true,
                       fillColor: Colors.yellow,
@@ -214,6 +215,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       labelText: 'Email',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide.none,
                       ),
                       filled: true,
                       fillColor: Colors.yellow,
@@ -229,6 +231,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       labelText: 'Password',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide.none,
                       ),
                       filled: true,
                       fillColor: Colors.yellow,
@@ -290,6 +293,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     decoration: InputDecoration(
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide.none,
                       ),
                       filled: true,
                       fillColor: Colors.yellow,

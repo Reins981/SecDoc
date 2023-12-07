@@ -142,10 +142,10 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
               labelText: 'Peak Power',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none,
               ),
               filled: true,
               fillColor: Colors.yellow,
-              prefixIcon: const Icon(Icons.person),
             ),
             keyboardType: TextInputType.number,
             style: const TextStyle(color: Colors.black),
@@ -159,10 +159,10 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
               labelText: 'Loss',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none,
               ),
               filled: true,
               fillColor: Colors.yellow,
-              prefixIcon: const Icon(Icons.person),
             ),
             keyboardType: TextInputType.number,
             style: const TextStyle(color: Colors.black),
@@ -176,10 +176,10 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
               labelText: 'Raddatabase',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none,
               ),
               filled: true,
               fillColor: Colors.yellow,
-              prefixIcon: const Icon(Icons.person),
             ),
             keyboardType: TextInputType.text,
             style: const TextStyle(color: Colors.black),
@@ -193,10 +193,10 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
               labelText: 'Pvtechchoice',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none,
               ),
               filled: true,
               fillColor: Colors.yellow,
-              prefixIcon: const Icon(Icons.person),
             ),
             keyboardType: TextInputType.text,
             style: const TextStyle(color: Colors.black),
@@ -210,10 +210,10 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
               labelText: 'Mountingplace',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none,
               ),
               filled: true,
               fillColor: Colors.yellow,
-              prefixIcon: const Icon(Icons.person),
             ),
             keyboardType: TextInputType.text,
             style: const TextStyle(color: Colors.black),
@@ -227,10 +227,10 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
               labelText: 'Angle',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none,
               ),
               filled: true,
               fillColor: Colors.yellow,
-              prefixIcon: const Icon(Icons.person),
             ),
             keyboardType: TextInputType.number,
             style: const TextStyle(color: Colors.black),
@@ -244,10 +244,10 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
               labelText: 'Aspect',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none,
               ),
               filled: true,
               fillColor: Colors.yellow,
-              prefixIcon: const Icon(Icons.person),
             ),
             keyboardType: TextInputType.number,
             style: const TextStyle(color: Colors.black),
@@ -259,21 +259,14 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
           SizedBox(height: 20),
           ElevatedButton(
             onPressed: () {
-              if (_formKey.currentState!.validate()) {
-                fetchSolarData();
-              }
+              fetchSolarData();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blue,
-              padding: const EdgeInsets.symmetric(horizontal: 60.0, vertical: 14.0),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30.0),
-              ),
+              padding: const EdgeInsets.all(20.0),
+              shape: CircleBorder(),
             ),
-            child: const Text(
-              "Calculate",
-              style: TextStyle(color: Colors.white, fontSize: 18.0),
-            ),
+            child: Icon(Icons.calculate, size: 80, color: Colors.white),
           ),
         ],
       ),
