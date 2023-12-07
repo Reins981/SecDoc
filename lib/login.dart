@@ -209,15 +209,6 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleLogin(BuildContext context, bool preserveAuthenticationState) async {
-
-    if (preserveAuthenticationState) {
-      print("Persist Authentication state");
-      BiometricsService.setBiometricsEnabled(true);
-    } else {
-      print("Authentication state will not be preserved");
-      BiometricsService.setBiometricsEnabled(false);
-    }
-
     ScaffoldMessengerState scaffoldContext = ScaffoldMessenger.of(context);
 
     try {
@@ -235,6 +226,23 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       final User user = userCredential.user!;
+      Map<String, dynamic> userDetails = await _helper.getCurrentUserDetails();
+      bool verified = userDetails['verified'];
+
+      if (!verified) {
+        _helper.showSnackBar('User ${user.displayName} is not verified. Please verify your identity first!', 'Error', scaffoldContext);
+        return;
+      }
+
+      // User authentication was successful, now persist the authentication state
+      if (preserveAuthenticationState) {
+        print("Persist Authentication state");
+        BiometricsService.setBiometricsEnabled(true);
+      } else {
+        print("Authentication state will not be preserved");
+        BiometricsService.setBiometricsEnabled(false);
+      }
+
       _showWelcomeAnimation(context, user.displayName!);
     } catch (e) {
       // Handle login error
