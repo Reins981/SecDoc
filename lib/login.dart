@@ -228,9 +228,14 @@ class _LoginScreenState extends State<LoginScreen> {
       final User user = userCredential.user!;
       Map<String, dynamic> userDetails = await _helper.getCurrentUserDetails();
       bool verified = userDetails['verified'];
+      bool disabled = userDetails['disabled'];
 
       if (!verified) {
         _helper.showSnackBar('User ${user.displayName} is not verified. Please verify your identity first!', 'Error', scaffoldContext);
+        return;
+      }
+      if (disabled) {
+        _helper.showSnackBar('User ${user.displayName} is disabled. Please contact the support team!', 'Error', scaffoldContext);
         return;
       }
 
