@@ -175,16 +175,25 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
                   ),
                 ],
               ),
-              body: DocumentListWidget(
-                  mergedData: mergedData,
-                  handleLogout: _handleLogout,
-                  searchController: _searchController,
-                  documentOperations: widget.documentOperations,
-                  callbackDownload: handleDownload,
-                  callbackDelete: handleDelete,
-                  onRefresh: onRefresh,
-                  origStream: data,
-                  helper: widget.helper
+              body: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Card(
+                  elevation: 5,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15.0),
+                  ),
+                  child: DocumentListWidget(
+                    mergedData: mergedData,
+                    handleLogout: _handleLogout,
+                    searchController: _searchController,
+                    documentOperations: widget.documentOperations,
+                    callbackDownload: handleDownload,
+                    callbackDelete: handleDelete,
+                    onRefresh: onRefresh,
+                    origStream: data,
+                    helper: widget.helper,
+                  ),
+                ),
               ),
             );
           },
@@ -394,217 +403,222 @@ class CustomListWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     // Use groupedDocuments to build your custom UI here
     // ...
-    return ListView.builder(
-      itemCount: groupedDocuments.length,
-      itemBuilder: (context, index) {
-        final domain = groupedDocuments.keys.elementAt(
-            index);
-        final yearMap = groupedDocuments[domain]!;
-        final yearList = yearMap.keys.toList();
+    return Theme(
+      data: ThemeData(
+        dividerColor: Colors.transparent,
+      ),
+      child: ListView.builder(
+        itemCount: groupedDocuments.length,
+        itemBuilder: (context, index) {
+          final domain = groupedDocuments.keys.elementAt(
+              index);
+          final yearMap = groupedDocuments[domain]!;
+          final yearList = yearMap.keys.toList();
 
-        return ExpansionTile(
-          initiallyExpanded: isSearch || isServerUpdate,
-          title: Text(
-            'Domain: $domain',
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          children: yearList.map((year) {
-            final categoryMap = yearMap[year]!;
-            final categoryList = categoryMap.keys
-                .toList();
-
-            return ExpansionTile(
-              initiallyExpanded: isSearch || isServerUpdate,
-              title: Text(
-                'Year: $year',
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
+          return ExpansionTile(
+            initiallyExpanded: isSearch || isServerUpdate,
+            title: Text(
+              'Domain: $domain',
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
               ),
-              children: categoryList.map((category) {
-                final userMap = categoryMap[category]!;
-                final userList = userMap.keys
-                    .toList();
+            ),
+            children: yearList.map((year) {
+              final categoryMap = yearMap[year]!;
+              final categoryList = categoryMap.keys
+                  .toList();
 
-                return ExpansionTile(
-                  initiallyExpanded: isSearch || isServerUpdate,
-                  title: Text(
-                    'Category: $category',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+              return ExpansionTile(
+                initiallyExpanded: isSearch || isServerUpdate,
+                title: Text(
+                  'Year: $year',
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
                   ),
-                  children: userList.map((user) {
-                    final documentRepo = userMap[user]!;
-                    return ExpansionTile(
-                      initiallyExpanded: isSearch || isServerUpdate,
-                      title: Text(
-                        'Customer: $user',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                ),
+                children: categoryList.map((category) {
+                  final userMap = categoryMap[category]!;
+                  final userList = userMap.keys
+                      .toList();
+
+                  return ExpansionTile(
+                    initiallyExpanded: isSearch || isServerUpdate,
+                    title: Text(
+                      'Category: $category',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
                       ),
-                      children: [
-                        ListView.builder(
-                          shrinkWrap: true,
-                          physics: NeverScrollableScrollPhysics(),
-                          itemCount: documentRepo
-                              .documents.length,
-                          itemBuilder: (context,
-                              index) {
-                            final document = documentRepo
-                                .documents[index];
-                            return Padding(
-                              padding: const EdgeInsets
-                                  .symmetric(
-                                  horizontal: 8.0),
-                              child: Card(
-                                elevation: 2,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment
-                                      .start,
-                                  children: [
-                                    ListTile(
-                                      onTap: () {
-                                        Navigator
-                                            .push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (
-                                                context) =>
-                                                DocumentDetailScreen(
-                                                    document: document,
-                                                    docOperations: documentOperations,
-                                                    helper: helper
-                                                ),
+                    ),
+                    children: userList.map((user) {
+                      final documentRepo = userMap[user]!;
+                      return ExpansionTile(
+                        initiallyExpanded: isSearch || isServerUpdate,
+                        title: Text(
+                          'Customer: $user',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        children: [
+                          ListView.builder(
+                            shrinkWrap: true,
+                            physics: NeverScrollableScrollPhysics(),
+                            itemCount: documentRepo
+                                .documents.length,
+                            itemBuilder: (context,
+                                index) {
+                              final document = documentRepo
+                                  .documents[index];
+                              return Padding(
+                                padding: const EdgeInsets
+                                    .symmetric(
+                                    horizontal: 8.0),
+                                child: Card(
+                                  elevation: 2,
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment
+                                        .start,
+                                    children: [
+                                      ListTile(
+                                        onTap: () {
+                                          Navigator
+                                              .push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (
+                                                  context) =>
+                                                  DocumentDetailScreen(
+                                                      document: document,
+                                                      docOperations: documentOperations,
+                                                      helper: helper
+                                                  ),
+                                            ),
+                                          );
+                                        },
+                                        title: Text(
+                                          document.name,
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight
+                                                .w500,
                                           ),
-                                        );
-                                      },
-                                      title: Text(
-                                        document.name,
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight
-                                              .w500,
                                         ),
-                                      ),
-                                      subtitle: Column(
-                                        crossAxisAlignment: CrossAxisAlignment
-                                            .start,
-                                        children: [
-                                          Text(
-                                            "Last Update: ${document.lastUpdate?.toDate()}",
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              fontStyle: FontStyle
-                                                  .italic,
+                                        subtitle: Column(
+                                          crossAxisAlignment: CrossAxisAlignment
+                                              .start,
+                                          children: [
+                                            Text(
+                                              "Last Update: ${document.lastUpdate?.toDate()}",
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                fontStyle: FontStyle
+                                                    .italic,
+                                              ),
                                             ),
-                                          ),
-                                          Container(
-                                            decoration: BoxDecoration(
-                                              color: document
-                                                  .isNew
-                                                  ? Colors
-                                                  .yellow
-                                                  : Colors
-                                                  .transparent,
-                                              border: document
-                                                  .isNew
-                                                  ? Border
-                                                  .all(
-                                                color: Colors
-                                                    .yellow,
-                                                // Border color
-                                                width: 1.0, // Border width
-                                              )
-                                                  : null,
-                                              borderRadius: BorderRadius
-                                                  .circular(
-                                                  4.0), // Border radius
-                                            ),
-                                            child: Padding(
-                                              padding: const EdgeInsets
-                                                  .all(
-                                                  4.0),
-                                              // Add padding inside the box
-                                              child: Text(
-                                                "Status: ${document
+                                            Container(
+                                              decoration: BoxDecoration(
+                                                color: document
                                                     .isNew
-                                                    ? 'New'
-                                                    : 'Updated'}",
-                                                style: const TextStyle(
-                                                  fontSize: 14,
-                                                  fontStyle: FontStyle
-                                                      .italic,
+                                                    ? Colors
+                                                    .yellow
+                                                    : Colors
+                                                    .transparent,
+                                                border: document
+                                                    .isNew
+                                                    ? Border
+                                                    .all(
                                                   color: Colors
-                                                      .black, // Text color
+                                                      .yellow,
+                                                  // Border color
+                                                  width: 1.0, // Border width
+                                                )
+                                                    : null,
+                                                borderRadius: BorderRadius
+                                                    .circular(
+                                                    4.0), // Border radius
+                                              ),
+                                              child: Padding(
+                                                padding: const EdgeInsets
+                                                    .all(
+                                                    4.0),
+                                                // Add padding inside the box
+                                                child: Text(
+                                                  "Status: ${document
+                                                      .isNew
+                                                      ? 'New'
+                                                      : 'Updated'}",
+                                                  style: const TextStyle(
+                                                    fontSize: 14,
+                                                    fontStyle: FontStyle
+                                                        .italic,
+                                                    color: Colors
+                                                        .black, // Text color
+                                                  ),
                                                 ),
                                               ),
                                             ),
+                                          ],
+                                        ),
+                                      ),
+                                      ButtonBar(
+                                        alignment: MainAxisAlignment
+                                            .spaceBetween,
+                                        children: [
+                                          ElevatedButton
+                                              .icon(
+                                            onPressed: () async {
+                                              callbackDownload(context, document);
+                                            },
+                                            icon: const Icon(
+                                                Icons
+                                                    .download),
+                                            label: const Text(
+                                                'Download'),
+                                          ),
+                                          ElevatedButton
+                                              .icon(
+                                            onPressed: () async {
+                                              // Avoid uninitialized groupedDocuments from the Provider
+                                              documentProvider.setGroupedDocuments(groupedDocuments);
+                                              String status = await callbackDelete(context, document);
+                                              if (status == 'Success') {
+                                                documentProvider
+                                                    .removeDocumentWithId(
+                                                    document);
+                                              }
+                                            },
+                                            icon: const Icon(
+                                                Icons
+                                                    .delete),
+                                            label: const Text(
+                                                'Delete'),
                                           ),
                                         ],
                                       ),
-                                    ),
-                                    ButtonBar(
-                                      alignment: MainAxisAlignment
-                                          .spaceBetween,
-                                      children: [
-                                        ElevatedButton
-                                            .icon(
-                                          onPressed: () async {
-                                            callbackDownload(context, document);
-                                          },
-                                          icon: const Icon(
-                                              Icons
-                                                  .download),
-                                          label: const Text(
-                                              'Download'),
-                                        ),
-                                        ElevatedButton
-                                            .icon(
-                                          onPressed: () async {
-                                            // Avoid uninitialized groupedDocuments from the Provider
-                                            documentProvider.setGroupedDocuments(groupedDocuments);
-                                            String status = await callbackDelete(context, document);
-                                            if (status == 'Success') {
-                                              documentProvider
-                                                  .removeDocumentWithId(
-                                                  document);
-                                            }
-                                          },
-                                          icon: const Icon(
-                                              Icons
-                                                  .delete),
-                                          label: const Text(
-                                              'Delete'),
-                                        ),
-                                      ],
-                                    ),
-                                    ProgressBar(
-                                      progress: documentOperations
-                                          .getProgressNotifierDict()[document.id],
-                                    ),
-                                  ],
+                                      ProgressBar(
+                                        progress: documentOperations
+                                            .getProgressNotifierDict()[document.id],
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    );
-                  }).toList(),
-                );
-              }).toList(),
-            );
-          }).toList(),
-        );
-      },
+                              );
+                            },
+                          ),
+                        ],
+                      );
+                    }).toList(),
+                  );
+                }).toList(),
+              );
+            }).toList(),
+          );
+        },
+      ),
     );
   }
 }
