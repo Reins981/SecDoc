@@ -80,7 +80,7 @@ class _MyAppState extends State<MyApp> {
           '/biometric': (context) => AuthenticatedScreen(),
           '/registration': (context) => const RegistrationScreen(),
           '/details': (context) => UserDetailsScreen(docOperations: docOperations),
-          '/solar': (context) => SolarDataFetcher()
+          '/solar': (context) => SolarDataFetcher(docOperations: docOperations)
           // ... other routes
         },
         onGenerateRoute: (settings) {
