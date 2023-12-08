@@ -292,15 +292,21 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
     return extractedData;
   }
 
-  Widget buildMonthCard(String title, Map<dynamic, dynamic> data) {
-    List<Widget> subCards = data.entries.map((entry) {
-      if (entry.value is Map<String, dynamic>) {
-        // If the value is a map, build a nested ExpansionTile with sub-cards
-        return buildNestedExpansionTile(entry.key, entry.value);
-      } else {
-        return buildCard(entry.key, entry.value.toString());
-      }
-    }).toList();
+  Widget buildCards(String title, dynamic data) {
+    List<Widget> subCards = [];
+
+    if (data is Map<dynamic, dynamic>) {
+      subCards = data.entries.expand((entry) {
+        if (entry.value is Map<dynamic, dynamic>) {
+          // If the value is a map, recursively generate sub-cards
+          return buildSubCards(entry.key.toString(), entry.value);
+        } else {
+          return [buildCard(entry.key.toString(), entry.value.toString())];
+        }
+      }).toList();
+    } else {
+      subCards.add(buildCard(title, data.toString()));
+    }
 
     return Card(
       elevation: 4,
@@ -322,17 +328,38 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
     );
   }
 
-  Widget buildNestedExpansionTile(String title, Map<dynamic, dynamic> data) {
-    return ExpansionTile(
-      title: Text(title),
-      children: data.entries.map((entry) {
-        if (entry.value is Map<String, dynamic>) {
-          return buildNestedExpansionTile(entry.key, entry.value);
-        } else {
-          return buildCard(entry.key, entry.value.toString());
-        }
-      }).toList(),
-    );
+  List<Widget> buildSubCards(String title, Map<dynamic, dynamic> data) {
+    List<Widget> subCards = [];
+
+    data.forEach((key, value) {
+      if (value is Map<dynamic, dynamic>) {
+        // If the value is a map, recursively generate sub-cards
+        subCards.addAll(buildSubCards(key.toString(), value));
+      } else {
+        subCards.add(buildCard(key.toString(), value.toString()));
+      }
+    });
+
+    return [
+      Card(
+        elevation: 4,
+        margin: EdgeInsets.all(8),
+        child: Padding(
+          padding: EdgeInsets.all(8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8),
+              ...subCards, // Include the generated sub-cards in the Column
+            ],
+          ),
+        ),
+      ),
+    ];
   }
 
   Widget buildCard(String title, String value) {
@@ -986,16 +1013,17 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
             ),
             SizedBox(height: 20),
             if (solarData != null)
-              ...solarData!.entries.map((entry) {
-                if (entry.key.startsWith('Month')
-                    || entry.key.startsWith('Location Data')
-                    || entry.key.startsWith('Mounting System')) {
-                  // Building cards for month details
-                  return buildMonthCard(entry.key, entry.value);
-                } else {
-                  // Building cards for other data (like location, pv_module)
-                  return buildCard(entry.key, entry.value.toString());
+              ...solarData!.entries.expand((entry) {
+                if (entry.value is Map<dynamic, dynamic>) {
+                  return buildSubCards(entry.key.toString(), entry.value);
+                } else if (entry.value is String) {
+                  return [
+                    buildCard(entry.key.toString(), entry.value.toString()),
+                  ];
                 }
+                // Add additional cases if needed (e.g., handling other data types)
+
+                return []; // Default return empty list if no condition is met
               }).toList(),
           ],
         ),
