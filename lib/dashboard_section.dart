@@ -54,14 +54,20 @@ class _DashboardSectionState extends State<DashboardSection> {
       ),
       DashboardItem(
           id: "3",
-          title: "Solar AI",
-          description: "Plan with AI",
-          detailedDescription: "Revolutionizing solar panel planning through cutting-edge AI technology",
-          detailedDescriptionAdmin: "Revolutionizing solar panel planning through cutting-edge AI technology",
-          buttonText: "Calculate Requirements Now",
+          title: "Solar Insights",
+          description: "Gain Performance Forecasts",
+          detailedDescription: "Explore tailored forecasts for solar panel performance across diverse environments, configurations, and conditions. "
+              "Get detailed insights that enable informed decisions about solar installations by predicting efficiency, energy output, and other critical factors crucial "
+              "for optimizing solar projects. "
+              "Send us your specifications for personalized forecasts!",
+          detailedDescriptionAdmin: "Explore tailored forecasts for solar panel performance across diverse environments, configurations, and conditions. "
+              "Get detailed insights that enable informed decisions about solar installations by predicting efficiency, energy output, and other critical factors crucial "
+              "for optimizing solar projects. "
+              "Send us your specifications for personalized forecasts!",
+          buttonText: "Get Forecasts Now",
           icon: Icons.code,
           itemType: DashboardItemType.ai
-      ),
+      )
       // Add more news items as needed
     ];
   }

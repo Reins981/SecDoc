@@ -6,7 +6,7 @@ import 'helpers.dart';
 import 'document_library.dart';
 import 'progress_bar.dart';
 
-class DetailedDashboardPage extends StatelessWidget {
+class DetailedDashboardPage extends StatefulWidget {
   final DashboardItem dashboardItem;
   final Helper helper;
   final DocumentOperations docOperations;
@@ -17,30 +17,38 @@ class DetailedDashboardPage extends StatelessWidget {
     required this.docOperations});
 
   @override
+  _DetailedDashboardPageState createState() => _DetailedDashboardPageState();
+}
+
+class _DetailedDashboardPageState extends State<DetailedDashboardPage> {
+
+  bool isLoading = false;
+
+  @override
   Widget build(BuildContext context) {
     return FutureBuilder<Map<String, dynamic>>(
-        future: helper.getCurrentUserDetails(),
+        future: widget.helper.getCurrentUserDetails(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
           if (snapshot.hasError) {
-            return helper.showStatus('Error loading data: ${snapshot.error}');
+            return widget.helper.showStatus('Error loading data: ${snapshot.error}');
           }
 
           if (!snapshot.hasData) {
-            return helper.showStatus('No user data available');
+            return widget.helper.showStatus('No user data available');
           }
 
           Map<String, dynamic> userDetails = snapshot.data!;
           final userRole = userDetails['userRole'];
 
           String documentId = "uploadDocIdDefault";
-          docOperations.setProgressNotifierDictValue(documentId);
+          widget.docOperations.setProgressNotifierDictValue(documentId);
           String detailedDescription = userRole == 'client'
-              ? dashboardItem.detailedDescription
-              : dashboardItem.detailedDescriptionAdmin;
+              ? widget.dashboardItem.detailedDescription
+              : widget.dashboardItem.detailedDescriptionAdmin;
 
           return Card(
             elevation: 4,
@@ -76,7 +84,7 @@ class DetailedDashboardPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          dashboardItem.title,
+                          widget.dashboardItem.title,
                           style: GoogleFonts.lato(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
@@ -93,93 +101,141 @@ class DetailedDashboardPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 16),
                         Visibility(
-                          visible: dashboardItem.itemType == DashboardItemType.library,
-                          child:
-                            ElevatedButton(
-                              onPressed: () {
-                                  Navigator.of(context).pushReplacement(MaterialPageRoute(
-                                    builder: (context) => DocumentLibraryScreen(
-                                        documentOperations: docOperations,
-                                        helper: helper),
-                                  ));
+                          visible: widget.dashboardItem.itemType == DashboardItemType.library,
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                setState(() {
+                                  isLoading = true;
+                                });
+                                
+                                await Future.delayed(Duration.zero);
+                                
+                                Navigator.of(context).pushReplacement(MaterialPageRoute(
+                                  builder: (context) => DocumentLibraryScreen(
+                                      documentOperations: widget.docOperations,
+                                      helper: widget.helper),
+                                )).then ((_) {
+                                  if (mounted) {
+                                    setState(() {
+                                      isLoading = false;
+                                    });
+                                  }
+                                });
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.yellow.withOpacity(1.0),
                                 foregroundColor: Colors.black, // Text color
                                 padding: const EdgeInsets.symmetric(
-                                  vertical: 12,
-                                  horizontal: 24,
+                                  vertical: 20,
+                                  horizontal: 40,
                                 ),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
+                                  borderRadius: BorderRadius.circular(20),
                                 ),
                               ),
                               child: Text(
-                                dashboardItem.buttonText,
-                                style: const TextStyle(fontSize: 16),
+                                widget.dashboardItem.buttonText,
+                                style: const TextStyle(fontSize: 20),
                               ),
-                            ),
-                        ),
-                        Visibility(
-                          visible: dashboardItem.itemType == DashboardItemType.ai,
-                          child:
-                          ElevatedButton(
-                            onPressed: () {
-                              Navigator.pushReplacementNamed(context, '/solar');
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.yellow.withOpacity(1.0),
-                              foregroundColor: Colors.black, // Text color
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 12,
-                                horizontal: 24,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            child: Text(
-                              dashboardItem.buttonText,
-                              style: const TextStyle(fontSize: 16),
                             ),
                           ),
                         ),
                         Visibility(
-                          visible: dashboardItem.itemType == DashboardItemType.upload,
-                          child:
-                          ElevatedButton(
-                            onPressed: () async {
-                                final scaffoldContext = ScaffoldMessenger.of(context);
+                          visible: widget.dashboardItem.itemType == DashboardItemType.ai,
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                setState(() {
+                                  isLoading = true;
+                                });
+
+                                await Future.delayed(Duration.zero);
+
+                                Navigator.pushReplacementNamed(context, '/solar').then((_) {
+                                  if (mounted) {
+                                    setState(() {
+                                      isLoading = false;
+                                    });
+                                  }
+                                });
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.yellow.withOpacity(1.0),
+                                foregroundColor: Colors.black, // Text color
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 20,
+                                  horizontal: 40,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                              ),
+                              child: Text(
+                                widget.dashboardItem.buttonText,
+                                style: const TextStyle(fontSize: 20),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Visibility(
+                          visible: widget.dashboardItem.itemType == DashboardItemType.upload,
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                setState(() {
+                                  isLoading = true; // Set loading state to true
+                                });
+
                                 if (userRole == 'client') {
-                                  await docOperations.uploadDocuments(documentId, scaffoldContext);
+                                  final scaffoldContext = ScaffoldMessenger.of(context);
+                                  await widget.docOperations.uploadDocuments(documentId, scaffoldContext);
                                 } else {
-                                  Navigator.pushReplacementNamed(context, '/details');
+                                  await Future.delayed(Duration.zero);
+                                  Navigator.pushReplacementNamed(context, '/details').then((_) {
+                                    if (mounted) {
+                                      setState(() {
+                                        isLoading = false;
+                                      });
+                                    }
+                                  });
                                 }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.yellow.withOpacity(1.0),
-                              foregroundColor: Colors.black, // Text color
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 12,
-                                horizontal: 24,
+                                setState(() {
+                                  isLoading = false; // Set loading state to false after operation completes
+                                });
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.yellow.withOpacity(1.0),
+                                foregroundColor: Colors.black, // Text color
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 20,
+                                  horizontal: 40,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
                               ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
+                              child: Text(
+                                widget.dashboardItem.buttonText,
+                                style: const TextStyle(fontSize: 20),
                               ),
-                            ),
-                            child: Text(
-                              dashboardItem.buttonText,
-                              style: const TextStyle(fontSize: 16),
                             ),
                           ),
                         ),
-                        dashboardItem.itemType == DashboardItemType.library ? const SizedBox(height: 8) : const SizedBox(height: 16),
+                        widget.dashboardItem.itemType == DashboardItemType.library ? const SizedBox(height: 8) : const SizedBox(height: 16),
                         Visibility(
-                          visible: dashboardItem.itemType == DashboardItemType.upload && userRole == "client",
+                          visible: widget.dashboardItem.itemType == DashboardItemType.upload && userRole == "client",
                           child: ProgressBar(
-                            progress: docOperations
+                            progress: widget.docOperations
                                 .getProgressNotifierDict()[documentId],
                           ),
+                        ),
+                        Visibility(
+                          visible: isLoading, // Show circular progress indicator only when isLoading is true
+                          child: CircularProgressIndicator(),
                         ),
                       ],
                     ),

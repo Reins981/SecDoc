@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:sec_doc/document_library.dart';
 import 'login.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -80,7 +81,7 @@ class _MyAppState extends State<MyApp> {
           '/biometric': (context) => AuthenticatedScreen(),
           '/registration': (context) => const RegistrationScreen(),
           '/details': (context) => UserDetailsScreen(docOperations: docOperations),
-          '/solar': (context) => SolarDataFetcher(docOperations: docOperations)
+          '/solar': (context) => SolarDataFetcher(docOperations: docOperations),
           // ... other routes
         },
         onGenerateRoute: (settings) {
