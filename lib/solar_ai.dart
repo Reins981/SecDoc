@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:printing/printing.dart';
 import 'dart:convert';
 import 'helpers.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'solar_ai_card.dart';
+import 'dart:io';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 
 class SolarDataFetcher extends StatefulWidget {
   final DocumentOperations docOperations;
@@ -111,6 +115,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
             bottom: 80, // Position above the bottom button
             right: 16,
             child: FloatingActionButton(
+              heroTag: 'vertical_align_top',
               mini: true,
               child: Icon(Icons.vertical_align_top), // Icon indicating upwards scrolling
               onPressed: () {
@@ -122,6 +127,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
             bottom: 16, // Adjust the position as needed
             right: 16, // Adjust the position as needed
             child: FloatingActionButton(
+              heroTag: 'vertical_align_bottom',
               mini: true, // Makes the button smaller
               child: Icon(Icons.vertical_align_bottom), // Icon for the button
               onPressed: () {
@@ -147,6 +153,56 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
       _scrollController.position.maxScrollExtent,
       duration: Duration(seconds: 1),
       curve: Curves.fastOutSlowIn,
+    );
+  }
+
+  Future<void> generateAndPreviewPdf(Map<String, dynamic> solarData) async {
+    print(solarData);
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.MultiPage(
+        header: (context) => pw.Header(
+          level: 0,
+          child: pw.Text('Solar Data Report', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+        ),
+        build: (context) => [
+          pw.Text('Overview', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+          pw.Padding(
+            padding: pw.EdgeInsets.only(top: 10),
+            child: pw.Text('Maximum Budget: ${solarData['Maximum Budget']}, Maximum Lifetime: ${solarData['Maximum Lifetime']}'),
+          ),
+          pw.SizedBox(height: 20),
+          pw.Text('Location Data', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+          pw.Padding(
+            padding: pw.EdgeInsets.only(top: 10),
+            child: pw.Text('Latitude: ${solarData['Location Data']['Latitude']}, Longitude: ${solarData['Location Data']['Longitude']}, Elevation: ${solarData['Location Data']['Elevation']}'),
+          ),
+          // ... More sections ...
+          _buildMonthlyDataTable(solarData),
+        ],
+      ),
+    );
+
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat format) async => pdf.save(),
+    );
+  }
+
+  pw.Widget _buildMonthlyDataTable(Map<String, dynamic> solarData) {
+    return pw.TableHelper.fromTextArray(
+      headers: ['Month', 'Daily Energy', 'Monthly Energy', 'Daily Irradiance', 'Monthly Irradiance', 'Sunshine Duration'],
+      data: List<List<String>>.generate(12, (index) {
+        final monthData = solarData['Month ${index + 1}'] ?? {};
+        return [
+          'Month ${index + 1}',
+          '${monthData['Daily Energy (kWh/m²)'] ?? '-'} kWh/m²',
+          '${monthData['Monthly Energy (kWh/m²)'] ?? '-'} kWh/m²',
+          '${monthData['Daily Horizontal Irradiance (kWh/m²)'] ?? '-'} kWh/m²',
+          '${monthData['Monthly Horizontal Irradiance (kWh/m²)'] ?? '-'} kWh/m²',
+          '${monthData['Monthly sunshine duration (hours)'] ?? '-'} hours',
+        ];
+      }),
     );
   }
 
@@ -198,29 +254,28 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
     Uri uri = Uri.parse(apiUrl).replace(queryParameters: queryParams);
     print(uri);
 
-    //try {
-    http.Response response = await http.get(uri);
+    try {
+      http.Response response = await http.get(uri);
 
-    if (response.statusCode == 200) {
-      var jsonData = json.decode(response.body);
-      print(jsonData);
-      setState(() {
-        solarData = extractImportantData(jsonData);
-        showForm = false;
-        isLoading = false;
-      });
-    } else {
-      helper.showSnackBar('Failed to fetch solar data. Status Code: ${response.statusCode}', "Error", scaffoldContext);
-      setState(() {
-        isLoading = false; // Set isLoading to false after receiving the response
-      });
-    }
-    /*} catch (error) {
+      if (response.statusCode == 200) {
+        var jsonData = json.decode(response.body);
+        setState(() {
+          solarData = extractImportantData(jsonData);
+          showForm = false;
+          isLoading = false;
+        });
+      } else {
+        helper.showSnackBar('Failed to fetch solar data. Status Code: ${response.statusCode}', "Error", scaffoldContext);
+        setState(() {
+          isLoading = false; // Set isLoading to false after receiving the response
+        });
+      }
+    } catch (error) {
       helper.showSnackBar('Error fetching solar data: $error', "Error", scaffoldContext);
       setState(() {
         isLoading = false; // Set isLoading to false after receiving the response
       });
-    }*/
+    }
   }
 
   Map<String, dynamic> extractImportantData(Map<String, dynamic> jsonData) {
@@ -341,8 +396,6 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
         extractedData['Hourly Estimations'] = hourlyData;
       }
     }
-    print("aaaaaaaaaaaaaaaa");
-    print(extractedData['Mounting System']);
     return extractedData;
   }
 
@@ -931,7 +984,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    // Perform the action to send results to PuraVida GmbH
+                    generateAndPreviewPdf(solarData ?? {});
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,
