@@ -24,19 +24,13 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
     'peakpower': '5',
     'pvtechchoice': 'crystSi',
     'mountingplace': 'building',
+    'fixed': '0',
+    'twoaxis': '0',
+    'vertical_axis': '0',
+    'inclined_axis': '0',
     'loss': '15',
-    'angle': '30',
-    'aspect': '180',
     'usehorizon' : '0',
-    'pvcalculation': '0',
-    'trackingtype': '0',
-    'optimalinclination': '0',
-    'optimalangles': '0',
     'lifetime': '25',
-    'inclined_optimum': '0',
-    'inclinedaxisangle': '0',
-    'vertical_optimum': '0',
-    'verticalaxisangle': '0',
     'outputformat': 'json',
   };
   bool showForm = true;
@@ -44,10 +38,9 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
   String selectedPvTechChoice = 'crystSi'; // Default value
   int selectedTrackingType = 0; // Default value
   String selectedMountingPlace = 'building'; // Default value
-  String maxBudget = '';
+  String maxBudget = '0';
   String lifetime = '25';
   bool useHorizon = false; // Default value
-  bool pvcalculation = false; // Default value
   bool optimalinclination = false; // Default value
   bool optimalangles = false; // Default value
   bool inclined_axis = false;
@@ -58,9 +51,10 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
   bool verticalaxisangle = false;
   bool twoaxis = false;
   bool fixed = false;
-
+  bool calcButtonEnabled = false;
   bool isLoading = false;
   Helper helper = Helper();
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -72,6 +66,10 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
     await auth.signOut();
     widget.docOperations.clearProgressNotifierDict();
     Navigator.pushReplacementNamed(context, '/login');
+  }
+
+  bool isAtLeastOneSwitchEnabled() {
+    return fixed || inclined_axis || vertical_axis || twoaxis;
   }
 
   @override
@@ -95,8 +93,10 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
         ],
       ),
       body: Stack(
+        alignment: Alignment.bottomRight,
         children: [
           SingleChildScrollView(
+            controller: _scrollController,
             padding: EdgeInsets.all(16),
             child: isLoading ? Container() : showForm ? buildForm() : buildResult(),
           ),
@@ -107,8 +107,46 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
                 child: CircularProgressIndicator(color: Colors.yellow), // Loading indicator
               ),
             ),
+          Positioned(
+            bottom: 80, // Position above the bottom button
+            right: 16,
+            child: FloatingActionButton(
+              mini: true,
+              child: Icon(Icons.vertical_align_top), // Icon indicating upwards scrolling
+              onPressed: () {
+                _scrollToTop();
+              },
+            ),
+          ),
+          Positioned(
+            bottom: 16, // Adjust the position as needed
+            right: 16, // Adjust the position as needed
+            child: FloatingActionButton(
+              mini: true, // Makes the button smaller
+              child: Icon(Icons.vertical_align_bottom), // Icon for the button
+              onPressed: () {
+                _scrollToBottom();
+              },
+            ),
+          ),
         ],
       ),
+    );
+  }
+
+  void _scrollToTop() {
+    _scrollController.animateTo(
+      0, // Scroll to the top
+      duration: Duration(seconds: 1),
+      curve: Curves.fastOutSlowIn,
+    );
+  }
+
+  void _scrollToBottom() {
+    _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent,
+      duration: Duration(seconds: 1),
+      curve: Curves.fastOutSlowIn,
     );
   }
 
@@ -160,29 +198,29 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
     Uri uri = Uri.parse(apiUrl).replace(queryParameters: queryParams);
     print(uri);
 
-    try {
-      http.Response response = await http.get(uri);
+    //try {
+    http.Response response = await http.get(uri);
 
-      if (response.statusCode == 200) {
-        var jsonData = json.decode(response.body);
-        print(jsonData);
-        setState(() {
-          solarData = extractImportantData(jsonData);
-          showForm = false;
-          isLoading = false;
-        });
-      } else {
-        helper.showSnackBar('Failed to fetch solar data. Status Code: ${response.statusCode}', "Error", scaffoldContext);
-        setState(() {
-          isLoading = false; // Set isLoading to false after receiving the response
-        });
-      }
-    } catch (error) {
-      helper.showSnackBar('Error fetching solar data: $error', "Error", scaffoldContext);
+    if (response.statusCode == 200) {
+      var jsonData = json.decode(response.body);
+      print(jsonData);
+      setState(() {
+        solarData = extractImportantData(jsonData);
+        showForm = false;
+        isLoading = false;
+      });
+    } else {
+      helper.showSnackBar('Failed to fetch solar data. Status Code: ${response.statusCode}', "Error", scaffoldContext);
       setState(() {
         isLoading = false; // Set isLoading to false after receiving the response
       });
     }
+    /*} catch (error) {
+      helper.showSnackBar('Error fetching solar data: $error', "Error", scaffoldContext);
+      setState(() {
+        isLoading = false; // Set isLoading to false after receiving the response
+      });
+    }*/
   }
 
   Map<String, dynamic> extractImportantData(Map<String, dynamic> jsonData) {
@@ -274,17 +312,29 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
     if (jsonData.containsKey('outputs')) {
       Map<String, dynamic> outputs = jsonData['outputs'];
       if (outputs.containsKey('monthly')) {
-        List<dynamic> monthlyData = outputs['monthly']['fixed'];
-        monthlyData.forEach((data) {
-          int month = data['month'];
-          extractedData['Month $month'] = {
-            'Daily Energy (kWh/m²)': data['E_d'],
-            'Monthly Energy (kWh/m²)': data['E_m'],
-            'Daily Horizontal Irradiance (kWh/m²)': data['H(i)_d'],
-            'Monthly Horizontal Irradiance (kWh/m²)': data['H(i)_m'],
-            'Monthly sunshine duration (hours)': data['SD_m'],
-          };
-        });
+        List<dynamic>? monthlyData;
+        if (outputs['monthly'].containsKey('fixed')) {
+          monthlyData = outputs['monthly']['fixed'];
+        } else if (outputs['monthly'].containsKey('two_axis')) {
+          monthlyData = outputs['monthly']['two_axis'];
+        } else if (outputs['monthly'].containsKey('vertical_axis')) {
+          monthlyData = outputs['monthly']['vertical_axis'];
+        } else if (outputs['monthly'].containsKey('inclined_axis')) {
+          monthlyData = outputs['monthly']['inclined_axis'];
+        }
+
+        if (monthlyData != null) {
+          monthlyData.forEach((data) {
+            int month = data['month'];
+            extractedData['Month $month'] = {
+              'Daily Energy (kWh/m²)': data['E_d'],
+              'Monthly Energy (kWh/m²)': data['E_m'],
+              'Daily Horizontal Irradiance (kWh/m²)': data['H(i)_d'],
+              'Monthly Horizontal Irradiance (kWh/m²)': data['H(i)_m'],
+              'Monthly sunshine duration (hours)': data['SD_m'],
+            };
+          });
+        }
       }
       if (outputs.containsKey('hourly')) {
         List<dynamic> hourlyData = outputs['hourly']['fixed']; // Replace 'fixed' with your specific hourly data key
@@ -381,6 +431,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
       String title,
       String value,
       Function(String) onChanged,
+      List <TextInputFormatter>? inputFormatters,
       String bodyText,
       ) {
     return Card(
@@ -399,6 +450,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
             keyboardType: TextInputType.number,
             style: const TextStyle(color: Colors.black),
             initialValue: value,
+            inputFormatters: inputFormatters ?? [],
             onChanged: onChanged,
           ),
           if (bodyText.isNotEmpty) ExpandableCard(
@@ -412,6 +464,8 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
 
   Widget buildItemFormFieldWithCard(
       String title,
+      List<String> menuItems,
+      String value,
       Function(String?) onChanged,
       String bodyText,
       ) {
@@ -432,10 +486,10 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
-                    value: selectedMountingPlace,
+                    value: value,
                     isDense: true,
                     onChanged: onChanged,
-                    items: <String>['free', 'building'].map((String value) {
+                    items: menuItems.map((String value) {
                       return DropdownMenuItem<String>(
                         value: value,
                         child: Text(value),
@@ -497,6 +551,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
                     maxBudget = newValue;
                   });
                 },
+                null,
                 'The Maximum Budget parameter allows users to input the total cost they anticipate or plan to spend on installing the entire PV system.\n\n'
                     'This cost encompasses all the expenses associated with acquiring and installing the solar panels,\n '
                     'inverters, mounting hardware, wiring, labor, permits, and any additional costs required for the installation of the PV system.\n\n',
@@ -504,6 +559,11 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
               const SizedBox(height: 20),
               buildItemFormFieldWithCard(
                 'Mountingplace',
+                  [
+                    'free',
+                    'building',
+                  ],
+                    selectedMountingPlace,
                     (String? newValue) {
                   setState(() {
                     selectedMountingPlace = newValue!;
@@ -524,6 +584,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
                       setState(() {
                         fixed = newValue;
                         queryParams['fixed'] = newValue ? '1' : '0';
+                        calcButtonEnabled = isAtLeastOneSwitchEnabled();
                       });
                     },
                     'Calculate a fixed mounted system.\n\n',
@@ -536,6 +597,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
                       setState(() {
                         inclined_axis = newValue;
                         queryParams['inclined_axis'] = newValue ? '1' : '0';
+                        calcButtonEnabled = isAtLeastOneSwitchEnabled();
                       });
                     },
                     'Calculate a single inclined axis system.\n\n',
@@ -548,6 +610,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
                       setState(() {
                         vertical_axis = newValue;
                         queryParams['vertical_axis'] = newValue ? '1' : '0';
+                        calcButtonEnabled = isAtLeastOneSwitchEnabled();
                       });
                     },
                     'Calculate a single vertical axis system.\n\n',
@@ -560,6 +623,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
                       setState(() {
                         twoaxis = newValue;
                         queryParams['twoaxis'] = newValue ? '1' : '0';
+                        calcButtonEnabled = isAtLeastOneSwitchEnabled();
                       });
                     },
                     'Calculate a two axis tracking system.\n\n',
@@ -567,423 +631,276 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
                 ],
               ),
               const SizedBox(height: 10),
-              // Elevated Card describing pvtechchoice
-              const ExpandableCard(titleText: 'Pvtechchoice', bodyText:  'Solar Panel technology in use.\n\n'
-                  'PV technology. Choices are: "crystSi", "CIS", "CdTe" and "Unknown".\n\n',),
-              const SizedBox(height: 20),
-              TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'Peak Power (kW)',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide.none,
-                  ),
-                  filled: true,
-                  fillColor: Colors.yellow,
-                ),
-                keyboardType: TextInputType.number,
-                style: const TextStyle(color: Colors.black),
-                onChanged: (value) {
-                  queryParams['peakpower'] = value;
+              buildItemFormFieldWithCard(
+                'Pvtechchoice',
+                  [
+                    'crystSi',
+                    'CIS',
+                    'CdTe',
+                    'Unknown',
+                  ],
+                    selectedPvTechChoice,
+                    (String? newValue) {
+                  setState(() {
+                    selectedPvTechChoice = newValue!;
+                    queryParams['pvtechchoice'] = newValue;
+                  });
                 },
-                initialValue: '5', // Default value set to 5 kW
+                  'Solar Panel technology in use.\n\n'
+                      'PV technology. Choices are: "crystSi", "CIS", "CdTe" and "Unknown".\n\n'
               ),
-              const SizedBox(height: 10),
-              // Elevated Card describing optimalangles
-              const ExpandableCard(titleText: 'Peak Power', bodyText:  'Enter the peak power of the solar system in kilowatts.\n\n '
-                  'This is the maximum power that can be generated by the system under ideal conditions.\n\n'),
               const SizedBox(height: 20),
-              TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'Loss (%)',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide.none,
-                  ),
-                  filled: true,
-                  fillColor: Colors.yellow,
-                ),
-                keyboardType: TextInputType.number,
-                style: const TextStyle(color: Colors.black),
-                onChanged: (value) {
-                  queryParams['loss'] = value;
+              buildTextFormFieldWithCard(
+                'Peak Power (kW)',
+                '5',
+                    (String newValue) {
+                  setState(() {
+                    queryParams['peakpower'] = newValue;
+                  });
                 },
-                initialValue: '15',
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'^[0-100]')), // Allow only values from 0 to 5
-                ],// Default value set to 15%
-              ),
-              const SizedBox(height: 10),
-              // Elevated Card describing Raddatabase
-              const ExpandableCard(titleText: 'Loss', bodyText:  'Enter the percentage of system loss.\n\n'
-                  'This accounts for various losses in the system, including efficiency losses and shading.\n\n',),
-              const SizedBox(height: 20),
-              FormField<String>(
-                builder: (FormFieldState<String> state) {
-                  return InputDecorator(
-                    decoration: InputDecoration(
-                      labelText: 'Raddatabase',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide.none,
-                      ),
-                      filled: true,
-                      fillColor: Colors.yellow,
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: selectedRadDatabase,
-                        isDense: true,
-                        onChanged: (String? newValue) {
-                          setState(() {
-                            selectedRadDatabase = newValue!;
-                            queryParams['raddatabase'] = newValue;
-                          });
-                        },
-                        items: <String>['PVGIS-SARAH', 'PVGIS-NSRDB', 'PVGIS-ERA5'].map((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(value),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 10),
-              // Elevated Card describing optimalangles
-              const ExpandableCard(titleText: 'Raddatabase', bodyText: 'The default DBs are PVGIS-SARAH, PVGIS-NSRDB and PVGIS-ERA5 based on the chosen location.\n\n'),
-              const SizedBox(height: 20),
-              Visibility(
-                visible: selectedTrackingType == 0 || selectedTrackingType == 1 || selectedTrackingType == 2 || selectedTrackingType == 4,
-                child: TextFormField(
-                  decoration: InputDecoration(
-                    labelText: 'Angle (°)',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide.none,
-                    ),
-                    filled: true,
-                    fillColor: Colors.yellow,
-                  ),
-                  keyboardType: TextInputType.number,
-                  style: const TextStyle(color: Colors.black),
-                  onChanged: (value) {
-                    queryParams['angle'] = value;
-                  },
-                  initialValue: '30',
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'^[0-360]')), // Allow only values from 0 to 5
-                  ],// Default value set to '30' degrees
-                ),
-              ),
-              const SizedBox(height: 10),
-              // Elevated Card describing angle
-              Visibility(
-                visible: selectedTrackingType == 0 || selectedTrackingType == 1 || selectedTrackingType == 2 || selectedTrackingType == 4,
-                child: const ExpandableCard(titleText: 'Angle', bodyText:  'Enter the angle of inclination for the solar panels.\n\n'
-                  'This is the tilt angle from the horizontal plane at which the solar panels are installed.\n\n'
-                  '0=south, 90=west, -90=east.\n\n',),
+                  null,
+                  'Enter the peak power of the solar system in kilowatts.\n\n '
+                      'This is the maximum power that can be generated by the system under ideal conditions.\n\n'
               ),
               const SizedBox(height: 20),
-              Visibility(
-                visible: selectedTrackingType == 0 || selectedTrackingType == 1 || selectedTrackingType == 2 || selectedTrackingType == 4,
-                child: TextFormField(
-                  decoration: InputDecoration(
-                    labelText: 'Aspect (°)',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide.none,
-                    ),
-                    filled: true,
-                    fillColor: Colors.yellow,
-                  ),
-                  keyboardType: TextInputType.number,
-                  style: const TextStyle(color: Colors.black),
-                  onChanged: (value) {
-                    queryParams['aspect'] = value;
-                  },
-                  initialValue: '180',
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'^[0-360]')), // Allow only values from 0 to 5
-                  ],// Default value set to '180'
-                ),
-              ),
-              const SizedBox(height: 10),
-              // Elevated Card describing aspect
-              Visibility(
-                visible: selectedTrackingType == 0 || selectedTrackingType == 1 || selectedTrackingType == 2 || selectedTrackingType == 4,
-                child: const ExpandableCard(titleText: 'Aspect', bodyText:  'Enter the aspect of the solar panels.\n\n'
-                  'This refers to the orientation of the panels with respect to the horizon.\n'
-                  'An "aspect" value of 0 implies that the panels are oriented towards the south.\n\n'
-                  'An aspect value of 90 represents a west-facing orientation.\n\n'
-                  'An aspect value of -90 implies an east-facing orientation..\n\n',),
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'Lifetime',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide.none,
-                  ),
-                  filled: true,
-                  fillColor: Colors.yellow,
-                ),
-                keyboardType: TextInputType.number,
-                style: const TextStyle(color: Colors.black),
-                onChanged: (value) {
-                  lifetime = value;
-                  queryParams['lifetime'] = value;
-                },
-                initialValue: '25',
-              ),
-              const SizedBox(height: 10),
-              // Elevated Card describing lifetime
-              const ExpandableCard(titleText: 'Lifetime', bodyText: 'Expected lifetime of the PV system in years.\n\n',),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Use Horizon',
-                        style: TextStyle(fontSize: 16),
-                      ),
-                    ],
-                  ),
-                  Switch(
-                    value: useHorizon,
-                    onChanged: (bool newValue) {
+              buildTextFormFieldWithCard(
+                  'Loss (%)',
+                  '15',
+                      (String newValue) {
+                    int? value = int.tryParse(newValue);
+                    if (value != null && value >= 0 && value <= 100) {
                       setState(() {
-                        useHorizon = newValue;
-                        queryParams['usehorizon'] = newValue ? '1' : '0';
+                        queryParams['loss'] = newValue;
+                      });
+                    } else {
+                      if (value == null) {
+                        queryParams['loss'] = '0';
+                      } else {
+                        final scaffoldContext = ScaffoldMessenger.of(context);
+                        helper.showSnackBar(
+                            "Invalid Loss Value [0 - 100]", "Error",
+                            scaffoldContext, duration: 2);
+                        setState(() {});
+                      }
+                    }
+                  },
+                  null,
+                  'Enter the percentage of system loss.\n\n'
+                      'This accounts for various losses in the system, including efficiency losses and shading.\n\n'
+              ),
+              const SizedBox(height: 20),
+              buildItemFormFieldWithCard(
+                  'Raddatabase',
+                  [
+                    'PVGIS-SARAH',
+                    'PVGIS-NSRDB',
+                    'PVGIS-ERA5'
+                  ],
+                  selectedRadDatabase,
+                      (String? newValue) {
+                    setState(() {
+                      selectedRadDatabase = newValue!;
+                      queryParams['raddatabase'] = newValue;
+                    });
+                  },
+                  'The default DBs are PVGIS-SARAH, PVGIS-NSRDB and PVGIS-ERA5 based on the chosen location.\n\n'
+              ),
+              const SizedBox(height: 20),
+              if (fixed || twoaxis) ...[
+                buildTextFormFieldWithCard(
+                    'Angle (°)',
+                    '30',
+                        (String newValue) {
+                      int? value = int.tryParse(newValue);
+                      if (value != null && value >= 0 && value <= 90) {
+                        setState(() {
+                          queryParams['angle'] = newValue;
+                        });
+                      } else {
+                        if (value == null) {
+                          queryParams['angle'] = '0';
+                        } else {
+                            final scaffoldContext = ScaffoldMessenger.of(context);
+                            helper.showSnackBar(
+                                "Invalid Angle Value [0 - 90]", "Error",
+                                scaffoldContext, duration: 2);
+                            setState(() {});
+                        }
+                      }
+                    },
+                    null,
+                    'Enter the angle of inclination for the solar panels.\n\n'
+                        'This is the tilt angle from the horizontal plane at which the solar panels are installed.\n\n'
+                        '0=south, 90=west, -90=east.\n\n'
+                ),
+                const SizedBox(height: 20),
+                buildTextFormFieldWithCard(
+                    'Aspect (°)',
+                    '180',
+                        (String newValue) {
+                      int? value = int.tryParse(newValue);
+                      if (value != null && value >= -180 && value <= 180) {
+                        setState(() {
+                          queryParams['aspect'] = newValue;
+                        });
+                      } else {
+                        if (value == null) {
+                          queryParams['aspect'] = '0';
+                        } else {
+                            final scaffoldContext = ScaffoldMessenger.of(context);
+                            helper.showSnackBar("Invalid Aspect Value [-180 - 180]", "Error",
+                                scaffoldContext, duration: 2);
+                            setState(() {});
+                        }
+                      }
+                    },
+                    null,
+                    'Enter the aspect of the solar panels.\n\n'
+                        'This refers to the orientation of the panels with respect to the horizon.\n'
+                        'An "aspect" value of 0 implies that the panels are oriented towards the south.\n\n'
+                        'An aspect value of 90 represents a west-facing orientation.\n\n'
+                        'An aspect value of -90 implies an east-facing orientation..\n\n'
+                ),
+                const SizedBox(height: 20),
+              ],
+              buildTextFormFieldWithCard(
+                  'Lifetime',
+                  '25',
+                      (String newValue) {
+                    int? value = int.tryParse(newValue);
+                    if (value != null && value >= 0 && value <= 100) {
+                      setState(() {
+                        queryParams['lifetime'] = newValue;
+                        lifetime = newValue;
+                      });
+                    } else {
+                      if (value == null ) {
+                        queryParams['lifetime'] = '1';
+                        lifetime = '1';
+                      } else {
+                        final scaffoldContext = ScaffoldMessenger.of(context);
+                        helper.showSnackBar(
+                            "Invalid Lifetime Value [0 - 100]", "Error",
+                            scaffoldContext, duration: 2);
+                        setState(() {});
+                      }
+                    }
+                  },
+                  null,
+                  'Expected lifetime of the PV system in years.\n\n'
+              ),
+              const SizedBox(height: 20),
+              buildSwitchWithCard(
+                'Use Horizon',
+                useHorizon,
+                    (bool newValue) {
+                  setState(() {
+                    useHorizon = newValue;
+                    queryParams['usehorizon'] = newValue ? '1' : '0';
+                  });
+                },
+                  'Calculate taking into account shadows from high horizon.\n\n',
+              ),
+              const SizedBox(height: 20),
+              if (fixed || twoaxis) ...[
+                buildSwitchWithCard(
+                  'Optimal Inclination',
+                  optimalinclination,
+                      (bool newValue) {
+                    setState(() {
+                      optimalinclination = newValue;
+                      queryParams['optimalinclination'] = newValue ? '1' : '0';
+                    });
+                  },
+                    'Calculate the optimum inclination angle.\n\n'
+                        'For the fixed PV system, if this parameter is enabled, the value defined for the "Angle" parameter is ignored',
+                ),
+                const SizedBox(height: 20),
+                buildSwitchWithCard(
+                  'Optimal Angles',
+                  optimalangles,
+                      (bool newValue) {
+                    setState(() {
+                      optimalangles = newValue;
+                      queryParams['optimalangles'] = newValue ? '1' : '0';
+                    });
+                  },
+                    'Calculate the optimum inclination and orientation angles.\n\n'
+                        'If this parameter is enabled, values defined for "Angle" and "Aspect" are ignored and therefore are not necessary'
+                ),
+                const SizedBox(height: 20),
+              ],
+              if (inclined_axis) ...[
+                buildSwitchWithCard(
+                    'Inclined Optimum',
+                    inclined_optimum,
+                        (bool newValue) {
+                      setState(() {
+                        inclined_optimum = newValue;
+                        queryParams['inclined_optimum'] = newValue ? '1' : '0';
                       });
                     },
+                    'Calculate optimum angle for a single inclined axis system.\n\n'
+                ),
+                const SizedBox(height: 20),
+                buildTextFormFieldWithCard(
+                    'Inclined Axis Angle (°)',
+                    '30',
+                        (String newValue) {
+                      setState(() {
+                        queryParams['inclinedaxisangle'] = newValue;
+                      });
+                    },
+                    [
+                      FilteringTextInputFormatter.allow(RegExp(r'^[0-360]')), // Allow only values from 0 to 5
+                    ],// Default value set to '30' degrees
+                    'Inclination angle for a single inclined axis system.\n\n'
+                        'Ignored if the optimum angle should be calculated.\n\n'
+                ),
+                const SizedBox(height: 20),
+              ],
+              if (vertical_axis) ...[
+                buildSwitchWithCard(
+                    'Vertical Optimum',
+                    vertical_optimum,
+                        (bool newValue) {
+                      setState(() {
+                        vertical_optimum = newValue;
+                        queryParams['vertical_optimum'] = newValue ? '1' : '0';
+                      });
+                    },
+                    'Calculate optimum angle for a single vertical axis system.\n\n'
+                ),
+              const SizedBox(height: 20),
+                buildTextFormFieldWithCard(
+                    'Vertical Axis Angle (°)',
+                    '30',
+                        (String newValue) {
+                      setState(() {
+                        queryParams['verticalaxisangle'] = newValue;
+                      });
+                    },
+                    [
+                      FilteringTextInputFormatter.allow(RegExp(r'^[0-360]')), // Allow only values from 0 to 5
+                    ],// Default value set to '30' degrees
+                    'Inclination angle for a single vertical axis system.\n\n'
+                        'Ignored if the optimum angle should be calculated.\n\n'
+                ),
+                const SizedBox(height: 20),
+              ],
+              if (calcButtonEnabled) ...[
+                ElevatedButton(
+                  onPressed: () {
+                    fetchSolarData(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    padding: const EdgeInsets.all(20.0),
+                    shape: CircleBorder(),
                   ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              // Elevated Card describing usehorizon
-              const ExpandableCard(titleText: 'Use Horizon', bodyText: 'Calculate taking into account shadows from high horizon.\n\n',),
-              const SizedBox(height: 20),
-              Visibility(
-                visible: selectedTrackingType == 1,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Optimal Inclination',
-                          style: TextStyle(fontSize: 16),
-                        ),
-                      ],
-                    ),
-                    Switch(
-                      value: optimalinclination,
-                      onChanged: (bool newValue) {
-                        setState(() {
-                          optimalinclination = newValue;
-                          queryParams['optimalinclination'] = newValue ? '1' : '0';
-                        });
-                      },
-                    ),
-                  ],
+                  child: Icon(Icons.calculate, size: 80, color: Colors.white),
                 ),
-              ),
-              const SizedBox(height: 10),
-              // Elevated Card describing optimal inclination
-              Visibility(
-                visible: selectedTrackingType == 1,
-                child: const ExpandableCard(titleText: 'Optimal Inclination', bodyText: 'Calculate the optimum inclination angle.\n\n'
-                  'For the fixed PV system, if this parameter is enabled, the value defined for the "Angle" parameter is ignored',),
-              ),
-              const SizedBox(height: 20),
-              Visibility(
-                visible: selectedTrackingType == 2,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Optimal Angles',
-                          style: TextStyle(fontSize: 16),
-                        ),
-                      ],
-                    ),
-                    Switch(
-                      value: optimalangles,
-                      onChanged: (bool newValue) {
-                        setState(() {
-                          optimalangles = newValue;
-                          queryParams['optimalangles'] = newValue ? '1' : '0';
-                        });
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-              // Elevated Card describing optimal angles
-              Visibility(
-                visible: selectedTrackingType == 2,
-                child: const ExpandableCard(titleText: 'Optimal Angles', bodyText: 'Calculate the optimum inclination and orientation angles.\n\n'
-                  'If this parameter is enabled, values defined for "Angle" and "Aspect" are ignored and therefore are not necessary',),
-              ),
-              const SizedBox(height: 20),
-              Visibility(
-                visible: selectedTrackingType == 5,
-                  child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Inclined Optimum',
-                          style: TextStyle(fontSize: 16),
-                        ),
-                      ],
-                    ),
-                    Switch(
-                      value: inclined_optimum,
-                      onChanged: (bool newValue) {
-                        setState(() {
-                          inclined_optimum = newValue;
-                          queryParams['inclined_optimum'] = newValue ? '1' : '0';
-                        });
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-              Visibility(
-                visible: selectedTrackingType == 5,
-                child: const ExpandableCard(titleText: 'Inclined Optimum', bodyText: 'Calculate optimum angle for a single inclined axis system.\n\n',),
-              ),
-              const SizedBox(height: 20),
-              Visibility(
-                visible: selectedTrackingType == 5,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Inclined Axis Angle',
-                          style: TextStyle(fontSize: 16),
-                        ),
-                      ],
-                    ),
-                    Switch(
-                      value: inclinedaxisangle,
-                      onChanged: (bool newValue) {
-                        setState(() {
-                          inclinedaxisangle = newValue;
-                          queryParams['inclinedaxisangle'] = newValue ? '1' : '0';
-                        });
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-              Visibility(
-                visible: selectedTrackingType == 5,
-                child: const ExpandableCard(titleText: 'Inclined Axis Angle', bodyText: 'Inclination angle for a single inclined axis system.\n\n'
-                  'Ignored if the optimum angle should be calculated.\n\n',),
-              ),
-              const SizedBox(height: 10),
-              Visibility(
-                visible: selectedTrackingType == 3,
-                child: const ExpandableCard(titleText: 'Vertical Axis', bodyText: 'Calculate a single vertical axis system.\n\n',),
-              ),
-              const SizedBox(height: 20),
-              Visibility(
-                visible: selectedTrackingType == 3,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Vertical Optimum',
-                          style: TextStyle(fontSize: 16),
-                        ),
-                      ],
-                    ),
-                    Switch(
-                      value: vertical_optimum,
-                      onChanged: (bool newValue) {
-                        setState(() {
-                          vertical_optimum = newValue;
-                          queryParams['vertical_optimum'] = newValue ? '1' : '0';
-                        });
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-              Visibility(
-                visible: selectedTrackingType == 3,
-                child: const ExpandableCard(titleText: 'Vertical Optimum', bodyText: 'Calculate optimum angle for a single vertical axis system.\n\n',),
-              ),
-              const SizedBox(height: 20),
-              Visibility(
-                visible: selectedTrackingType == 3,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Vertical Axis Angle',
-                          style: TextStyle(fontSize: 16),
-                        ),
-                      ],
-                    ),
-                    Switch(
-                      value: verticalaxisangle,
-                      onChanged: (bool newValue) {
-                        setState(() {
-                          verticalaxisangle = newValue;
-                          queryParams['verticalaxisangle'] = newValue ? '1' : '0';
-                        });
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-              Visibility(
-                visible: selectedTrackingType == 3,
-                child: const ExpandableCard(titleText: 'Vertical Axis Angle', bodyText: 'Inclination angle for a single vertical axis system.\n\n'
-                  'Ignored if the optimum angle should be calculated.\n\n',),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  fetchSolarData(context);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  padding: const EdgeInsets.all(20.0),
-                  shape: CircleBorder(),
-                ),
-                child: Icon(Icons.calculate, size: 80, color: Colors.white),
-              ),
+              ],
             ],
           ),
         ),
