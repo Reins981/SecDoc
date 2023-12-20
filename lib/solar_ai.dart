@@ -486,7 +486,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
 
     extractedData['Maximum Budget'] = maxBudget;
     extractedData['Peak Power'] = peakPower;
-    extractedData['Loss'] = loss;
+    extractedData['System Loss'] = loss;
     extractedData['Maximum Lifetime'] = lifetime;
 
     if (jsonData.containsKey('inputs')) {
