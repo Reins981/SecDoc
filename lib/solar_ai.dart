@@ -31,10 +31,12 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
     'twoaxis': '0',
     'vertical_axis': '0',
     'inclined_axis': '0',
+    'inclinedaxisangle': '0',
+    'verticalaxisangle': '0',
+    'angle': '0',
+    'aspect': '0',
     'loss': '15',
     'usehorizon' : '0',
-    'angle': '30',
-    'aspect': '180',
     'lifetime': '25',
     'outputformat': 'json',
   };
@@ -44,8 +46,8 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
     'usehorizon' : '0',
     'batterysize': '50',
     'cutoff': '50',
-    'angle': '30',
-    'aspect': '180',
+    'angle': '0',
+    'aspect': '0',
     'consumptionday': '200',
     'outputformat': 'json',
   };
@@ -57,6 +59,11 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
   String selectedMountingPlace = 'building'; // Default value
   String maxBudget = '0';
   String lifetime = '25';
+  String peakPower = '5';
+  String capacity = '50';
+  String cutOff = '50';
+  String consumptionDaily = '200';
+  String loss = '15';
   String angle = '30';
   String aspect = '180';
   bool useHorizon = false; // Default value
@@ -97,10 +104,12 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
       'twoaxis': '0',
       'vertical_axis': '0',
       'inclined_axis': '0',
+      'inclinedaxisangle': '0',
+      'verticalaxisangle': '0',
+      'angle': '0',
+      'aspect': '0',
       'loss': '15',
       'usehorizon' : '0',
-      'angle': '30',
-      'aspect': '180',
       'lifetime': '25',
       'outputformat': 'json',
     };
@@ -110,11 +119,37 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
       'usehorizon' : '0',
       'batterysize': '50',
       'cutoff': '50',
-      'angle': '30',
-      'aspect': '180',
+      'angle': '0',
+      'aspect': '0',
       'consumptionday': '200',
       'outputformat': 'json',
     };
+    // Reset individual state variables
+    selectedSystemType = 'Grid-connected & Tracking PV systems'; // Default value
+    selectedRadDatabase = 'PVGIS-SARAH'; // Default value
+    selectedPvTechChoice = 'crystSi'; // Default value
+    selectedMountingPlace = 'building'; // Default value
+    maxBudget = '0';
+    lifetime = '25';
+    peakPower = '5';
+    capacity = '50';
+    cutOff = '50';
+    consumptionDaily = '200';
+    loss = '15';
+    angle = '0';
+    aspect = '0';
+    useHorizon = false; // Default value
+    optimalinclination = false; // Default value
+    optimalangles = false; // Default value
+    inclined_axis = false;
+    inclined_optimum = false;
+    inclinedaxisangle = false;
+    vertical_axis = false;
+    vertical_optimum = false;
+    verticalaxisangle = false;
+    twoaxis = false;
+    fixed = false;
+    calcButtonEnabled = false;
   }
 
   bool isAtLeastOneSwitchEnabled() {
@@ -202,6 +237,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
   }
 
   Future<void> generateAndPreviewPdf(Map<String, dynamic> solarData) async {
+    print("solarData...");
     print(solarData);
     final pdf = pw.Document();
 
@@ -216,7 +252,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
           pw.Padding(
             padding: pw.EdgeInsets.only(top: 10),
             child: pw.Text('Maximum Budget: ${solarData['Maximum Budget']},'
-                '\nMaxi: ${solarData['Maximum Lifetime']}'
+                '\nMaximum Lifetime: ${solarData['Maximum Lifetime']}'
                 '\nTechnology: ${solarData['Technology']}'
                 '\nPeak Power: ${solarData['Peak Power']}'
                 '\nSystem Loss: ${solarData['System Loss']}'
@@ -232,16 +268,39 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
           ),
           pw.SizedBox(height: 20),
           pw.Text('Mounting System', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
-          pw.Padding(
-            padding: pw.EdgeInsets.only(top: 10),
-            child: pw.Text('Type: ${solarData['Mounting System']['Type']}'
-                '\nInclination Angle (°): ${solarData['Mounting System']['Inclination Angle'] + ' (might be overridden if Slope is Optimal)'}'
-                '\nOrientation (°): ${solarData['Mounting System']['Orientation'] + ' (might be overridden if Orientation Angle is Optimal)'}'
-                '\nSlope: ${solarData['Mounting System']['Slope']}'
-                '\nSlope is Optimal: ${solarData['Mounting System']['Slope is Optimal']}'
-                '\nOrientation Angle: ${solarData['Mounting System']['Orientation Angle']}'
-                '\nOrientation Angle is Optimal: ${solarData['Mounting System']['Orientation Angle is Optimal']}'),
-          ),
+          if (solarData['Mounting System'].containsKey('Type'))
+            pw.Padding(
+              padding: pw.EdgeInsets.only(top: 10),
+              child: pw.Text('Type: ${solarData['Mounting System']['Type']}'
+                  '\nSlope: ${solarData['Mounting System']['Slope']}'
+                  '\nSlope is Optimal: ${solarData['Mounting System']['Slope is Optimal']}'
+                  '\nOrientation Angle: ${solarData['Mounting System']['Orientation Angle']}'
+                  '\nOrientation Angle is Optimal: ${solarData['Mounting System']['Orientation Angle is Optimal']}'),
+            ),
+          if (solarData['Mounting System'].containsKey('Inclined Axis'))
+            pw.Padding(
+              padding: pw.EdgeInsets.only(top: 10),
+              child: pw.Text('Slope: ${solarData['Mounting System']['Inclined Axis']['Slope']}'
+                  '\nSlope is Optimal: ${solarData['Mounting System']['Inclined Axis']['Slope is Optimal']}'
+                  '\nOrientation Angle: ${solarData['Mounting System']['Inclined Axis']['Orientation Angle']}'
+                  '\nOrientation Angle is Optimal: ${solarData['Mounting System']['Inclined Axis']['Orientation Angle is Optimal']}'),
+            ),
+          if (solarData['Mounting System'].containsKey('Vertical Axis'))
+            pw.Padding(
+              padding: pw.EdgeInsets.only(top: 10),
+              child: pw.Text('Slope: ${solarData['Mounting System']['Vertical Axis']['Slope']}'
+                  '\nSlope is Optimal: ${solarData['Mounting System']['Vertical Axis']['Slope is Optimal']}'
+                  '\nOrientation Angle: ${solarData['Mounting System']['Vertical Axis']['Orientation Angle']}'
+                  '\nOrientation Angle is Optimal: ${solarData['Mounting System']['Vertical Axis']['Orientation Angle is Optimal']}'),
+            ),
+          if (solarData['Mounting System'].containsKey('Two Axis'))
+            pw.Padding(
+              padding: pw.EdgeInsets.only(top: 10),
+              child: pw.Text('Slope: ${solarData['Mounting System']['Two Axis']['Slope']}'
+                  '\nSlope is Optimal: ${solarData['Mounting System']['Two Axis']['Slope is Optimal']}'
+                  '\nOrientation Angle: ${solarData['Mounting System']['Two Axis']['Orientation Angle']}'
+                  '\nOrientation Angle is Optimal: ${solarData['Mounting System']['Two Axis']['Orientation Angle is Optimal']}'),
+            ),
           pw.SizedBox(height: 20),
           _buildMonthlyDataTable(solarData),
         ],
@@ -401,6 +460,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
 
       if (response.statusCode == 200) {
         var jsonData = json.decode(response.body);
+        print("jsonData");
         print(jsonData);
         setState(() {
           solarData = selectedSystemType == 'Grid-connected & Tracking PV systems' ? extractImportantData(jsonData) : extractImportantDataOffGrid(jsonData);
@@ -425,6 +485,8 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
     Map<String, dynamic> extractedData = {};
 
     extractedData['Maximum Budget'] = maxBudget;
+    extractedData['Peak Power'] = peakPower;
+    extractedData['Loss'] = loss;
     extractedData['Maximum Lifetime'] = lifetime;
 
     if (jsonData.containsKey('inputs')) {
@@ -450,9 +512,6 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
       if (inputs.containsKey('mounting_system')) {
         Map<String, dynamic> mountingSystem = inputs['mounting_system'];
         extractedData['Mounting System'] = {};
-        extractedData['Mounting System']['Inclination Angle'] = angle;
-        extractedData['Mounting System']['Orientation'] = aspect;
-
         if (mountingSystem.containsKey('fixed')) {
           Map<String, dynamic> fixedParameters = mountingSystem['fixed'];
           if (fixedParameters.containsKey('type')) {
@@ -548,6 +607,10 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
     Map<String, dynamic> extractedData = {};
 
     extractedData['Maximum Budget'] = maxBudget;
+    extractedData['Peak Power'] = peakPower;
+    extractedData['Battery Capacity (Wh)'] = capacity;
+    extractedData['Battery Discharge Cutoff Limit (%)'] = cutOff;
+    extractedData['Daily Energy Consumption (Wh)'] = consumptionDaily;
 
     if (jsonData.containsKey('inputs')) {
       Map<String, dynamic> inputs = jsonData['inputs'];
@@ -924,6 +987,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
               (String newValue) {
             setState(() {
               queryParams['peakpower'] = newValue;
+              peakPower = newValue;
             });
           },
           null,
@@ -939,10 +1003,12 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
             if (value != null && value >= 0 && value <= 100) {
               setState(() {
                 queryParams['loss'] = newValue;
+                loss = newValue;
               });
             } else {
               if (value == null) {
-                queryParams['loss'] = '0';
+                queryParams['loss'] = '15';
+                loss = '15';
               } else {
                 final scaffoldContext = ScaffoldMessenger.of(context);
                 helper.showSnackBar(
@@ -977,7 +1043,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
       if (fixed || twoaxis) ...[
         buildTextFormFieldWithCard(
             'Angle (°)',
-            '30',
+            '0',
                 (String newValue) {
               int? value = int.tryParse(newValue);
               if (value != null && value >= 0 && value <= 90) {
@@ -1006,7 +1072,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
         const SizedBox(height: 20),
         buildTextFormFieldWithCard(
             'Aspect (°)',
-            '180',
+            '0',
                 (String newValue) {
               int? value = int.tryParse(newValue);
               if (value != null && value >= -180 && value <= 180) {
@@ -1047,7 +1113,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
               });
             } else {
               if (value == null ) {
-                queryParams['lifetime'] = '1';
+                queryParams['lifetime'] = '25';
                 lifetime = '1';
               } else {
                 final scaffoldContext = ScaffoldMessenger.of(context);
@@ -1117,15 +1183,13 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
         const SizedBox(height: 20),
         buildTextFormFieldWithCard(
             'Inclined Axis Angle (°)',
-            '30',
+            '0',
                 (String newValue) {
               setState(() {
                 queryParams['inclinedaxisangle'] = newValue;
               });
             },
-            [
-              FilteringTextInputFormatter.allow(RegExp(r'^[0-360]')), // Allow only values from 0 to 5
-            ],// Default value set to '30' degrees
+            null,
             'Inclination angle for a single inclined axis system.\n\n'
                 'Ignored if the optimum angle should be calculated.\n\n'
         ),
@@ -1146,15 +1210,13 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
         const SizedBox(height: 20),
         buildTextFormFieldWithCard(
             'Vertical Axis Angle (°)',
-            '30',
+            '0',
                 (String newValue) {
               setState(() {
                 queryParams['verticalaxisangle'] = newValue;
               });
             },
-            [
-              FilteringTextInputFormatter.allow(RegExp(r'^[0-360]')), // Allow only values from 0 to 5
-            ],// Default value set to '30' degrees
+            null,
             'Inclination angle for a single vertical axis system.\n\n'
                 'Ignored if the optimum angle should be calculated.\n\n'
         ),
@@ -1198,6 +1260,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
               (String newValue) {
             setState(() {
               queryParamsOffGrid['peakpower'] = newValue;
+              peakPower = newValue;
             });
           },
           null,
@@ -1212,9 +1275,11 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
             int? value = int.tryParse(newValue);
             if (value == null) {
               queryParamsOffGrid['batterysize'] = '50';
+              capacity = '50';
             }
             setState(() {
               queryParamsOffGrid['batterysize'] = newValue;
+              capacity = newValue;
             });
           },
           null,
@@ -1229,12 +1294,12 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
             if (value != null && value >= 0 && value <= 100) {
               setState(() {
                 queryParamsOffGrid['cutoff'] = newValue;
-                lifetime = newValue;
+                cutOff = newValue;
               });
             } else {
               if (value == null ) {
                 queryParamsOffGrid['cutoff'] = '50';
-                lifetime = '50';
+                cutOff = '50';
               } else {
                 final scaffoldContext = ScaffoldMessenger.of(context);
                 helper.showSnackBar(
@@ -1272,7 +1337,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
       const SizedBox(height: 20),
       buildTextFormFieldWithCard(
           'Angle (°)',
-          '30',
+          '0',
               (String newValue) {
             int? value = int.tryParse(newValue);
             if (value != null && value >= 0 && value <= 90) {
@@ -1301,7 +1366,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
       const SizedBox(height: 20),
       buildTextFormFieldWithCard(
           'Aspect (°)',
-          '180',
+          '0',
               (String newValue) {
             int? value = int.tryParse(newValue);
             if (value != null && value >= -180 && value <= 180) {
@@ -1348,9 +1413,11 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
             int? value = int.tryParse(newValue);
             if (value == null) {
               queryParamsOffGrid['consumptionday'] = '200';
+              consumptionDaily = '200';
             }
             setState(() {
               queryParamsOffGrid['consumptionday'] = newValue;
+              consumptionDaily = newValue;
             });
           },
           null,
@@ -1468,10 +1535,11 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
                   return [
                     buildCard(entry.key.toString(), entry.value.toString()),
                   ];
+                } else {
+                  return [
+                    buildCard(entry.key.toString(), entry.value.toString()),
+                  ];
                 }
-                // Add additional cases if needed (e.g., handling other data types)
-
-                return []; // Default return empty list if no condition is met
               }).toList(),
           ],
         ),
