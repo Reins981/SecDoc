@@ -959,7 +959,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
   List<Widget> buildGridConnectedFields() {
     return [
       buildTextFormFieldWithCard(
-        'Maximum Budget',
+        'Maximum Budget (Euros)',
         '0',
             (String newValue) {
           setState(() {
@@ -1186,7 +1186,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
         const SizedBox(height: 20),
       ],
       buildTextFormFieldWithCard(
-          'Lifetime',
+          'Lifetime (Years)',
           '25',
               (String newValue) {
             int? value = int.tryParse(newValue);
@@ -1325,7 +1325,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
   List<Widget> buildOffGridFields() {
     return [
       buildTextFormFieldWithCard(
-        'Maximum Budget',
+        'Maximum Budget (Euros)',
         '0',
             (String newValue) {
           setState(() {
