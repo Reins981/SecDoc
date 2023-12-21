@@ -192,6 +192,7 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
                     onRefresh: onRefresh,
                     origStream: data,
                     helper: widget.helper,
+                    userRole: userRole,
                   ),
                 ),
               ),
@@ -213,6 +214,7 @@ class DocumentListWidget extends StatefulWidget {
   final void Function() onRefresh;
   final dynamic origStream;
   final Helper helper;
+  final String userRole;
 
   const DocumentListWidget({super.key,
     required this.mergedData,
@@ -223,7 +225,8 @@ class DocumentListWidget extends StatefulWidget {
     required this.callbackDelete,
     required this.onRefresh,
     required this.origStream,
-    required this.helper
+    required this.helper,
+    required this.userRole,
   });
 
   @override
@@ -322,6 +325,7 @@ class _DocumentListWidgetState extends State<DocumentListWidget> {
                     isServerUpdate: _isServerUpdate,
                     documentProvider: documentProvider,
                     helper: widget.helper,
+                    userRole: widget.userRole,
                 );
 
               } else {
@@ -342,7 +346,8 @@ class _DocumentListWidgetState extends State<DocumentListWidget> {
                         isSearch: _isSearch,
                         isServerUpdate: _isServerUpdate,
                         documentProvider: documentProvider,
-                        helper: widget.helper
+                        helper: widget.helper,
+                        userRole: widget.userRole,
                     );
                   },
                 );
@@ -387,6 +392,7 @@ class CustomListWidget extends StatelessWidget {
   final bool isServerUpdate;
   final DocumentProvider documentProvider;
   final Helper helper;
+  final String userRole;
 
   const CustomListWidget({super.key,
     required this.groupedDocuments,
@@ -397,6 +403,7 @@ class CustomListWidget extends StatelessWidget {
     required this.isServerUpdate,
     required this.documentProvider,
     required this.helper,
+    required this.userRole,
   });
 
   @override
@@ -457,7 +464,7 @@ class CustomListWidget extends StatelessWidget {
                       return ExpansionTile(
                         initiallyExpanded: isSearch || isServerUpdate,
                         title: Text(
-                          'Customer: $user',
+                          userRole == 'client' ? 'MyDocs: $user' : 'CustomerDocs: $user',
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,

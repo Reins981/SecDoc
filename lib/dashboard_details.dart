@@ -23,6 +23,7 @@ class DetailedDashboardPage extends StatefulWidget {
 class _DetailedDashboardPageState extends State<DetailedDashboardPage> {
 
   bool isLoading = false;
+  bool isUploading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -191,8 +192,14 @@ class _DetailedDashboardPageState extends State<DetailedDashboardPage> {
                                 });
 
                                 if (userRole == 'client') {
+                                  setState(() {
+                                    isUploading = true;
+                                  });
                                   final scaffoldContext = ScaffoldMessenger.of(context);
-                                  await widget.docOperations.uploadDocuments(documentId, scaffoldContext);
+                                  await widget.docOperations.uploadDocuments(documentId, null, scaffoldContext);
+                                  setState(() {
+                                    isUploading = true;
+                                  });
                                 } else {
                                   await Future.delayed(Duration.zero);
                                   Navigator.pushReplacementNamed(context, '/details').then((_) {
@@ -227,15 +234,15 @@ class _DetailedDashboardPageState extends State<DetailedDashboardPage> {
                         ),
                         widget.dashboardItem.itemType == DashboardItemType.library ? const SizedBox(height: 8) : const SizedBox(height: 16),
                         Visibility(
-                          visible: widget.dashboardItem.itemType == DashboardItemType.upload && userRole == "client",
-                          child: ProgressBar(
-                            progress: widget.docOperations
-                                .getProgressNotifierDict()[documentId],
+                          visible: (isLoading && widget.dashboardItem.itemType == DashboardItemType.upload && userRole == "client"),
+                          child: Align(
+                            alignment: Alignment.center,
+                            child: LinearProgressIndicator(
+                              minHeight: 4.0, // Adjust the thickness
+                              backgroundColor: Colors.grey.shade300,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                            ),
                           ),
-                        ),
-                        Visibility(
-                          visible: isLoading, // Show circular progress indicator only when isLoading is true
-                          child: CircularProgressIndicator(),
                         ),
                       ],
                     ),

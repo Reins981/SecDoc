@@ -267,7 +267,15 @@ class DocumentOperations {
   }
 
   void setProgressNotifierDictValue(String documentId) {
-    _progressNotifierDict[documentId] = ValueNotifier<double>(0.0);
+    if (!_progressNotifierDict.containsKey(documentId)) {
+      _progressNotifierDict[documentId] = ValueNotifier<double>(0.0);
+    }
+  }
+
+  void resetProgressNotifierDictValue(String documentId) {
+    if (_progressNotifierDict.containsKey(documentId)) {
+      _progressNotifierDict[documentId].value = 0.0;
+    }
   }
 
   void clearProgressNotifierDict() {
@@ -612,11 +620,16 @@ class DocumentOperations {
     };
   }
 
-  Future<void> uploadDocuments(String? documentId, ScaffoldMessengerState context) async {
+  Future<void> uploadDocuments(String? documentId, File? specificFile, ScaffoldMessengerState context) async {
     Helper _helper = Helper();
-    List<File> files = await selectDocumentsForUpload();
-    String? errorMessage;
+    List<File> files = [];
+    if (specificFile == null) {
+      files = await selectDocumentsForUpload();
+    } else {
+      files = [specificFile];
+    }
 
+    String? errorMessage;
     if (files.isEmpty) {
       errorMessage = "No Documents available for upload";
       _helper.showSnackBar(errorMessage, 'Error', context);
@@ -632,9 +645,13 @@ class DocumentOperations {
     int totalBytes = await _helper.getTotalBytes(files);
     int totalBytesTransferred = 0;
 
+    Completer<void> uploadCompleter = Completer(); // Create a Completer
+    int filesCount = files.length; // Count the total number of files
+    int uploadedFilesCount = 0; // Counter for uploaded files
+
     try {
       Map<String, dynamic> userDetails = await _helper.getCurrentUserDetails();
-      String category = "Customer";
+      String category = "MyDocs";
       int year = DateTime.now().year;
       String userDomain = userDetails['userDomain'].toLowerCase();
       String token = userDetails['token'];
@@ -655,7 +672,7 @@ class DocumentOperations {
 
         //Map<String, dynamic> result = await _helper.getSignedUrl(documentPath, token);
 
-        // TODO and use instead of getDownloadURL
+        // TODO and use this instead of getDownloadURL
         /*if (result['status'] == 'Failed') {
           return result['error'];
         }
@@ -689,6 +706,10 @@ class DocumentOperations {
                 } else {
                   _helper.showSnackBar("Document $documentName uploaded successfully", 'Success', context);
                 }
+                uploadedFilesCount++;
+                if (uploadedFilesCount == filesCount) {
+                  uploadCompleter.complete();
+                }
                 break;
               case TaskState.canceled:
                 String errorMessage = "Upload task is cancelled for $documentName";
@@ -713,6 +734,7 @@ class DocumentOperations {
       _helper.showSnackBar('$e', 'Error', context);
       return;
     }
+    return uploadCompleter.future;
   }
 
   Future<String> downloadDocument(Document document, String downloadPath) async {

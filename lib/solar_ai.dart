@@ -9,6 +9,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'solar_ai_card.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'dart:io';
+import 'progress_bar.dart';
 
 class SolarDataFetcher extends StatefulWidget {
   final DocumentOperations docOperations;
@@ -51,6 +53,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
     'consumptionday': '200',
     'outputformat': 'json',
   };
+  String documentId = "solarAIDocument";
   String selectedSystemType = 'Grid-connected & Tracking PV systems'; // Default value
   bool showForm = true;
   String selectedRadDatabase = 'PVGIS-SARAH'; // Default value
@@ -79,6 +82,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
   bool fixed = false;
   bool calcButtonEnabled = false;
   bool isLoading = false;
+  bool isUploading = false;
   Helper helper = Helper();
   final ScrollController _scrollController = ScrollController();
 
@@ -150,6 +154,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
     twoaxis = false;
     fixed = false;
     calcButtonEnabled = false;
+    isUploading = false;
   }
 
   bool isAtLeastOneSwitchEnabled() {
@@ -236,9 +241,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
     );
   }
 
-  Future<void> generateAndPreviewPdf(Map<String, dynamic> solarData) async {
-    print("solarData...");
-    print(solarData);
+  Future<void> generateAndPreviewPdf(Map<String, dynamic> solarData, ScaffoldMessengerState context) async {
     final pdf = pw.Document();
 
     pdf.addPage(
@@ -307,13 +310,37 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
       ),
     );
 
-    await Printing.layoutPdf(
-      onLayout: (PdfPageFormat format) async => pdf.save(),
-    );
+    Map<String, dynamic> currentUserDetails = await helper.getCurrentUserDetails();
+    String role = currentUserDetails['userRole'];
+
+    if (role == 'client') {
+      setState(() {
+        isUploading = true;
+      });
+      // Save the PDF file locally
+      String fileName = 'SolarDataReport_${DateTime.now().millisecondsSinceEpoch}.pdf';
+      String filePath = await widget.docOperations.createDownloadPathForFile(fileName);
+
+      if (filePath == "Failed") {
+        helper.showSnackBar("Could not access directory for saving file $fileName", "Error", context);
+      } else {
+        final file = File(filePath);
+        await file.writeAsBytes(await pdf.save());
+
+        // Upload the PDF file
+        await widget.docOperations.uploadDocuments(documentId, file, context);
+        setState(() {
+          isUploading = false;
+        });
+      }
+    } else {
+        await Printing.layoutPdf(
+          onLayout: (PdfPageFormat format) async => pdf.save(),
+        );
+    }
   }
 
-  Future<void> generateAndPreviewPdfOffGrid(Map<String, dynamic> solarData) async {
-    print(solarData);
+  Future<void> generateAndPreviewPdfOffGrid(Map<String, dynamic> solarData, ScaffoldMessengerState context) async {
     final pdf = pw.Document();
 
     pdf.addPage(
@@ -356,9 +383,35 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
       ),
     );
 
-    await Printing.layoutPdf(
-      onLayout: (PdfPageFormat format) async => pdf.save(),
-    );
+    Map<String, dynamic> currentUserDetails = await helper.getCurrentUserDetails();
+    String role = currentUserDetails['userRole'];
+
+    if (role == 'client') {
+      setState(() {
+        isUploading = true;
+      });
+      // Save the PDF file locally
+      String fileName = 'SolarDataReport_${DateTime.now().millisecondsSinceEpoch}.pdf';
+      String filePath = await widget.docOperations.createDownloadPathForFile(fileName);
+
+      if (filePath == "Failed") {
+        helper.showSnackBar("Could not access directory for saving file $fileName", "Error", context);
+      } else {
+        final file = File(filePath);
+        await file.writeAsBytes(await pdf.save());
+
+        // Upload the PDF file
+        await widget.docOperations.uploadDocuments(documentId, file, context);
+
+        setState(() {
+          isUploading = false;
+        });
+      }
+    } else {
+      await Printing.layoutPdf(
+        onLayout: (PdfPageFormat format) async => pdf.save(),
+      );
+    }
   }
 
   pw.Widget _buildMonthlyDataTable(Map<String, dynamic> solarData) {
@@ -453,22 +506,29 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
       queryParamsInUse = queryParamsOffGrid;
     }
     Uri uri = Uri.parse(apiUrl).replace(queryParameters: queryParamsInUse);
-    print(uri);
 
     try {
       http.Response response = await http.get(uri);
 
       if (response.statusCode == 200) {
         var jsonData = json.decode(response.body);
-        print("jsonData");
-        print(jsonData);
+
         setState(() {
           solarData = selectedSystemType == 'Grid-connected & Tracking PV systems' ? extractImportantData(jsonData) : extractImportantDataOffGrid(jsonData);
           showForm = false;
           isLoading = false;
         });
       } else {
-        helper.showSnackBar('Failed to fetch solar data. Status Code: ${response.statusCode}', "Error", scaffoldContext);
+        // Attempt to decode response body to get the error message
+        String errorMessage;
+        try {
+          var responseData = json.decode(response.body);
+          errorMessage = responseData['error'] ?? 'Error: ${response.reasonPhrase}';
+        } catch (e) {
+          // If decoding fails, use the HTTP status message
+          errorMessage = 'Error: ${response.reasonPhrase}';
+        }
+        helper.showSnackBar('Failed to fetch solar data. Status Code: $errorMessage', "Error", scaffoldContext);
         setState(() {
           isLoading = false; // Set isLoading to false after receiving the response
         });
@@ -507,7 +567,6 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
         Map<String, dynamic> pvModule = inputs['pv_module'];
         extractedData['Technology'] = pvModule['technology'];
         extractedData['Peak Power'] = pvModule['peak_power'];
-        extractedData['System Loss'] = pvModule['system_loss'];
       }
       if (inputs.containsKey('mounting_system')) {
         Map<String, dynamic> mountingSystem = inputs['mounting_system'];
@@ -1491,6 +1550,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
     }
 
     Widget buildResult() {
+      widget.docOperations.setProgressNotifierDictValue(documentId);
       return SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1504,6 +1564,8 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
                       showForm = true;
                       solarData = null;
                       resetQueryParams();
+                      // First Reset the Progress Bar
+                      widget.docOperations.resetProgressNotifierDictValue(documentId);
                     });
                   },
                   style: ElevatedButton.styleFrom(
@@ -1515,7 +1577,8 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    selectedSystemType == 'Grid-connected & Tracking PV systems' ? generateAndPreviewPdf(solarData ?? {}) : generateAndPreviewPdfOffGrid(solarData ?? {});
+                    final scaffoldContext = ScaffoldMessenger.of(context);
+                    selectedSystemType == 'Grid-connected & Tracking PV systems' ? generateAndPreviewPdf(solarData ?? {}, scaffoldContext) : generateAndPreviewPdfOffGrid(solarData ?? {}, scaffoldContext);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,
@@ -1526,6 +1589,18 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
                 ),
               ],
             ),
+            SizedBox(height: 20),
+            if (isUploading)
+              Center(
+                child: Align(
+                  alignment: Alignment.center,
+                  child: LinearProgressIndicator(
+                    minHeight: 4.0, // Adjust the thickness
+                    backgroundColor: Colors.grey.shade300,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                  ),
+                ),
+              ),
             SizedBox(height: 20),
             if (solarData != null)
               ...solarData!.entries.expand((entry) {
