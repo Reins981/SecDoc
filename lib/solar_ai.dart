@@ -331,9 +331,11 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
 
         // Upload the PDF file
         await widget.docOperations.uploadDocuments(documentId, file, context);
-        setState(() {
-          isUploading = false;
-        });
+        if (mounted) {
+          setState(() {
+            isUploading = false; // This should be false after uploading
+          });
+        }
       }
     } else {
         await Printing.layoutPdf(
@@ -405,9 +407,11 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
         // Upload the PDF file
         await widget.docOperations.uploadDocuments(documentId, file, context);
 
-        setState(() {
-          isUploading = false;
-        });
+        if (mounted) {
+          setState(() {
+            isUploading = false; // This should be false after uploading
+          });
+        }
       }
     } else {
       await Printing.layoutPdf(

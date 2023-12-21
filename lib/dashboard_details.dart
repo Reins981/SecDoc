@@ -205,9 +205,11 @@ class _DetailedDashboardPageState extends State<DetailedDashboardPage> {
                                   });
                                   final scaffoldContext = ScaffoldMessenger.of(context);
                                   await widget.docOperations.uploadDocuments(documentId, null, scaffoldContext);
-                                  setState(() {
-                                    isUploading = true;
-                                  });
+                                  if (mounted) {
+                                    setState(() {
+                                      isUploading = false; // This should be false after uploading
+                                    });
+                                  }
                                 } else {
                                   await Future.delayed(Duration.zero);
                                   Navigator.pushReplacementNamed(context, '/details').then((_) {

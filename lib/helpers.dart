@@ -356,7 +356,7 @@ class DocumentOperations {
       final category = documentData['category'];
       final year = documentData['year'];
       final userMail = userRole == 'client' ? documentData['from_email'] : documentData['user_email'];
-      final userName = userRole == 'client' ? documentData['from_role'] : documentData['user_name'];
+      final userName = documentData['user_name'];
       final name = documentData['document_name'];
       final owner = documentData['owner'];
       final lastUpdate = documentData['last_update'];
@@ -482,6 +482,7 @@ class DocumentOperations {
         '$owner/'
         '$userName/'
         '$documentName';
+    print(documentPath);
 
     try {
       final Reference ref = FirebaseStorage.instance.ref().child(documentPath);
