@@ -356,7 +356,7 @@ class DocumentOperations {
       final category = documentData['category'];
       final year = documentData['year'];
       final userMail = userRole == 'client' ? documentData['from_email'] : documentData['user_email'];
-      final userName = documentData['user_name'];
+      final userName = userRole == 'client' ? documentData['from_user_name'] : documentData['user_name'];
       final name = documentData['document_name'];
       final owner = documentData['owner'];
       final lastUpdate = documentData['last_update'];
@@ -595,6 +595,7 @@ class DocumentOperations {
         await FirebaseFirestore.instance.collection('documents_$userDomainLowerCase')
             .add({
           "from_email": userDetails['userEmail'],
+          "from_user_name": userDetails['userName'],
           "from_role": userDetails['userRole'],
           "user_name": userDetails['userName'],
           "user_email": userDetails['userEmail'],
