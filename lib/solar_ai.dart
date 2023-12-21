@@ -256,11 +256,11 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
           pw.Text('Overview', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
           pw.Padding(
             padding: pw.EdgeInsets.only(top: 10),
-            child: pw.Text('Maximum Budget: ${solarData['Maximum Budget']} Euros'
-                '\nMaximum Lifetime: ${solarData['Maximum Lifetime']} Years'
+            child: pw.Text('Maximum Budget: ${solarData['Maximum Budget (Euros)']} Euros'
+                '\nMaximum Lifetime: ${solarData['Maximum Lifetime (Years)']} Years'
                 '\nTechnology: ${solarData['Technology']}'
-                '\nPeak Power: ${solarData['Peak Power']} kW'
-                '\nSystem Loss: ${solarData['System Loss']} %'
+                '\nPeak Power: ${solarData['Peak Power (kW)']} kW'
+                '\nSystem Loss: ${solarData['System Loss (%)']} %'
                 '\nDatabase: ${solarData['Radiation Database']}'),
           ),
           pw.SizedBox(height: 20),
@@ -277,33 +277,33 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
             pw.Padding(
               padding: pw.EdgeInsets.only(top: 10),
               child: pw.Text('Type: ${solarData['Mounting System']['Type']}'
-                  '\nSlope: ${solarData['Mounting System']['Slope']} °'
+                  '\nSlope: ${solarData['Mounting System']['Slope (°)']} °'
                   '\nSlope is Optimal: ${solarData['Mounting System']['Slope is Optimal']}'
-                  '\nOrientation Angle: ${solarData['Mounting System']['Orientation Angle']} °'
+                  '\nOrientation Angle: ${solarData['Mounting System']['Orientation Angle (°)']} °'
                   '\nOrientation Angle is Optimal: ${solarData['Mounting System']['Orientation Angle is Optimal']}'),
             ),
           if (solarData['Mounting System'].containsKey('Inclined Axis'))
             pw.Padding(
               padding: pw.EdgeInsets.only(top: 10),
-              child: pw.Text('Slope: ${solarData['Mounting System']['Inclined Axis']['Slope']} °'
+              child: pw.Text('Slope: ${solarData['Mounting System']['Inclined Axis']['Slope (°)']} °'
                   '\nSlope is Optimal: ${solarData['Mounting System']['Inclined Axis']['Slope is Optimal']}'
-                  '\nOrientation Angle: ${solarData['Mounting System']['Inclined Axis']['Orientation Angle']} °'
+                  '\nOrientation Angle: ${solarData['Mounting System']['Inclined Axis']['Orientation Angle (°)']} °'
                   '\nOrientation Angle is Optimal: ${solarData['Mounting System']['Inclined Axis']['Orientation Angle is Optimal']}'),
             ),
           if (solarData['Mounting System'].containsKey('Vertical Axis'))
             pw.Padding(
               padding: pw.EdgeInsets.only(top: 10),
-              child: pw.Text('Slope: ${solarData['Mounting System']['Vertical Axis']['Slope']} °'
+              child: pw.Text('Slope: ${solarData['Mounting System']['Vertical Axis']['Slope (°)']} °'
                   '\nSlope is Optimal: ${solarData['Mounting System']['Vertical Axis']['Slope is Optimal']}'
-                  '\nOrientation Angle: ${solarData['Mounting System']['Vertical Axis']['Orientation Angle']} °'
+                  '\nOrientation Angle: ${solarData['Mounting System']['Vertical Axis']['Orientation Angle (°)']} °'
                   '\nOrientation Angle is Optimal: ${solarData['Mounting System']['Vertical Axis']['Orientation Angle is Optimal']}'),
             ),
           if (solarData['Mounting System'].containsKey('Two Axis'))
             pw.Padding(
               padding: pw.EdgeInsets.only(top: 10),
-              child: pw.Text('Slope: ${solarData['Mounting System']['Two Axis']['Slope']} °'
+              child: pw.Text('Slope: ${solarData['Mounting System']['Two Axis']['Slope (°)']} °'
                   '\nSlope is Optimal: ${solarData['Mounting System']['Two Axis']['Slope is Optimal']}'
-                  '\nOrientation Angle: ${solarData['Mounting System']['Two Axis']['Orientation Angle']} °'
+                  '\nOrientation Angle: ${solarData['Mounting System']['Two Axis']['Orientation Angle (°)']} °'
                   '\nOrientation Angle is Optimal: ${solarData['Mounting System']['Two Axis']['Orientation Angle is Optimal']}'),
             ),
           pw.SizedBox(height: 20),
@@ -355,8 +355,8 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
           pw.Text('Overview', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
           pw.Padding(
             padding: pw.EdgeInsets.only(top: 10),
-            child: pw.Text('Maximum Budget: ${solarData['Maximum Budget']} Euros'
-                '\nPeak Power: ${solarData['Peak Power']} kW'
+            child: pw.Text('Maximum Budget: ${solarData['Maximum Budget (Euros)']} Euros'
+                '\nPeak Power: ${solarData['Peak Power (kW)']} kW'
                 '\nBattery Capacity: ${solarData['Battery Capacity (Wh)']} Wh'
                 '\nBattery Discharge Cutoff Limit: ${solarData['Battery Discharge Cutoff Limit (%)']} %'
                 '\nDaily Energy Consumption: ${solarData['Daily Energy Consumption (Wh)']} Wh'
@@ -374,9 +374,9 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
           pw.Text('Mounting System', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
           pw.Padding(
             padding: pw.EdgeInsets.only(top: 10),
-            child: pw.Text('Slope: ${solarData['Mounting System']['Slope']} °'
+            child: pw.Text('Slope: ${solarData['Mounting System']['Slope (°)']} °'
                 '\nSlope is Optimal: ${solarData['Mounting System']['Slope is Optimal']}'
-                '\nOrientation Angle: ${solarData['Mounting System']['Orientation Angle']} °'
+                '\nOrientation Angle: ${solarData['Mounting System']['Orientation Angle (°)']} °'
                 '\nOrientation Angle is Optimal: ${solarData['Mounting System']['Orientation Angle is Optimal']}'),
           ),
           pw.SizedBox(height: 20),
