@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'helpers.dart';
 import 'dart:convert';
@@ -76,7 +77,9 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Customers and Admins'),
+        title: Text('Customers and Admins', style: GoogleFonts.lato(fontSize: 20, letterSpacing: 1.0, color: Colors.black)),
+        centerTitle: true,
+        backgroundColor: Colors.yellow,
         leading: IconButton(
           onPressed: () {
             Navigator.pushReplacementNamed(context, '/dashboard');

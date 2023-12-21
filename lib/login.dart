@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'helpers.dart';
 import 'dashboard_section.dart';
 import 'biometric_service.dart';
@@ -51,7 +52,13 @@ class _LoginScreenState extends State<LoginScreen> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('Cancel'),
+              child: Text('Cancel',
+                style: GoogleFonts.lato(
+                  fontSize: 16,
+                  color: Colors.black,
+                  letterSpacing: 1.0,
+                ),
+              ),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -59,7 +66,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 Navigator.of(context).pop();
                 await resetPassword(email, context);
               },
-              child: const Text('Send'),
+              child: Text('Send',
+                style: GoogleFonts.lato(
+                  fontSize: 16,
+                  color: Colors.black,
+                  letterSpacing: 1.0,
+                ),
+              ),
             ),
           ],
         );
@@ -131,11 +144,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 20),
                     SwitchListTile(
-                      title: const Text(
+                      title: Text(
                         'Enable Biometrics',
-                        style: TextStyle(
+                        style: GoogleFonts.lato(
+                          fontSize: 18,
                           color: Colors.black,
-                          fontSize: 18.0,
+                          letterSpacing: 1.0,
                         ),
                       ),
                       value: _biometricsEnabled,
@@ -162,10 +176,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         textStyle: TextStyle(fontSize: 18),
                         minimumSize: Size(double.infinity, 60),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Login',
-                        style: TextStyle(
+                        style: GoogleFonts.lato(
                           color: Colors.white,
+                          letterSpacing: 1.0,
                         ),
                       ),
                     ),
@@ -178,10 +193,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           onPressed: () async {
                             await _showEmailInputDialog(context);
                           },
-                          child: const Text(
+                          child: Text(
                             'Forgot Password?',
-                            style: TextStyle(
+                            style: GoogleFonts.lato(
                               color: Colors.black,
+                              letterSpacing: 1.0,
                             ),
                           ),
                         ),
@@ -189,10 +205,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           onPressed: () {
                             Navigator.pushReplacementNamed(context, '/registration');
                           },
-                          child: const Text(
+                          child: Text(
                             'Not yet registered?',
-                            style: TextStyle(
+                            style: GoogleFonts.lato(
                               color: Colors.black,
+                              letterSpacing: 1.0,
                             ),
                           ),
                         ),
@@ -329,9 +346,11 @@ class _WelcomeDialogState extends State<_WelcomeDialog> with SingleTickerProvide
                       alignment: Alignment.center,
                       child: Text(
                         'Welcome, ${widget.displayName}!',
-                        style: const TextStyle(
+                        style: GoogleFonts.lato(
                           fontSize: 24,
+                          color: Colors.black,
                           fontWeight: FontWeight.bold,
+                          letterSpacing: 1.0,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -349,9 +368,13 @@ class _WelcomeDialogState extends State<_WelcomeDialog> with SingleTickerProvide
                         ),
                         minimumSize: const Size(double.infinity, 50),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Continue',
-                        style: TextStyle(fontSize: 18),
+                        style: GoogleFonts.lato(
+                          fontSize: 18,
+                          color: Colors.black,
+                          letterSpacing: 1.0,
+                        ),
                       ),
                     ),
                   ], // children

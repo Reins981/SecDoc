@@ -29,10 +29,9 @@ class DocumentProvider extends ChangeNotifier {
     _removeDocumentWithId(document.id);
   }
 
-  void groupAndSetDocuments(List<DocumentSnapshot> documents, {bool notifyL=true}) {
-    _groupedDocuments = docOperations.groupDocuments(documents);
+  void groupAndSetDocuments(List<DocumentSnapshot> documents, String userRole, {bool notifyL=true}) {
+    _groupedDocuments = docOperations.groupDocuments(documents, userRole);
     if (notifyL) {
-      print("Notify listeners");
       notifyListeners();
     }
   }
@@ -52,24 +51,27 @@ class DocumentProvider extends ChangeNotifier {
 
 
 
-  void delaySearch(String searchText, List<DocumentSnapshot> documentsOrig) {
+  void delaySearch(String searchText, List<DocumentSnapshot> documentsOrig, String userRole) {
     if (_debounceTimer != null && _debounceTimer!.isActive) {
       _debounceTimer!.cancel(); // Cancel the previous timer if it's active
     }
 
-    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
-      _searchDocumentByNames(searchText, documentsOrig); // Perform search after a delay
+    _debounceTimer = Timer(const Duration(milliseconds: 100), () {
+      _searchDocumentByNames(searchText, documentsOrig, userRole); // Perform search after a delay
     });
   }
 
   // Search document by document name or user name
-  void _searchDocumentByNames(String searchText, List<DocumentSnapshot> documentsOrig) {
+  void _searchDocumentByNames(String searchText, List<DocumentSnapshot> documentsOrig, String userRole) {
 
     String? documentStatus;
     if (searchText.toLowerCase() == "new") {
       documentStatus = "true";
     } else if (searchText.toLowerCase() == "updated") {
       documentStatus = "false";
+    }
+    if (searchText.toLowerCase() == "customerdocs" && userRole.contains("admin")) {
+      searchText = "MyDocs";
     }
 
     List<DocumentSnapshot> allDocumentsCopy = List.from(documentsOrig);
@@ -98,8 +100,7 @@ class DocumentProvider extends ChangeNotifier {
         .toList();
 
     if (filteredDocuments.isNotEmpty) {
-      print("Filter results received");
-      groupAndSetDocuments(filteredDocuments);
+      groupAndSetDocuments(filteredDocuments, userRole);
     } else {
       _groupedDocuments = {};
       notifyListeners();

@@ -1,4 +1,5 @@
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:open_file/open_file.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -99,7 +100,11 @@ class Helper {
         behavior: SnackBarBehavior.floating,
         content: Text(
           message,
-          style: TextStyle(color: fontColor, fontSize: 16.0),
+          style: GoogleFonts.lato(
+            fontSize: 16,
+            color: fontColor,
+            letterSpacing: 1.0,
+          ),
         ),
         duration: Duration(seconds: duration),
         shape: RoundedRectangleBorder(
@@ -122,10 +127,10 @@ class Helper {
         ),
         child: Text(
           status,
-          style: const TextStyle(
-            fontSize: 10.0,
-            fontWeight: FontWeight.bold,
+          style: GoogleFonts.lato(
+            fontSize: 10,
             color: Colors.white,
+            letterSpacing: 1.0,
           ),
         ),
       ),
@@ -334,12 +339,11 @@ class DocumentOperations {
       result = domainStreams;
 
     }
-
     return result;
   }
 
   Map<String, Map<int, Map<String, Map<String, DocumentRepository>>>> groupDocuments(
-      List<DocumentSnapshot> documents) {
+      List<DocumentSnapshot> documents, String userRole) {
 
     final domainMap = <String, Map<int, Map<String, Map<String, DocumentRepository>>>>{};
 
@@ -351,8 +355,8 @@ class DocumentOperations {
       final domain = documentData['user_domain'];
       final category = documentData['category'];
       final year = documentData['year'];
-      final userMail = documentData['user_email'];
-      final userName = documentData['user_name'];
+      final userMail = userRole == 'client' ? documentData['from_email'] : documentData['user_email'];
+      final userName = userRole == 'client' ? documentData['from_role'] : documentData['user_name'];
       final name = documentData['document_name'];
       final owner = documentData['owner'];
       final lastUpdate = documentData['last_update'];
@@ -589,6 +593,8 @@ class DocumentOperations {
         // Create a new document
         await FirebaseFirestore.instance.collection('documents_$userDomainLowerCase')
             .add({
+          "from_email": userDetails['userEmail'],
+          "from_role": userDetails['userRole'],
           "user_name": userDetails['userName'],
           "user_email": userDetails['userEmail'],
           "owner": userDetails['userUid'],

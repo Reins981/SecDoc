@@ -138,7 +138,11 @@ class _DetailedDashboardPageState extends State<DetailedDashboardPage> {
                               ),
                               child: Text(
                                 widget.dashboardItem.buttonText,
-                                style: const TextStyle(fontSize: 20),
+                                style: GoogleFonts.lato(
+                                  fontSize: 20,
+                                  color: Colors.black,
+                                  letterSpacing: 1.0,
+                                ),
                               ),
                             ),
                           ),
@@ -176,7 +180,11 @@ class _DetailedDashboardPageState extends State<DetailedDashboardPage> {
                               ),
                               child: Text(
                                 widget.dashboardItem.buttonText,
-                                style: const TextStyle(fontSize: 20),
+                                style: GoogleFonts.lato(
+                                  fontSize: 20,
+                                  color: Colors.black,
+                                  letterSpacing: 1.0,
+                                ),
                               ),
                             ),
                           ),
@@ -227,7 +235,11 @@ class _DetailedDashboardPageState extends State<DetailedDashboardPage> {
                               ),
                               child: Text(
                                 widget.dashboardItem.buttonText,
-                                style: const TextStyle(fontSize: 20),
+                                style: GoogleFonts.lato(
+                                  fontSize: 20,
+                                  color: Colors.black,
+                                  letterSpacing: 1.0,
+                                ),
                               ),
                             ),
                           ),

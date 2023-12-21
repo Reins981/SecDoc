@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:sec_doc/helpers.dart';
 
 
@@ -76,7 +77,9 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.document.name),
+        title: Text(widget.document.name,  style: GoogleFonts.lato(fontSize: 20, letterSpacing: 1.0, color: Colors.black)),
+        centerTitle: true,
+        backgroundColor: Colors.yellow,
       ),
       body: FutureBuilder<Map<String, dynamic>>(
         future: _documentContent,
@@ -84,7 +87,16 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError || snapshot.data == null) {
-            return const Center(child: Text('Error loading document'));
+            return Center(
+                child: Text(
+                  'Error loading document',
+                  style: GoogleFonts.lato(
+                    fontSize: 16,
+                    color: Colors.black,
+                    letterSpacing: 1.0,
+                  ),
+                )
+            );
           } else {
             var data = snapshot.data!;
             dynamic content = data['content'];
@@ -121,7 +133,11 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                   padding: const EdgeInsets.all(16.0),
                   child: Text(
                     content,
-                    style: const TextStyle(fontSize: 16.0),
+                    style: GoogleFonts.lato(
+                      fontSize: 16,
+                      color: Colors.black,
+                      letterSpacing: 1.0,
+                    ),
                   ),
                 );
               }

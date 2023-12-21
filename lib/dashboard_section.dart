@@ -36,7 +36,7 @@ class _DashboardSectionState extends State<DashboardSection> {
             "\n ensuring easy and efficient management of all your important files.",
         detailedDescriptionAdmin: "Effortlessly access, download, and seamlessly navigate through our comprehensive document library, "
             "\n ensuring easy and efficient management of all your important files.",
-        buttonText: "Access Documents Now",
+        buttonText: "Access Docs Now",
         icon: Icons.folder,
         itemType: DashboardItemType.library
       ),
@@ -48,7 +48,7 @@ class _DashboardSectionState extends State<DashboardSection> {
           "\nlaying the foundation for personalized solar panel design tailored to your specific needs.",
         detailedDescriptionAdmin: "Empower customer solar panel planning by effortlessly uploading Plans and Offers to our cloud, "
             "\nlaying the foundation for personalized solar panel design tailored to customers specific needs.",
-        buttonText: "Upload Documents Now",
+        buttonText: "Upload Docs Now",
         icon: Icons.cloud_upload,
         itemType: DashboardItemType.upload
       ),
@@ -85,8 +85,9 @@ class _DashboardSectionState extends State<DashboardSection> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Dashboard", style: GoogleFonts.lato(fontSize: 20, letterSpacing: 1.0)),
+        title: Text("Dashboard", style: GoogleFonts.lato(fontSize: 20, letterSpacing: 1.0, color: Colors.black)),
         centerTitle: true,
+        backgroundColor: Colors.yellow,
         automaticallyImplyLeading: false,
         actions: [
           IconButton(

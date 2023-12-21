@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class ExpandableCard extends StatefulWidget {
   final String titleText;
@@ -34,7 +35,11 @@ class _ExpandableCardState extends State<ExpandableCard> {
               return ListTile(
                 title: Text(
                   widget.titleText,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: GoogleFonts.lato(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.0,
+                  ),
                 ),
               );
             },
@@ -42,7 +47,10 @@ class _ExpandableCardState extends State<ExpandableCard> {
               padding: EdgeInsets.all(16.0),
               child: Text(
                 widget.bodyText,
-                style: TextStyle(fontSize: 16),
+                style: GoogleFonts.lato(
+                  fontSize: 16,
+                  letterSpacing: 1.0,
+                ),
               ),
             ),
             isExpanded: _showCard,

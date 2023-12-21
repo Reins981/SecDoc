@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'helpers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
@@ -178,7 +179,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Registration'),
+        title: Text('Registration', style: GoogleFonts.lato(fontSize: 20, letterSpacing: 1.0, color: Colors.black)),
+        centerTitle: true,
+        backgroundColor: Colors.yellow,
         leading: IconButton(
           onPressed: () {
             Navigator.pushReplacementNamed(context, '/login');
@@ -265,12 +268,13 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Choose your domain based on your location:',
-                          style: TextStyle(
-                            color: Colors.black,
+                          style: GoogleFonts.lato(
                             fontSize: 18,
+                            color: Colors.black,
                             fontWeight: FontWeight.bold,
+                            letterSpacing: 1.0,
                           ),
                         ),
                         const SizedBox(height: 10),
@@ -303,7 +307,13 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           (String value) {
                         return DropdownMenuItem<String>(
                           value: value,
-                          child: Text(value),
+                          child: Text(value,
+                            style: GoogleFonts.lato(
+                              fontSize: 16,
+                              color: Colors.black,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
                         );
                       },
                     )
@@ -348,10 +358,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       textStyle: TextStyle(fontSize: 18),
                       minimumSize: Size(double.infinity, 60),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Register',
-                      style: TextStyle(
+                      style: GoogleFonts.lato(
                         color: Colors.white,
+                        letterSpacing: 1.0,
                       ),
                     ),
                   ),
@@ -359,7 +370,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               ),
             )
               :
-          const Padding(
+          Padding(
             padding: EdgeInsets.all(20.0),
             child: Card(
               color: Colors.yellow,
@@ -371,15 +382,20 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   children: [
                     Text(
                       'User registered successfully!',
-                      style: TextStyle(
+                      style: GoogleFonts.lato(
                         fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                        letterSpacing: 1.0,
                       ),
                     ),
                     SizedBox(height: 20),
                     Text(
                       'The next steps are:\n- Close this App or Return to the Login Screen\n- Verify your email address with the verification link sent to you by email\n- Login with your email address and password',
-                      style: TextStyle(fontSize: 16),
+                      style: GoogleFonts.lato(
+                        fontSize: 16,
+                        color: Colors.black,
+                        letterSpacing: 1.0,
+                      ),
                     ),
                   ],
                 ),

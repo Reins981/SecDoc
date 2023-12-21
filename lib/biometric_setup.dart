@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:local_auth/local_auth.dart';
 import 'helpers.dart';
 
@@ -106,10 +107,11 @@ class _AuthenticatedScreenState extends State<AuthenticatedScreen> {
               children: [
                 Text(
                   "Welcome, $userName",
-                  style: const TextStyle(
+                  style: GoogleFonts.lato(
+                    fontSize: 36,
                     color: Colors.black,
-                    fontSize: 36.0,
                     fontWeight: FontWeight.bold,
+                    letterSpacing: 1.0,
                   ),
                 ),
                 const SizedBox(height: 40.0),
@@ -119,13 +121,13 @@ class _AuthenticatedScreenState extends State<AuthenticatedScreen> {
                   color: Colors.blue,
                 ),
                 const SizedBox(height: 20.0),
-                const Text(
+                Text(
                   "Authenticate using your fingerprint instead of your password",
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: GoogleFonts.lato(
+                    fontSize: 18,
                     color: Colors.grey,
-                    fontSize: 18.0,
-                    height: 1.5,
+                    letterSpacing: 1.0,
                   ),
                 ),
                 const SizedBox(height: 40.0),
@@ -144,9 +146,13 @@ class _AuthenticatedScreenState extends State<AuthenticatedScreen> {
                       borderRadius: BorderRadius.circular(30.0),
                     ),
                   ),
-                  child: const Text(
+                  child: Text(
                     "Authenticate",
-                    style: TextStyle(color: Colors.white, fontSize: 18.0),
+                      style: GoogleFonts.lato(
+                        fontSize: 18,
+                        color: Colors.white,
+                        letterSpacing: 1.0,
+                      ),
                   ),
                 ),
               ],

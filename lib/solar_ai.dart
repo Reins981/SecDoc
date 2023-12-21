@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:printing/printing.dart';
 import 'dart:convert';
@@ -10,7 +11,6 @@ import 'solar_ai_card.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'dart:io';
-import 'progress_bar.dart';
 
 class SolarDataFetcher extends StatefulWidget {
   final DocumentOperations docOperations;
@@ -165,7 +165,9 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Solar Data'),
+        title: Text('Solar Data',  style: GoogleFonts.lato(fontSize: 20, letterSpacing: 1.0, color: Colors.black)),
+        centerTitle: true,
+        backgroundColor: Colors.yellow,
         leading: IconButton(
           onPressed: () {
             Navigator.pushReplacementNamed(context, '/dashboard');
@@ -254,11 +256,11 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
           pw.Text('Overview', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
           pw.Padding(
             padding: pw.EdgeInsets.only(top: 10),
-            child: pw.Text('Maximum Budget: ${solarData['Maximum Budget']},'
-                '\nMaximum Lifetime: ${solarData['Maximum Lifetime']}'
+            child: pw.Text('Maximum Budget: ${solarData['Maximum Budget']} Euros'
+                '\nMaximum Lifetime: ${solarData['Maximum Lifetime']} Years'
                 '\nTechnology: ${solarData['Technology']}'
-                '\nPeak Power: ${solarData['Peak Power']}'
-                '\nSystem Loss: ${solarData['System Loss']}'
+                '\nPeak Power: ${solarData['Peak Power']} kW'
+                '\nSystem Loss: ${solarData['System Loss']} %'
                 '\nDatabase: ${solarData['Radiation Database']}'),
           ),
           pw.SizedBox(height: 20),
@@ -275,33 +277,33 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
             pw.Padding(
               padding: pw.EdgeInsets.only(top: 10),
               child: pw.Text('Type: ${solarData['Mounting System']['Type']}'
-                  '\nSlope: ${solarData['Mounting System']['Slope']}'
+                  '\nSlope: ${solarData['Mounting System']['Slope']} °'
                   '\nSlope is Optimal: ${solarData['Mounting System']['Slope is Optimal']}'
-                  '\nOrientation Angle: ${solarData['Mounting System']['Orientation Angle']}'
+                  '\nOrientation Angle: ${solarData['Mounting System']['Orientation Angle']} °'
                   '\nOrientation Angle is Optimal: ${solarData['Mounting System']['Orientation Angle is Optimal']}'),
             ),
           if (solarData['Mounting System'].containsKey('Inclined Axis'))
             pw.Padding(
               padding: pw.EdgeInsets.only(top: 10),
-              child: pw.Text('Slope: ${solarData['Mounting System']['Inclined Axis']['Slope']}'
+              child: pw.Text('Slope: ${solarData['Mounting System']['Inclined Axis']['Slope']} °'
                   '\nSlope is Optimal: ${solarData['Mounting System']['Inclined Axis']['Slope is Optimal']}'
-                  '\nOrientation Angle: ${solarData['Mounting System']['Inclined Axis']['Orientation Angle']}'
+                  '\nOrientation Angle: ${solarData['Mounting System']['Inclined Axis']['Orientation Angle']} °'
                   '\nOrientation Angle is Optimal: ${solarData['Mounting System']['Inclined Axis']['Orientation Angle is Optimal']}'),
             ),
           if (solarData['Mounting System'].containsKey('Vertical Axis'))
             pw.Padding(
               padding: pw.EdgeInsets.only(top: 10),
-              child: pw.Text('Slope: ${solarData['Mounting System']['Vertical Axis']['Slope']}'
+              child: pw.Text('Slope: ${solarData['Mounting System']['Vertical Axis']['Slope']} °'
                   '\nSlope is Optimal: ${solarData['Mounting System']['Vertical Axis']['Slope is Optimal']}'
-                  '\nOrientation Angle: ${solarData['Mounting System']['Vertical Axis']['Orientation Angle']}'
+                  '\nOrientation Angle: ${solarData['Mounting System']['Vertical Axis']['Orientation Angle']} °'
                   '\nOrientation Angle is Optimal: ${solarData['Mounting System']['Vertical Axis']['Orientation Angle is Optimal']}'),
             ),
           if (solarData['Mounting System'].containsKey('Two Axis'))
             pw.Padding(
               padding: pw.EdgeInsets.only(top: 10),
-              child: pw.Text('Slope: ${solarData['Mounting System']['Two Axis']['Slope']}'
+              child: pw.Text('Slope: ${solarData['Mounting System']['Two Axis']['Slope']} °'
                   '\nSlope is Optimal: ${solarData['Mounting System']['Two Axis']['Slope is Optimal']}'
-                  '\nOrientation Angle: ${solarData['Mounting System']['Two Axis']['Orientation Angle']}'
+                  '\nOrientation Angle: ${solarData['Mounting System']['Two Axis']['Orientation Angle']} °'
                   '\nOrientation Angle is Optimal: ${solarData['Mounting System']['Two Axis']['Orientation Angle is Optimal']}'),
             ),
           pw.SizedBox(height: 20),
@@ -353,11 +355,11 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
           pw.Text('Overview', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
           pw.Padding(
             padding: pw.EdgeInsets.only(top: 10),
-            child: pw.Text('Maximum Budget: ${solarData['Maximum Budget']},'
-                '\nPeak Power: ${solarData['Peak Power']}'
-                '\nBattery Capacity (Wh): ${solarData['Battery Capacity (Wh)']}'
-                '\nBattery Discharge Cutoff Limit (%): ${solarData['Battery Discharge Cutoff Limit (%)']}'
-                '\nDaily Energy Consumption (Wh): ${solarData['Daily Energy Consumption (Wh)']}'
+            child: pw.Text('Maximum Budget: ${solarData['Maximum Budget']} Euros'
+                '\nPeak Power: ${solarData['Peak Power']} kW'
+                '\nBattery Capacity: ${solarData['Battery Capacity (Wh)']} Wh'
+                '\nBattery Discharge Cutoff Limit: ${solarData['Battery Discharge Cutoff Limit (%)']} %'
+                '\nDaily Energy Consumption: ${solarData['Daily Energy Consumption (Wh)']} Wh'
                 '\nDatabase: ${solarData['Radiation Database']}'),
           ),
           pw.SizedBox(height: 20),
@@ -372,9 +374,9 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
           pw.Text('Mounting System', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
           pw.Padding(
             padding: pw.EdgeInsets.only(top: 10),
-            child: pw.Text('Slope: ${solarData['Mounting System']['Slope']}'
+            child: pw.Text('Slope: ${solarData['Mounting System']['Slope']} °'
                 '\nSlope is Optimal: ${solarData['Mounting System']['Slope is Optimal']}'
-                '\nOrientation Angle: ${solarData['Mounting System']['Orientation Angle']}'
+                '\nOrientation Angle: ${solarData['Mounting System']['Orientation Angle']} °'
                 '\nOrientation Angle is Optimal: ${solarData['Mounting System']['Orientation Angle is Optimal']}'),
           ),
           pw.SizedBox(height: 20),
@@ -544,10 +546,10 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
   Map<String, dynamic> extractImportantData(Map<String, dynamic> jsonData) {
     Map<String, dynamic> extractedData = {};
 
-    extractedData['Maximum Budget'] = maxBudget;
-    extractedData['Peak Power'] = peakPower;
-    extractedData['System Loss'] = loss;
-    extractedData['Maximum Lifetime'] = lifetime;
+    extractedData['Maximum Budget (Euros)'] = maxBudget;
+    extractedData['Peak Power (kW)'] = peakPower;
+    extractedData['System Loss (%)'] = loss;
+    extractedData['Maximum Lifetime (Years)'] = lifetime;
 
     if (jsonData.containsKey('inputs')) {
       Map<String, dynamic> inputs = jsonData['inputs'];
@@ -566,7 +568,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
       if (inputs.containsKey('pv_module')) {
         Map<String, dynamic> pvModule = inputs['pv_module'];
         extractedData['Technology'] = pvModule['technology'];
-        extractedData['Peak Power'] = pvModule['peak_power'];
+        extractedData['Peak Power (kW)'] = pvModule['peak_power'];
       }
       if (inputs.containsKey('mounting_system')) {
         Map<String, dynamic> mountingSystem = inputs['mounting_system'];
@@ -578,12 +580,12 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
           }
           if (fixedParameters.containsKey('slope')) {
             Map<String, dynamic> slopeParameters = fixedParameters['slope'];
-            extractedData['Mounting System']['Slope'] = slopeParameters['value'];
+            extractedData['Mounting System']['Slope (°)'] = slopeParameters['value'];
             extractedData['Mounting System']['Slope is Optimal'] = slopeParameters['optimal'];
           }
           if (fixedParameters.containsKey('azimuth')) {
             Map<String, dynamic> orientationAngle = fixedParameters['azimuth'];
-            extractedData['Mounting System']['Orientation Angle'] = orientationAngle['value'];
+            extractedData['Mounting System']['Orientation Angle (°)'] = orientationAngle['value'];
             extractedData['Mounting System']['Orientation Angle is Optimal'] = orientationAngle['optimal'];
           }
         }
@@ -592,12 +594,12 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
           extractedData['Mounting System']['Vertical Axis'] = {};
           if (verticalAxis.containsKey('slope')) {
             Map<String, dynamic> slopeParameters = verticalAxis['slope'];
-            extractedData['Mounting System']['Vertical Axis']['Slope'] = slopeParameters['value'];
+            extractedData['Mounting System']['Vertical Axis']['Slope (°)'] = slopeParameters['value'];
             extractedData['Mounting System']['Vertical Axis']['Slope is Optimal'] = slopeParameters['optimal'];
           }
           if (verticalAxis.containsKey('azimuth')) {
             Map<String, dynamic> orientationAngle = verticalAxis['azimuth'];
-            extractedData['Mounting System']['Vertical Axis']['Orientation Angle'] = orientationAngle['value'];
+            extractedData['Mounting System']['Vertical Axis']['Orientation Angle (°)'] = orientationAngle['value'];
             extractedData['Mounting System']['Vertical Axis']['Orientation Angle is Optimal'] = orientationAngle['optimal'];
           }
         }
@@ -606,12 +608,12 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
           extractedData['Mounting System']['Inclined Axis'] = {};
           if (inclinedAxis.containsKey('slope')) {
             Map<String, dynamic> slopeParameters = inclinedAxis['slope'];
-            extractedData['Mounting System']['Inclined Axis']['Slope'] = slopeParameters['value'];
+            extractedData['Mounting System']['Inclined Axis']['Slope (°)'] = slopeParameters['value'];
             extractedData['Mounting System']['Inclined Axis']['Slope is Optimal'] = slopeParameters['optimal'];
           }
           if (inclinedAxis.containsKey('azimuth')) {
             Map<String, dynamic> orientationAngle = inclinedAxis['azimuth'];
-            extractedData['Mounting System']['Inclined Axis']['Orientation Angle'] = orientationAngle['value'];
+            extractedData['Mounting System']['Inclined Axis']['Orientation Angle (°)'] = orientationAngle['value'];
             extractedData['Mounting System']['Inclined Axis']['Orientation Angle is Optimal'] = orientationAngle['optimal'];
           }
         }
@@ -620,12 +622,12 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
           extractedData['Mounting System']['Two Axis'] = {};
           if (twoAxis.containsKey('slope')) {
             Map<String, dynamic> slopeParameters = twoAxis['slope'];
-            extractedData['Mounting System']['Two Axis']['Slope'] = slopeParameters['value'];
+            extractedData['Mounting System']['Two Axis']['Slope (°)'] = slopeParameters['value'];
             extractedData['Mounting System']['Two Axis']['Slope is Optimal'] = slopeParameters['optimal'];
           }
           if (twoAxis.containsKey('azimuth')) {
             Map<String, dynamic> orientationAngle = twoAxis['azimuth'];
-            extractedData['Mounting System']['Two Axis']['Orientation Angle'] = orientationAngle['value'];
+            extractedData['Mounting System']['Two Axis']['Orientation Angle (°)'] = orientationAngle['value'];
             extractedData['Mounting System']['Two Axis']['Orientation Angle is Optimal'] = orientationAngle['optimal'];
           }
         }
@@ -665,8 +667,8 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
   Map<String, dynamic> extractImportantDataOffGrid(Map<String, dynamic> jsonData) {
     Map<String, dynamic> extractedData = {};
 
-    extractedData['Maximum Budget'] = maxBudget;
-    extractedData['Peak Power'] = peakPower;
+    extractedData['Maximum Budget (Euros)'] = maxBudget;
+    extractedData['Peak Power (kW)'] = peakPower;
     extractedData['Battery Capacity (Wh)'] = capacity;
     extractedData['Battery Discharge Cutoff Limit (%)'] = cutOff;
     extractedData['Daily Energy Consumption (Wh)'] = consumptionDaily;
@@ -687,7 +689,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
       }
       if (inputs.containsKey('pv_module')) {
         Map<String, dynamic> pvModule = inputs['pv_module'];
-        extractedData['Peak Power'] = pvModule['peak_power'];
+        extractedData['Peak Power (kW)'] = pvModule['peak_power'];
       }
       if (inputs.containsKey('battery')) {
         Map<String, dynamic> batteryDetails = inputs['battery'];
@@ -707,12 +709,12 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
           Map<String, dynamic> fixedParameters = mountingSystem['fixed'];
           if (fixedParameters.containsKey('slope')) {
             Map<String, dynamic> slopeParameters = fixedParameters['slope'];
-            extractedData['Mounting System']['Slope'] = slopeParameters['value'];
+            extractedData['Mounting System']['Slope (°)'] = slopeParameters['value'];
             extractedData['Mounting System']['Slope is Optimal'] = slopeParameters['optimal'];
           }
           if (fixedParameters.containsKey('azimuth')) {
             Map<String, dynamic> orientationAngle = fixedParameters['azimuth'];
-            extractedData['Mounting System']['Orientation Angle'] = orientationAngle['value'];
+            extractedData['Mounting System']['Orientation Angle (°)'] = orientationAngle['value'];
             extractedData['Mounting System']['Orientation Angle is Optimal'] = orientationAngle['optimal'];
           }
         }
@@ -766,7 +768,11 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
           children: [
             Text(
               title,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: GoogleFonts.lato(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.0,
+              ),
             ),
             SizedBox(height: 8),
             ...subCards, // Include the generated sub-cards in the Column
@@ -799,7 +805,11 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
             children: [
               Text(
                 title,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: GoogleFonts.lato(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.0,
+                ),
               ),
               SizedBox(height: 8),
               ...subCards, // Include the generated sub-cards in the Column
@@ -815,8 +825,20 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
       elevation: 4,
       margin: EdgeInsets.all(8),
       child: ListTile(
-        title: Text(title),
-        subtitle: Text(value),
+        title: Text(title,
+          style: GoogleFonts.lato(
+            fontSize: 16,
+            color: Colors.black,
+            letterSpacing: 1.0,
+          ),
+        ),
+        subtitle: Text(value,
+          style: GoogleFonts.lato(
+            fontSize: 16,
+            color: Colors.black,
+            letterSpacing: 1.0,
+          ),
+        ),
       ),
     );
   }
@@ -915,7 +937,10 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
           ListTile(
             title: Text(
               title,
-              style: TextStyle(fontSize: 18),
+              style: GoogleFonts.lato(
+                fontSize: 18,
+                letterSpacing: 1.0,
+              ),
             ),
             trailing: Switch(
               value: value,
@@ -1520,11 +1545,21 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
             ].map<DropdownMenuItem<String>>((String value) {
               return DropdownMenuItem<String>(
                 value: value,
-                child: Text(value, style: TextStyle(color: Colors.white)), // Set text color to white for contrast
+                child: Text(value,
+                  style: GoogleFonts.lato(
+                    fontSize: 16,
+                    color: Colors.white,
+                    letterSpacing: 1.0,
+                  ),
+                ), // Set text color to white for contrast
               );
             }).toList(),
             dropdownColor: Colors.blue, // Set the dropdown menu's background color
-            style: TextStyle(color: Colors.white), // Set the text style for the dropdown items
+            style: GoogleFonts.lato(
+              fontSize: 16,
+              color: Colors.white,
+              letterSpacing: 1.0,
+            ), // Set the text style for the dropdown items
           ),
         ),
       ),

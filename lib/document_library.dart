@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'dart:async'; // Import the async package for using StreamController
 import 'package:rxdart/rxdart.dart';
 import 'progress_bar.dart';
@@ -102,11 +103,29 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
         }
 
         if (snapshot.hasError) {
-          return Center(child: Text('Error loading data: ${snapshot.error}'));
+          return Center(
+            child: Text(
+              'Error loading data: ${snapshot.error}',
+                style: GoogleFonts.lato(
+                fontSize: 16,
+                color: Colors.black,
+                letterSpacing: 1.0,
+              ),
+            )
+          );
         }
 
         if (!snapshot.hasData) {
-          return const Center(child: Text('No user data available'));
+          return Center(
+            child: Text(
+              'No user data available',
+              style: GoogleFonts.lato(
+                fontSize: 16,
+                color: Colors.black,
+                letterSpacing: 1.0,
+              ),
+            )
+          );
         }
 
         final idTokenResult = snapshot.data!;
@@ -125,12 +144,30 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
 
         if (userRole == null) {
           final String errorMessage = 'User Role for user $userUid not defined.';
-          return Center(child: Text(errorMessage));
+          return Center(
+            child: Text(
+              errorMessage,
+              style: GoogleFonts.lato(
+                fontSize: 16,
+                color: Colors.black,
+                letterSpacing: 1.0,
+              ),
+            )
+          );
         }
 
         if (userDomain == null) {
           final String errorMessage = 'User Domain for user $userUid not defined.';
-          return Center(child: Text(errorMessage));
+          return Center(
+            child: Text(
+              errorMessage,
+              style: GoogleFonts.lato(
+                fontSize: 16,
+                color: Colors.black,
+                letterSpacing: 1.0,
+              ),
+            )
+          );
         }
 
         return FutureBuilder<dynamic>(
@@ -141,11 +178,29 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
             }
 
             if (snapshot.hasError) {
-              return Center(child: Text(snapshot.error.toString()));
+              return Center(
+                child: Text(
+                  snapshot.error.toString(),
+                  style: GoogleFonts.lato(
+                    fontSize: 16,
+                    color: Colors.black,
+                    letterSpacing: 1.0,
+                  ),
+                )
+              );
             }
 
             if (!snapshot.hasData || snapshot.data == null) {
-              return const Center(child: Text('No documents available.'));
+              return Center(
+                child: Text(
+                  'No documents available.',
+                  style: GoogleFonts.lato(
+                    fontSize: 16,
+                    color: Colors.black,
+                    letterSpacing: 1.0,
+                  ),
+                )
+              );
             }
 
             final data = snapshot.data;
@@ -159,7 +214,9 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
 
             return Scaffold(
               appBar: AppBar(
-                title: const Text('Document Library'),
+                title: Text('Document Library', style: GoogleFonts.lato(fontSize: 20, letterSpacing: 1.0, color: Colors.black)),
+                centerTitle: true,
+                backgroundColor: Colors.yellow,
                 leading: IconButton(
                   onPressed: () {
                     Navigator.pushReplacementNamed(context, '/dashboard');
@@ -283,7 +340,7 @@ class _DocumentListWidgetState extends State<DocumentListWidget> {
                 setState(() {
                   _isSearch = searchText.isNotEmpty;
                 });
-                documentProvider.delaySearch(searchText, allDocumentsOrig);
+                documentProvider.delaySearch(searchText, allDocumentsOrig, widget.userRole);
               },
             ),
           ),
@@ -300,12 +357,28 @@ class _DocumentListWidgetState extends State<DocumentListWidget> {
               if (snapshot.hasError) {
                 String errorMessage = snapshot.error?.toString() ??
                     'Error loading documents';
-                return Center(child: Text(errorMessage));
+                return Center(
+                  child: Text(
+                    errorMessage,
+                    style: GoogleFonts.lato(
+                      fontSize: 16,
+                      color: Colors.black,
+                      letterSpacing: 1.0,
+                    ),
+                  )
+                );
               }
 
               if (!snapshot.hasData || snapshot.data == null) {
-                return const Center(
-                    child: Text('No documents available.'));
+                return Center(
+                  child: Text('No documents available.',
+                    style: GoogleFonts.lato(
+                      fontSize: 16,
+                      color: Colors.black,
+                      letterSpacing: 1.0,
+                    ),
+                  )
+                );
               }
 
               // Create the original document list and the display document list initially
@@ -313,7 +386,7 @@ class _DocumentListWidgetState extends State<DocumentListWidget> {
                   createDocumentListForDisplayFromSnapshot(snapshot, widget.origStream);
 
               if (!_isInitialized) {
-                final groupedDocuments = widget.documentOperations.groupDocuments(displayDocuments);
+                final groupedDocuments = widget.documentOperations.groupDocuments(displayDocuments, widget.userRole);
                 _isInitialized = true;
 
                 return CustomListWidget(
@@ -331,7 +404,7 @@ class _DocumentListWidgetState extends State<DocumentListWidget> {
               } else {
                 print("Invoking Consumer");
                 if (documentProvider.groupedDocuments == null || _isSearch == false) {
-                  documentProvider.groupAndSetDocuments(displayDocuments, notifyL: false);
+                  documentProvider.groupAndSetDocuments(displayDocuments, widget.userRole, notifyL: false);
                   _isServerUpdate = true;
                 }
 
@@ -426,9 +499,11 @@ class CustomListWidget extends StatelessWidget {
             initiallyExpanded: isSearch || isServerUpdate,
             title: Text(
               'Domain: $domain',
-              style: const TextStyle(
+              style: GoogleFonts.lato(
                 fontSize: 24,
+                color: Colors.black,
                 fontWeight: FontWeight.bold,
+                letterSpacing: 1.0,
               ),
             ),
             children: yearList.map((year) {
@@ -440,23 +515,36 @@ class CustomListWidget extends StatelessWidget {
                 initiallyExpanded: isSearch || isServerUpdate,
                 title: Text(
                   'Year: $year',
-                  style: const TextStyle(
+                  style: GoogleFonts.lato(
                     fontSize: 22,
+                    color: Colors.black,
                     fontWeight: FontWeight.bold,
+                    letterSpacing: 1.0,
                   ),
                 ),
                 children: categoryList.map((category) {
+                  String prefix = "For: ";
                   final userMap = categoryMap[category]!;
                   final userList = userMap.keys
                       .toList();
+                  if ((userRole == 'admin' || userRole == 'super_admin') && category == 'MyDocs') {
+                    category = 'CustomerDocs';
+                    prefix = "From: ";
+                  } else if (userRole == 'client' && category == 'MyDocs') {
+                    prefix = "";
+                  } else if (userRole == 'client') {
+                    prefix = "From: ";
+                  }
 
                   return ExpansionTile(
                     initiallyExpanded: isSearch || isServerUpdate,
                     title: Text(
                       'Category: $category',
-                      style: const TextStyle(
+                      style: GoogleFonts.lato(
                         fontSize: 20,
+                        color: Colors.black,
                         fontWeight: FontWeight.bold,
+                        letterSpacing: 1.0,
                       ),
                     ),
                     children: userList.map((user) {
@@ -464,10 +552,12 @@ class CustomListWidget extends StatelessWidget {
                       return ExpansionTile(
                         initiallyExpanded: isSearch || isServerUpdate,
                         title: Text(
-                          userRole == 'client' ? 'MyDocs: $user' : 'CustomerDocs: $user',
-                          style: const TextStyle(
+                          user = '$prefix$user',
+                          style: GoogleFonts.lato(
                             fontSize: 18,
+                            color: Colors.black,
                             fontWeight: FontWeight.bold,
+                            letterSpacing: 1.0,
                           ),
                         ),
                         children: [
@@ -508,10 +598,11 @@ class CustomListWidget extends StatelessWidget {
                                         },
                                         title: Text(
                                           document.name,
-                                          style: const TextStyle(
+                                          style: GoogleFonts.lato(
                                             fontSize: 16,
-                                            fontWeight: FontWeight
-                                                .w500,
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.w500,
+                                            letterSpacing: 1.0,
                                           ),
                                         ),
                                         subtitle: Column(
@@ -520,10 +611,10 @@ class CustomListWidget extends StatelessWidget {
                                           children: [
                                             Text(
                                               "Last Update: ${document.lastUpdate?.toDate()}",
-                                              style: const TextStyle(
+                                              style: GoogleFonts.lato(
                                                 fontSize: 14,
-                                                fontStyle: FontStyle
-                                                    .italic,
+                                                fontStyle: FontStyle.italic,
+                                                letterSpacing: 1.0,
                                               ),
                                             ),
                                             Container(
@@ -558,12 +649,11 @@ class CustomListWidget extends StatelessWidget {
                                                       .isNew
                                                       ? 'New'
                                                       : 'Updated'}",
-                                                  style: const TextStyle(
+                                                  style: GoogleFonts.lato(
                                                     fontSize: 14,
-                                                    fontStyle: FontStyle
-                                                        .italic,
-                                                    color: Colors
-                                                        .black, // Text color
+                                                    color: Colors.black,
+                                                    fontStyle: FontStyle.italic,
+                                                    letterSpacing: 1.0,
                                                   ),
                                                 ),
                                               ),
@@ -583,8 +673,14 @@ class CustomListWidget extends StatelessWidget {
                                             icon: const Icon(
                                                 Icons
                                                     .download),
-                                            label: const Text(
-                                                'Download'),
+                                            label: Text(
+                                              'Download',
+                                              style: GoogleFonts.lato(
+                                                fontSize: 16,
+                                                color: Colors.black,
+                                                letterSpacing: 1.0,
+                                              ),
+                                            ),
                                           ),
                                           ElevatedButton
                                               .icon(
@@ -601,8 +697,14 @@ class CustomListWidget extends StatelessWidget {
                                             icon: const Icon(
                                                 Icons
                                                     .delete),
-                                            label: const Text(
-                                                'Delete'),
+                                            label: Text(
+                                              'Delete',
+                                              style: GoogleFonts.lato(
+                                                fontSize: 16,
+                                                color: Colors.black,
+                                                letterSpacing: 1.0,
+                                              ),
+                                            ),
                                           ),
                                         ],
                                       ),
