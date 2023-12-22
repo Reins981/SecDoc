@@ -78,7 +78,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
 }
 
 class UsersTable extends StatelessWidget {
-  final List<Map<String, dynamic>> users;
+  final List<UserInstance> users;
   final Helper helper = Helper();
   final DocumentOperations docOperations;
 

@@ -290,28 +290,28 @@ class Helper {
     }
   }
 
-  Future<List<Map<String, dynamic>>> getUserDetails(List<Map<String, dynamic>> users) async {
+  Future<List<Map<String, dynamic>>> getUserDetails(List<UserInstance> users) async {
 
     List<Map<String, dynamic>> userDetails = [];
-    for (Map<String, dynamic> user in users) {
+    for (UserInstance user in users) {
       try {
-        final userUid = user['uid'];
-        final userEmail = user['email'];
-        final userName = user['display_name'];
+        final userUid = user.uid;
+        final userEmail = user.email;
+        //final userName = user['display_name'];
 
-        final userRole = user['customClaims']['role'];
-        final userDomain = user['customClaims']['domain'];
-        final disabled = user['customClaims']['disabled'];
-        final verified = user['customClaims']['verified'];
+        final userRole = user.role;
+        final userDomain = user.domain;
+        //final disabled = user['customClaims']['disabled'];
+        //final verified = user['customClaims']['verified'];
 
         userDetails.add( {
           'userUid': userUid,
           'userEmail': userEmail,
-          'userName': userName,
+          //'userName': userName,
           'userRole': userRole,
           'userDomain': userDomain,
-          'disabled': disabled,
-          'verified': verified
+          //'disabled': disabled,
+          //'verified': verified
         });
       } catch (e) {
         rethrow;
