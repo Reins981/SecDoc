@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart' as http;
 import 'helpers.dart';
-import 'dart:convert';
+import 'user.dart';
 
 class UserDetailsScreen extends StatefulWidget {
   final DocumentOperations docOperations;
@@ -16,7 +15,7 @@ class UserDetailsScreen extends StatefulWidget {
 }
 
 class _UserDetailsScreenState extends State<UserDetailsScreen> {
-  List<Map<String, dynamic>> users = [];
+  List<UserInstance> users = [];
   bool isLoading = true;
   String? errorMessage;
 
@@ -24,7 +23,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
   void initState() {
     super.initState();
     users = [];
-    fetchUsers().then((fetchedUsers) {
+    widget.helper.fetchUsersFromServer().then((fetchedUsers) {
       setState(() {
         users = fetchedUsers;
         isLoading = false;
@@ -42,35 +41,6 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
     await auth.signOut();
     widget.docOperations.clearProgressNotifierDict();
     Navigator.pushReplacementNamed(context, '/login');
-  }
-
-  Future<List<Map<String, dynamic>>> fetchUsers() async {
-    try {
-      FirebaseAuth auth = FirebaseAuth.instance;
-      User? user = auth.currentUser;
-      String? idToken;
-
-      if (user != null) {
-        idToken = await user.getIdToken();
-      }
-
-      final response = await http.get(
-          headers: <String, String>{
-            'Authorization': 'Bearer $idToken',
-          },
-          Uri.parse('https://127.0.0.1:5000/get_all_users')
-      );
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> responseBody = jsonDecode(response.body);
-        final List<Map<String, dynamic>> fetchedUsers = List<Map<String, dynamic>>.from(responseBody['users']);
-        return fetchedUsers;
-      } else {
-        throw 'Failed to fetch users: ${response.statusCode}';
-      }
-    } catch (e) {
-      throw '$e';
-    }
   }
 
   @override

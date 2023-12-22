@@ -16,6 +16,7 @@ import 'package:http/http.dart' as http;
 import 'package:file_picker/file_picker.dart';
 import 'package:randomstring_dart/randomstring_dart.dart';
 import 'dart:convert';
+import 'user.dart';
 
 class Helper {
 
@@ -184,6 +185,66 @@ class Helper {
       notificationDetails,
       payload: filePath,
     );
+  }
+
+  Future<List<UserInstance>> fetchUsersFromServer() async {
+    try {
+      FirebaseAuth auth = FirebaseAuth.instance;
+      User? user = auth.currentUser;
+      String? idToken;
+
+      if (user != null) {
+        idToken = await user.getIdToken();
+      }
+
+      final response = await http.get(
+          headers: <String, String>{
+            'Authorization': 'Bearer $idToken',
+          },
+          Uri.parse('https://127.0.0.1:5000/get_all_users')
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> usersJson = jsonDecode(response.body)['users'];
+        return usersJson.map((json) => UserInstance.fromJson(json)).toList();
+      } else {
+        throw 'Failed to fetch users: ${response.statusCode}';
+      }
+    } catch (e) {
+      throw '$e';
+    }
+  }
+
+  Future<void> sendPushNotificationRequestToServer(String userId) async {
+
+    FirebaseAuth auth = FirebaseAuth.instance;
+    User? user = auth.currentUser;
+    String? idToken;
+
+    if (user != null) {
+      idToken = await user.getIdToken();
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse('https://127.0.0.1:5000/push_notification'),
+        headers: <String, String>{
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $idToken',
+        },
+        body: jsonEncode(<String, String>{
+          'user_id': userId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        print('Psu notification sent to server successfully');
+      } else {
+        print('Failed to send Push notification to server: ${response.body}');
+      }
+    } catch (e) {
+      print('Error sending Push notification to server: $e');
+    }
   }
 
   Future<IdTokenResult> getIdTokenResult(User? thisUser) async {
@@ -738,6 +799,15 @@ class DocumentOperations {
           return;
         }
       }
+
+      try {
+        List<UserInstance> allUsers = await _helper.fetchUsersFromServer();
+        // ToDo send a notifiction to the admin users
+      } catch (e) {
+        _helper.showSnackBar('$e', 'Error', context);
+        return;
+      }
+
     } catch (e) {
       _helper.showSnackBar('$e', 'Error', context);
       return;

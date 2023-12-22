@@ -231,6 +231,8 @@ class _MyAppState extends State<MyApp> {
 
     if (user != null) {
       idToken = await user.getIdToken();
+    } else {
+      return;
     }
 
     try {
@@ -241,7 +243,7 @@ class _MyAppState extends State<MyApp> {
           'Authorization': 'Bearer $idToken',
         },
         body: jsonEncode(<String, String>{
-          'user_id': 'USER_ID',  // Replace with actual user ID
+          'user_id': user.uid,  // Replace with actual user ID
           'token': token,
         }),
       );
