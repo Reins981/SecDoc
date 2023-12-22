@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'login.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'helpers.dart';
 import 'document_provider.dart';
 import 'dashboard_section.dart';
@@ -47,7 +49,93 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
+    _initializeFirebaseMessaging();
     _checkBiometricsEnabled();
+  }
+
+  Future<void> _initializeFirebaseMessaging() async {
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+    // Request permissions
+    NotificationSettings settings = await messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+      provisional: false,
+    );
+
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      print('User granted permission');
+      // Subscribe to "documents" topic
+      messaging.subscribeToTopic('documents').then((_) {
+        print('Subscribed to "documents" topic');
+      });
+      // For handling the received notifications
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        if (message.notification != null) {
+          print('Message also contained a notification: ${message.notification}');
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20), // Rounded corners
+              ),
+              title: Text(
+                message.notification!.title ?? "New Notification",
+                style: GoogleFonts.lato(
+                  fontSize: 22,
+                  color: Colors.blue,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.0,
+                ),
+              ),
+              content: Text(
+                message.notification!.body ?? "You have a new document!",
+                style: GoogleFonts.lato(
+                  fontSize: 18,
+                  color: Colors.black87,
+                  letterSpacing: 1.0,
+                ),
+              ),
+              backgroundColor: Colors.white, // Background color of the dialog
+              actionsPadding: EdgeInsets.symmetric(horizontal: 10),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    backgroundColor: Colors.yellow, // Button background color
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20), // Button rounded corners
+                    ),
+                  ),
+                  child: Text(
+                    'OK',
+                    style: GoogleFonts.lato(
+                      fontSize: 18,
+                      color: Colors.blue,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+      });
+    } else if (settings.authorizationStatus == AuthorizationStatus.provisional) {
+      print('User granted provisional permission');
+    } else {
+      print('User declined or has not accepted permission');
+    }
+
+    // Background message handling
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  }
+
+  static Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+    await Firebase.initializeApp();
+    print('Handling a background message: ${message.messageId}');
   }
 
   Future<void> _checkBiometricsEnabled() async {
