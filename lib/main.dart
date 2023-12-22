@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'login.dart';
@@ -6,6 +7,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:google_api_availability/google_api_availability.dart';
+import 'package:http/http.dart' as http;
 import 'helpers.dart';
 import 'document_provider.dart';
 import 'dashboard_section.dart';
@@ -15,20 +18,22 @@ import 'registration.dart';
 import 'user_details.dart';
 import 'solar_ai.dart';
 
+
 class AppLifecycleObserver with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    /*if (state == AppLifecycleState.paused) {
+    if (state == AppLifecycleState.resumed) {
       print('App is about to enter state $state');
-    }*/
+    }
   }
 }
 
+AppLifecycleObserver observer = AppLifecycleObserver();
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Ensure that the widgets are initialized
-  var observer = AppLifecycleObserver();
   WidgetsBinding.instance.addObserver(observer);
   await Firebase.initializeApp(); // Initialize Firebase
   runApp(MyApp());
@@ -46,11 +51,123 @@ class _MyAppState extends State<MyApp> {
   final AppLifecycleObserver appObserver = AppLifecycleObserver();
   bool _biometricsEnabled = false;
 
+  Future<void> checkGooglePlayServices() async {
+    final GooglePlayServicesAvailability availability =
+    await GoogleApiAvailability.instance.checkGooglePlayServicesAvailability();
+
+    if (availability != GooglePlayServicesAvailability.success) {
+      // Google Play Services not available or version not supported
+      // Show dialog to download or enable Google Play Services
+      showGooglePlayServiceNotification();
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _initializeFirebaseMessaging();
     _checkBiometricsEnabled();
+    checkGooglePlayServices();
+  }
+
+  void showGooglePlayServiceNotification() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20), // Rounded corners
+        ),
+        title: Text(
+          "Google Play Services Unavailable",
+          style: GoogleFonts.lato(
+            fontSize: 22,
+            color: Colors.blue,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.0,
+          ),
+        ),
+        content: Text(
+          "Please install or update Google Play Services.",
+          style: GoogleFonts.lato(
+            fontSize: 18,
+            color: Colors.black87,
+            letterSpacing: 1.0,
+          ),
+        ),
+        backgroundColor: Colors.white, // Background color of the dialog
+        actionsPadding: EdgeInsets.symmetric(horizontal: 10),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              backgroundColor: Colors.yellow, // Button background color
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20), // Button rounded corners
+              ),
+            ),
+            child: Text(
+              'OK',
+              style: GoogleFonts.lato(
+                fontSize: 18,
+                color: Colors.blue,
+                letterSpacing: 1.0,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void showUserNotification(RemoteMessage message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20), // Rounded corners
+        ),
+        title: Text(
+          message.notification!.title ?? "New Notification",
+          style: GoogleFonts.lato(
+            fontSize: 22,
+            color: Colors.blue,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.0,
+          ),
+        ),
+        content: Text(
+          message.notification!.body ?? "You have a new document!",
+          style: GoogleFonts.lato(
+            fontSize: 18,
+            color: Colors.black87,
+            letterSpacing: 1.0,
+          ),
+        ),
+        backgroundColor: Colors.white, // Background color of the dialog
+        actionsPadding: EdgeInsets.symmetric(horizontal: 10),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              backgroundColor: Colors.yellow, // Button background color
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20), // Button rounded corners
+              ),
+            ),
+            child: Text(
+              'OK',
+              style: GoogleFonts.lato(
+                fontSize: 18,
+                color: Colors.blue,
+                letterSpacing: 1.0,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _initializeFirebaseMessaging() async {
@@ -66,61 +183,29 @@ class _MyAppState extends State<MyApp> {
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
       print('User granted permission');
+
+      // Retrieve the current FCM token
+      String? token = await messaging.getToken();
+      print("FCM Token: $token");
+      sendRegistrationToServer(token);
+
+      // Listen for token refresh
+      FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
+        print("Refreshed token: $newToken");
+        sendRegistrationToServer(token);
+      });
+
       // Subscribe to "documents" topic
       messaging.subscribeToTopic('documents').then((_) {
         print('Subscribed to "documents" topic');
       });
+
       // For handling the received notifications
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        print("Got a notification!!!!");
         if (message.notification != null) {
           print('Message also contained a notification: ${message.notification}');
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20), // Rounded corners
-              ),
-              title: Text(
-                message.notification!.title ?? "New Notification",
-                style: GoogleFonts.lato(
-                  fontSize: 22,
-                  color: Colors.blue,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.0,
-                ),
-              ),
-              content: Text(
-                message.notification!.body ?? "You have a new document!",
-                style: GoogleFonts.lato(
-                  fontSize: 18,
-                  color: Colors.black87,
-                  letterSpacing: 1.0,
-                ),
-              ),
-              backgroundColor: Colors.white, // Background color of the dialog
-              actionsPadding: EdgeInsets.symmetric(horizontal: 10),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  style: TextButton.styleFrom(
-                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    backgroundColor: Colors.yellow, // Button background color
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20), // Button rounded corners
-                    ),
-                  ),
-                  child: Text(
-                    'OK',
-                    style: GoogleFonts.lato(
-                      fontSize: 18,
-                      color: Colors.blue,
-                      letterSpacing: 1.0,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
+          showUserNotification(message);
         }
       });
     } else if (settings.authorizationStatus == AuthorizationStatus.provisional) {
@@ -134,8 +219,41 @@ class _MyAppState extends State<MyApp> {
   }
 
   static Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-    await Firebase.initializeApp();
     print('Handling a background message: ${message.messageId}');
+  }
+
+  Future<void> sendRegistrationToServer(String? token) async {
+    if (token == null) return;
+
+    FirebaseAuth auth = FirebaseAuth.instance;
+    User? user = auth.currentUser;
+    String? idToken;
+
+    if (user != null) {
+      idToken = await user.getIdToken();
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse('https://127.0.0.1:5000/register_token'),
+        headers: <String, String>{
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $idToken',
+        },
+        body: jsonEncode(<String, String>{
+          'user_id': 'USER_ID',  // Replace with actual user ID
+          'token': token,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        print('Token sent to server successfully');
+      } else {
+        print('Failed to send token to server: ${response.body}');
+      }
+    } catch (e) {
+      print('Error sending token to server: $e');
+    }
   }
 
   Future<void> _checkBiometricsEnabled() async {
@@ -230,6 +348,7 @@ class _LoadingPageState extends State<LoadingPage>
   @override
   void dispose() {
     _animationController.dispose();
+    WidgetsBinding.instance.removeObserver(observer);
     super.dispose();
   }
 
