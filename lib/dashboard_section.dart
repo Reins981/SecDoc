@@ -143,12 +143,13 @@ class _DashboardSectionState extends State<DashboardSection> with SingleTickerPr
             ),
           ),
           if (_isChatVisible)
-            IntrinsicHeight(
+            Positioned(
+              bottom: 0, // Adjust the position as needed
+              left: 0,   // Adjust the position as needed
+              right: 0,  // Adjust the position as needed
               child: SizedBox(
-                width: 300,
-                child: SingleChildScrollView(
-                  child: ChatWindow(docOperations: widget.docOperations),
-                ),
+                height: 500, // Set the desired height
+                child: ChatWindow(docOperations: widget.docOperations),
               ),
             ),
         ],
