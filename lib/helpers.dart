@@ -17,6 +17,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:randomstring_dart/randomstring_dart.dart';
 import 'dart:convert';
 import 'user.dart';
+import 'mail_settings.dart';
+import 'package:sendgrid_mailer/sendgrid_mailer.dart';
 
 class Helper {
 
@@ -215,6 +217,55 @@ class Helper {
     }
   }
 
+  Future<void> sendNotificationMail(
+      String userName,
+      String fromEmailAddress,
+      String toEmailAddress,
+      String adminUserName,
+      ) async {
+    Helper helper = Helper();
+    // Replace "YOUR_API_KEY" with your actual SendGrid API key
+    final sendgrid = Mailer(mailPassword);
+
+    final String name = "$userName $fromEmailAddress";
+    final fromAddress = Address(mailDefaultSender, name);
+    Address toAddress = Address(toEmailAddress, adminUserName);
+    Content htmlContent = Content('text/html', '''
+      <html>
+        <body style="font-family: Arial, sans-serif; margin: 0; padding: 0;">
+        <div style="background-color: #f5f5f5;">
+            <div style="background-color: #ffffff; margin: 0 auto; max-width: 600px;">
+                <div style="padding: 20px; text-align: center;">
+                    <h1 style="color: #333333;">Welcome back to PuraVida GmbH $adminUserName</h1>
+                    <p style="color: #555555;">Client "$name" has uploaded new document(s).</p>
+                    <p style="color: #555555;">Please open your mobile App to access them.</p>
+                </div>
+                <div style="padding: 20px; background-color: #f5f5f5; text-align: center;">
+                    <p style="color: #777777;">If you have any questions or need assistance, please contact our support team at <a href="mailto:support@pura_vida.com" style="color: #007bff;">support@pura_vida.com</a>.</p>
+                    <p style="color: #777777;">Strasse XXX, 6021 Absam, Tirol, Austria</p>
+                </div>
+            </div>
+        </div>
+    </body>
+      </html>
+    ''');
+
+    final subject = 'New Document(s) from $userName';
+    Personalization personalization = Personalization([toAddress]);
+
+    final email = Email([personalization], fromAddress, subject, content: [htmlContent]);
+
+    try {
+      await sendgrid.send(email).then((result) {
+        print("Successfully sent Notification mail to $toEmailAddress");
+      }).catchError((e) {
+        print('$e');
+      });
+    } catch (e) {
+        print('$e');
+    }
+  }
+
   Future<void> sendPushNotificationRequestToServer(String userId) async {
 
     FirebaseAuth auth = FirebaseAuth.instance;
@@ -238,7 +289,7 @@ class Helper {
       );
 
       if (response.statusCode == 200) {
-        print('Psu notification sent to server successfully');
+        print('Push notification sent to server successfully');
       } else {
         print('Failed to send Push notification to server: ${response.body}');
       }
@@ -723,6 +774,8 @@ class DocumentOperations {
       String category = "MyDocs";
       int year = DateTime.now().year;
       String userDomain = userDetails['userDomain'].toLowerCase();
+      String userName = userDetails['userName'];
+      String userEmail = userDetails['userEmail'];
       String token = userDetails['token'];
 
       // First Reset the Progress Bar
@@ -796,21 +849,27 @@ class DocumentOperations {
           });
         } catch (e) {
           _helper.showSnackBar('$e', 'Error', context);
-          return;
+          return uploadCompleter.future;
         }
       }
 
       try {
         List<UserInstance> allUsers = await _helper.fetchUsersFromServer();
-        // ToDo send a notifiction to the admin users
+
+        for (UserInstance user in allUsers) {
+          if (user.role == 'super_admin' || (user.role == 'admin' && user.domain.toLowerCase() == userDomain)) {
+            await _helper.sendPushNotificationRequestToServer(user.uid);
+            await _helper.sendNotificationMail(userName, userEmail, user.email, user.userName);
+          }
+        }
       } catch (e) {
-        _helper.showSnackBar('$e', 'Error', context);
-        return;
+        print('$e');
+        return uploadCompleter.future;
       }
 
     } catch (e) {
       _helper.showSnackBar('$e', 'Error', context);
-      return;
+      return uploadCompleter.future;
     }
     return uploadCompleter.future;
   }

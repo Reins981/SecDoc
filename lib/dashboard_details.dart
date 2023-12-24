@@ -1,10 +1,8 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'dashboard_item.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'helpers.dart';
 import 'document_library.dart';
-import 'progress_bar.dart';
 
 class DetailedDashboardPage extends StatefulWidget {
   final DashboardItem dashboardItem;

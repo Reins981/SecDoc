@@ -100,63 +100,73 @@ class _AuthenticatedScreenState extends State<AuthenticatedScreen> {
 
         return Scaffold(
           backgroundColor: Colors.white,
-          body: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 24.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  "Welcome, $userName",
-                  style: GoogleFonts.lato(
-                    fontSize: 36,
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.0,
+          body: LayoutBuilder(
+            builder: (BuildContext context, BoxConstraints viewportConstraints) {
+              return SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: viewportConstraints.maxHeight,
                   ),
-                ),
-                const SizedBox(height: 40.0),
-                const Icon(
-                  Icons.fingerprint,
-                  size: 100.0,
-                  color: Colors.blue,
-                ),
-                const SizedBox(height: 20.0),
-                Text(
-                  "Authenticate using your fingerprint instead of your password",
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.lato(
-                    fontSize: 18,
-                    color: Colors.grey,
-                    letterSpacing: 1.0,
-                  ),
-                ),
-                const SizedBox(height: 40.0),
-                ElevatedButton(
-                  onPressed: () async {
-                    bool success = await _authenticate(context);
-                    await delay(1);
-                    if (success) {
-                      Navigator.pushReplacementNamed(context, '/dashboard');
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 14.0),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30.0),
+                  child: IntrinsicHeight(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Welcome, $userName",
+                          style: GoogleFonts.lato(
+                            fontSize: 36,
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                        const SizedBox(height: 40.0),
+                        const Icon(
+                          Icons.fingerprint,
+                          size: 100.0,
+                          color: Colors.blue,
+                        ),
+                        const SizedBox(height: 20.0),
+                        Text(
+                          "Authenticate using your fingerprint instead of your password",
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.lato(
+                            fontSize: 18,
+                            color: Colors.grey,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                        const SizedBox(height: 40.0),
+                        ElevatedButton(
+                          onPressed: () async {
+                            bool success = await _authenticate(context);
+                            await delay(1);
+                            if (success) {
+                              Navigator.pushReplacementNamed(context, '/dashboard');
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue,
+                            padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 14.0),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30.0),
+                            ),
+                          ),
+                          child: Text(
+                            "Authenticate",
+                            style: GoogleFonts.lato(
+                              fontSize: 18,
+                              color: Colors.white,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  child: Text(
-                    "Authenticate",
-                      style: GoogleFonts.lato(
-                        fontSize: 18,
-                        color: Colors.white,
-                        letterSpacing: 1.0,
-                      ),
-                  ),
                 ),
-              ],
-            ),
+              );
+            },
           ),
         );
       },

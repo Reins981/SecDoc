@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'helpers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'chat_window.dart';
 
 class DashboardSection extends StatefulWidget {
 
@@ -17,16 +18,25 @@ class DashboardSection extends StatefulWidget {
   _DashboardSectionState createState() => _DashboardSectionState();
 }
 
-class _DashboardSectionState extends State<DashboardSection> {
+class _DashboardSectionState extends State<DashboardSection> with SingleTickerProviderStateMixin {
 
   late List<DashboardItem> dashboardItems;
   // Global Helper Instance
   final _helper = Helper();
+  late AnimationController _animationController;
+  String _userName = '';
+  bool _isChatVisible = false;
+  int selectedDashboardIndex = 0;
 
   // Mock news data
   @override
   void initState() {
     super.initState();
+    _initializeUser();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
     dashboardItems = [
       DashboardItem(
         id: "1",
@@ -72,7 +82,18 @@ class _DashboardSectionState extends State<DashboardSection> {
     ];
   }
 
-  int selectedDashboardIndex = 0;
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _initializeUser() {
+    var currentUser = FirebaseAuth.instance.currentUser;
+    setState(() {
+      _userName = currentUser?.displayName ?? currentUser?.email ?? 'User';
+    });
+  }
 
   Future<void> _handleLogout(BuildContext context) async {
     final FirebaseAuth auth = FirebaseAuth.instance;
@@ -98,29 +119,82 @@ class _DashboardSectionState extends State<DashboardSection> {
           ),
         ],
       ),
-      body: SingleChildScrollView (
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
-            DashboardSlider(
-              dashboardItems: dashboardItems,
-              onDashboardSelected: (index) {
-                setState(() {
-                  selectedDashboardIndex = index;
-                });
-              },
-              selectedDashboardIndex: selectedDashboardIndex,
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            child: Column(
+              children: [
+                _buildUserBadge(), // User badge
+                DashboardSlider(
+                  dashboardItems: dashboardItems,
+                  onDashboardSelected: (index) {
+                    setState(() {
+                      selectedDashboardIndex = index;
+                    });
+                  },
+                  selectedDashboardIndex: selectedDashboardIndex,
+                ),
+                const SizedBox(height: 20),
+                if (selectedDashboardIndex < dashboardItems.length)
+                  DetailedDashboardPage(
+                      dashboardItem: dashboardItems[selectedDashboardIndex],
+                      helper: _helper, docOperations: widget.docOperations),
+              ],
             ),
-            const SizedBox(height: 20),
-            if (selectedDashboardIndex < dashboardItems.length)
-              DetailedDashboardPage(
-                  dashboardItem: dashboardItems[selectedDashboardIndex],
-                  helper: _helper, docOperations: widget.docOperations),
-          ],
-        ),
+          ),
+          if (_isChatVisible)
+            IntrinsicHeight(
+              child: SizedBox(
+                width: 300,
+                child: SingleChildScrollView(
+                  child: ChatWindow(docOperations: widget.docOperations),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
+
+
+  Widget _buildUserBadge() {
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+      alignment: Alignment.centerLeft,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween, // Align items in row
+        children: [
+          Text(
+            'Welcome, $_userName',
+            style: GoogleFonts.lato(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.black54,
+                letterSpacing: 1.0
+            ),
+          ),
+          AnimatedSwitcher(
+            duration: Duration(milliseconds: 300),
+            transitionBuilder: (Widget child, Animation<double> animation) {
+              return ScaleTransition(child: child, scale: animation);
+            },
+            child: IconButton(
+              key: ValueKey<bool>(_isChatVisible),
+              icon: _isChatVisible
+                  ? const Icon(Icons.chat_bubble, size: 50, color: Colors.blue)
+                  : const Icon(Icons.chat_bubble_outline, size: 50, color: Colors.blue),
+              onPressed: () {
+                setState(() {
+                  _isChatVisible = !_isChatVisible;
+                });
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 }
 
 class DashboardSlider extends StatelessWidget {
