@@ -148,7 +148,7 @@ class _DashboardSectionState extends State<DashboardSection> with SingleTickerPr
               left: 0,   // Adjust the position as needed
               right: 0,  // Adjust the position as needed
               child: SizedBox(
-                height: 500, // Set the desired height
+                height: 350, // Set the desired height
                 child: ChatWindow(docOperations: widget.docOperations),
               ),
             ),
