@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
+import 'user.dart';
 
 String generateMessageId() {
   var uuid = Uuid();
@@ -30,8 +31,8 @@ class _ChatWindowState extends State<ChatWindow> with SingleTickerProviderStateM
   String? currentUserId = '';
   String? email = '';
   String userRole = '';
-  bool isAdmin = false;
-  bool isSuperAdmin = false;
+  String userDomain = '';
+  List<UserInstance> allUsers = [];
 
   @override
   void initState() {
@@ -47,13 +48,17 @@ class _ChatWindowState extends State<ChatWindow> with SingleTickerProviderStateM
   void _initializeUser() async {
     var currentUser = FirebaseAuth.instance.currentUser;
     Map<String, dynamic> userDetails = await helper.getCurrentUserDetails();
+    try {
+      allUsers = await helper.fetchUsersFromServer();
+    } catch (e) {
+      print('$e');
+    }
 
     setState(() {
       currentUserId = currentUser?.uid;
       email = currentUser?.email;
-      isAdmin = userDetails['userRole'] == 'super_admin' || userDetails['userRole'] == 'admin';
-      isSuperAdmin = userDetails['userRole'] == 'super_admin';
       userRole = userDetails['userRole'];
+      userDomain = userDetails['userDomain'];
     });
   }
 
@@ -63,28 +68,42 @@ class _ChatWindowState extends State<ChatWindow> with SingleTickerProviderStateM
     super.dispose();
   }
 
-  Future<void> _sendMessage() async {
+  Future<void> _sendMessage(ScaffoldMessengerState context) async {
     if (_messageController.text.isNotEmpty) {
       User? currentUser = _auth.currentUser;
       if (currentUser != null) {
         var uuid = generateMessageId();
-        String destinationUserId = "E7bMBQoiFMhWUkzBjfyHD97opXT2"; // Replace with actual value
-        String? destinationUserName = "john"; // Replace with actual value
-        String destinationEmail = "john_doe@pv.com";
 
-        await _firestore.collection('messages').add({
-          'message': _messageController.text,
-          'senderId': currentUser.uid,
-          'senderName': currentUser.displayName,
-          'senderEmail': currentUser.email,
-          'destinationUserId': destinationUserId,
-          'destinationUserName': destinationUserName ?? destinationEmail,
-          'timestamp': FieldValue.serverTimestamp(),
-          'messageType': 'Request',
-          'messageId': uuid,
-        });
+        if (allUsers.isEmpty) {
+          helper.showSnackBar("Could not find any administrative users!", 'Error', context);
+        }
 
-        _messageController.clear();
+        try {
+          for (UserInstance user in allUsers) {
+            if (user.role == 'super_admin' || (user.role == 'admin' && user.domain.toLowerCase() == userDomain)) {
+              String destinationUserId = user.uid; // Replace with actual value
+              String destinationUserName = user.userName!; // Replace with actual value
+
+              await _firestore.collection('messages').add({
+                'message': _messageController.text,
+                'senderId': currentUser.uid,
+                'senderName': currentUser.displayName,
+                'senderEmail': currentUser.email,
+                'destinationUserId': destinationUserId,
+                'destinationUserName': destinationUserName,
+                'timestamp': FieldValue.serverTimestamp(),
+                'messageType': 'Request',
+                'messageId': uuid,
+              });
+
+              _messageController.clear();
+              await helper.sendPushNotificationRequestToServer(
+                  destinationUserId);
+            }
+          }
+        } catch (e) {
+          helper.showSnackBar('$e', 'Error', context);
+        }
       }
     }
   }
@@ -113,6 +132,7 @@ class _ChatWindowState extends State<ChatWindow> with SingleTickerProviderStateM
         });
 
         _messageController.clear();
+        await helper.sendPushNotificationRequestToServer(destinationId);
       }
     }
   }
@@ -140,7 +160,7 @@ class _ChatWindowState extends State<ChatWindow> with SingleTickerProviderStateM
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Text(
-                "Chat with Us",
+                userRole == "client" ? "Chat with Us" : "Customer Chat Requests",
                 style: GoogleFonts.lato(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -154,8 +174,8 @@ class _ChatWindowState extends State<ChatWindow> with SingleTickerProviderStateM
                   firestore: _firestore,
                   currentUserId: currentUserId,
                   currentUserEmail: email,
-                  isAdmin: isAdmin,
-                  isSuperAdmin: isSuperAdmin,
+                  isAdmin: userRole.contains("admin"),
+                  isSuperAdmin: userRole == "super_admin",
                   callback: _sendReply),
             ),
             if (userRole == 'client')
@@ -167,7 +187,10 @@ class _ChatWindowState extends State<ChatWindow> with SingleTickerProviderStateM
                     color: Colors.transparent, // to maintain the original color of the IconButton
                     child: InkWell(
                       borderRadius: BorderRadius.circular(30), // Slightly larger than the icon size for better effect
-                      onTap: _sendMessage,
+                      onTap: () {
+                        ScaffoldMessengerState scaffoldContext = ScaffoldMessenger.of(context);
+                        _sendMessage(scaffoldContext);
+                      },
                       child: Padding(
                         padding: EdgeInsets.all(8.0), // Padding to provide space for the ripple effect
                         child: Icon(Icons.send, color: Theme.of(context).primaryColor),
@@ -339,7 +362,7 @@ class MessageList extends StatelessWidget {
                         ],
                       ),
                     ),
-                    if (isAdmin) replyIcon,
+                    if (isAdmin && messageType != "Reply") replyIcon,
                     if (message['senderId'] == currentUserId) deleteIcon
                   ],
                 ),

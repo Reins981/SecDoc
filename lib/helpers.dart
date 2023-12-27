@@ -859,7 +859,7 @@ class DocumentOperations {
         for (UserInstance user in allUsers) {
           if (user.role == 'super_admin' || (user.role == 'admin' && user.domain.toLowerCase() == userDomain)) {
             await _helper.sendPushNotificationRequestToServer(user.uid);
-            await _helper.sendNotificationMail(userName, userEmail, user.email, user.userName);
+            await _helper.sendNotificationMail(userName, userEmail, user.email, user.userName!);
           }
         }
       } catch (e) {
