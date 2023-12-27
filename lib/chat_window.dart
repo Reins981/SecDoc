@@ -430,7 +430,12 @@ class _ReplyScreenState extends State<ReplyScreen> {
         title: Text("Replay Message", style: GoogleFonts.lato(fontSize: 20, letterSpacing: 1.0, color: Colors.black)),
         centerTitle: true,
         backgroundColor: Colors.yellow,
-        automaticallyImplyLeading: false,
+        leading: IconButton(
+          onPressed: () {
+            Navigator.pushReplacementNamed(context, '/dashboard');
+          },
+          icon: const Icon(Icons.arrow_back),
+        ),
       ),
       body: Padding(
         padding: EdgeInsets.all(16),
@@ -442,7 +447,13 @@ class _ReplyScreenState extends State<ReplyScreen> {
               decoration: InputDecoration(
                 labelText: "Your Message",
                 hintText: "Type your message here...",
-                border: OutlineInputBorder(),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30), // Set border radius here
+                  borderSide: const BorderSide(
+                    color: Colors.grey, // You can set the border color here
+                    width: 1.0, // And the border width
+                  ),
+                ),
                 suffixIcon: IconButton(
                   icon: Icon(Icons.clear),
                   onPressed: () {
@@ -487,14 +498,20 @@ class _ReplyScreenState extends State<ReplyScreen> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue,
-                padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-                textStyle: TextStyle(fontSize: 16),
+                foregroundColor: Colors.black, // Text color
+                padding: const EdgeInsets.symmetric(
+                  vertical: 20,
+                  horizontal: 40,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
               ),
               child: Text(
                 "Send Reply",
                 style: GoogleFonts.lato(
                   fontSize: 20,
-                  color: Colors.white,
+                  color: Colors.black,
                   letterSpacing: 1.0,
                 ),
               ),
