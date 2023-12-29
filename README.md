@@ -1,6 +1,6 @@
-# sec_doc
+# SecDoc
 
-A secure document manager for bacqroo.
+A secure document manager for PuraVida GmbH.
 
 ## Getting Started
 

@@ -8,7 +8,7 @@
 PRODUCT_NAME = sec_doc
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = bacqroo.mx.secDoc
+PRODUCT_BUNDLE_IDENTIFIER = puravida.com.secDoc
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2023 bacqroo.mx. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2023 puravida.com. All rights reserved.
