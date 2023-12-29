@@ -33,6 +33,8 @@ class _ChatWindowState extends State<ChatWindow> with SingleTickerProviderStateM
   String userRole = '';
   String userDomain = '';
   List<UserInstance> allUsers = [];
+  String? _replyingToMessageId;
+  bool isSending = false;
 
   @override
   void initState() {
@@ -176,33 +178,46 @@ class _ChatWindowState extends State<ChatWindow> with SingleTickerProviderStateM
                   currentUserEmail: email,
                   isAdmin: userRole.contains("admin"),
                   isSuperAdmin: userRole == "super_admin",
-                  callback: _sendReply),
+                  callback: _sendReply,
+                  replyingToMessageId: _replyingToMessageId, // Pass the state
+                  setReplyingToMessageId: (String? id) => setState(() => _replyingToMessageId = id)
+              ),
             ),
             if (userRole == 'client')
-              TextField(
-                controller: _messageController,
-                decoration: InputDecoration(
-                  hintText: "Type your message here...",
-                  suffixIcon: Material(
-                    color: Colors.transparent, // to maintain the original color of the IconButton
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(30), // Slightly larger than the icon size for better effect
-                      onTap: () {
-                        ScaffoldMessengerState scaffoldContext = ScaffoldMessenger.of(context);
-                        _sendMessage(scaffoldContext);
-                      },
-                      child: Padding(
-                        padding: EdgeInsets.all(8.0), // Padding to provide space for the ripple effect
-                        child: Icon(Icons.send, color: Theme.of(context).primaryColor),
+              isSending
+                  ? CircularProgressIndicator()
+                  : TextField(
+                      controller: _messageController,
+                      decoration: InputDecoration(
+                        hintText: "Type your message here...",
+                        suffixIcon: Material(
+                          color: Colors.transparent, // to maintain the original color of the IconButton
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(30), // Slightly larger than the icon size for better effect
+                            onTap: () {
+                              setState(() {
+                                isSending = true;
+                              });
+                              ScaffoldMessengerState scaffoldContext = ScaffoldMessenger.of(context);
+                              _sendMessage(scaffoldContext);
+                              if (mounted) {
+                                setState(() {
+                                  isSending = false;
+                                });
+                              }
+                            },
+                            child: Padding(
+                              padding: EdgeInsets.all(8.0), // Padding to provide space for the ripple effect
+                              child: Icon(Icons.send, color: Theme.of(context).primaryColor),
+                            ),
+                          ),
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 10),
                       ),
                     ),
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 10),
-                ),
-              ),
           ],
         ),
       ),
@@ -210,32 +225,40 @@ class _ChatWindowState extends State<ChatWindow> with SingleTickerProviderStateM
   }
 }
 
-class MessageList extends StatelessWidget {
-
+class MessageList extends StatefulWidget {
   final FirebaseFirestore firestore;
   final String? currentUserId;
   final String? currentUserEmail;
   final bool isAdmin;
   final bool isSuperAdmin;
-  final void Function(String message,
-      String? senderId,
-      String? senderName,
-      String? senderEmail,
-      String destinationId,
-      String destinationName) callback;
+  final void Function(String message, String? senderId, String? senderName, String? senderEmail, String destinationId, String destinationName) callback;
+  final String? replyingToMessageId;
+  final Function(String?) setReplyingToMessageId;
 
   const MessageList({
-    super.key,
+    Key? key,
     required this.firestore,
     required this.currentUserId,
     required this.currentUserEmail,
     required this.isAdmin,
     required this.isSuperAdmin,
-    required this.callback,});
+    required this.callback,
+    required this.replyingToMessageId,
+    required this.setReplyingToMessageId,
+  }) : super(key: key);
+
+  @override
+  _MessageListState createState() => _MessageListState();
+}
+
+class _MessageListState extends State<MessageList> {
+
+  final TextEditingController _replyMessageController = TextEditingController();
+  Map<String, bool> _replyingLoading = {};
 
   String? getLabelText(QueryDocumentSnapshot<Object?> message, String senderEmail) {
     // Message recipient
-    if (message['destinationUserId'] == currentUserId) {
+    if (message['destinationUserId'] == widget.currentUserId) {
         return "From: $senderEmail";
     } else {
       return null;
@@ -267,13 +290,14 @@ class MessageList extends StatelessWidget {
         List<Widget> messageWidgets = [];
 
         for (var message in messages) {
-          if (message['destinationUserId'] == currentUserId || message['senderId'] == currentUserId) {
+          if (message['destinationUserId'] == widget.currentUserId || message['senderId'] == widget.currentUserId) {
+            bool isReplyingLoading = _replyingLoading[message.id] ?? false;
             final messageText = message['message'] ?? '';
             final messageType = message['messageType'];
             final senderEmail = message['senderEmail'];
             String? labelText = getLabelText(message, senderEmail);
             late String senderName;
-            if (messageType == 'Reply' && isAdmin) {
+            if (messageType == 'Reply' && widget.isAdmin) {
               senderName = "${message['senderName']} -> ${message['destinationUserName']}";
             } else {
               senderName = message['senderName'] ?? '';
@@ -292,83 +316,129 @@ class MessageList extends StatelessWidget {
               },
             );
 
-            Widget messageWidget = GestureDetector(
-              onTap: isAdmin && message['destinationUserId'] == currentUserId ? () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => ReplyScreen(
-                      newSenderId: currentUserId,
-                      newSenderName: message['destinationUserName'],
-                      newSenderEmail: currentUserEmail,
-                      newDestinationId: message['senderId'],
-                      newDestinationName: message['senderName'],
-                      callback: callback,
-                    ),
-                  ),
-                );
-              } : null,
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                margin: EdgeInsets.symmetric(vertical: 5),
-                decoration: BoxDecoration(
-                  color: message['senderId'] == currentUserId ? Colors.blue[100] : Colors.grey[200],
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+            Widget messageWidget = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      if (widget.isAdmin && message['destinationUserId'] == widget.currentUserId) {
+                        widget.setReplyingToMessageId(message.id); // Set the current message as the one being replied to
+                      }
+                    },
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      margin: EdgeInsets.symmetric(vertical: 5),
+                      decoration: BoxDecoration(
+                        color: message['senderId'] == widget.currentUserId ? Colors.blue[100] : Colors.grey[200],
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            senderName,
-                            style: GoogleFonts.lato(
-                              fontSize: 16,
-                              color: Colors.black54,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.0,
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  senderName,
+                                  style: GoogleFonts.lato(
+                                    fontSize: 16,
+                                    color: Colors.black54,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1.0,
+                                  ),
+                                ),
+                                SizedBox(height: 5),
+                                Text(
+                                  messageText,
+                                  style: GoogleFonts.lato(
+                                    fontSize: 14,
+                                    color: Colors.black,
+                                    letterSpacing: 1.0,
+                                  ),
+                                ),
+                                if (labelText != null) ...[ // Use spread operator with list
+                                  SizedBox(height: 5),
+                                  Text(
+                                    labelText,
+                                    style: GoogleFonts.lato(
+                                      fontSize: 12,
+                                      color: Colors.black45,
+                                      letterSpacing: 1.0,
+                                    ),
+                                  ),
+                                ],
+                                SizedBox(height: 5),
+                                Text(
+                                  DateFormat('dd MMM yyyy hh:mm a').format((message['timestamp'] as Timestamp).toDate()),
+                                  style: GoogleFonts.lato(
+                                    fontSize: 12,
+                                    color: Colors.black45,
+                                    letterSpacing: 1.0,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          SizedBox(height: 5),
-                          Text(
-                            messageText,
-                            style: GoogleFonts.lato(
-                              fontSize: 14,
-                              color: Colors.black,
-                              letterSpacing: 1.0,
-                            ),
-                          ),
-                          if (labelText != null) ...[ // Use spread operator with list
-                            SizedBox(height: 5),
-                            Text(
-                              labelText,
-                              style: GoogleFonts.lato(
-                                fontSize: 12,
-                                color: Colors.black45,
-                                letterSpacing: 1.0,
-                              ),
-                            ),
-                          ],
-                          SizedBox(height: 5),
-                          Text(
-                            DateFormat('dd MMM yyyy hh:mm a').format((message['timestamp'] as Timestamp).toDate()),
-                            style: GoogleFonts.lato(
-                              fontSize: 12,
-                              color: Colors.black45,
-                              letterSpacing: 1.0,
-                            ),
-                          ),
+                          if (widget.isAdmin && messageType != "Reply") replyIcon,
+                          if (message['senderId'] == widget.currentUserId) deleteIcon
                         ],
                       ),
                     ),
-                    if (isAdmin && messageType != "Reply") replyIcon,
-                    if (message['senderId'] == currentUserId) deleteIcon
-                  ],
-                ),
-              ),
-            );
+                  ),
+                  if (widget.replyingToMessageId == message.id) // Check if this message is being replied to
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: isReplyingLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : TextField(
+                        controller: _replyMessageController,
+                        decoration: InputDecoration(
+                          hintText: "Type your reply here...",
+                          suffixIcon: Material(
+                            color: Colors.transparent, // to maintain the original color of the IconButton
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(30), // Slightly larger than the icon size for better effect
+                              onTap: () {
+                                setState(() {
+                                  _replyingLoading[message.id] = true;
+                                });
+                                // Implement send reply logic using the callback
+                                widget.callback(
+                                  _replyMessageController.text,
+                                  widget.currentUserId,
+                                  message['destinationUserName'],
+                                  widget.currentUserEmail, // or currentUserDisplayName based on your data
+                                  message['senderId'], // newDestinationId
+                                  message['senderName'], // newDestinationName
+                                );
 
+                                if (mounted) {
+                                  setState(() {
+                                    _replyMessageController.clear();
+                                    _replyingLoading[message.id] = false;
+                                    widget.setReplyingToMessageId(
+                                        null); // Reset the reply state
+                                  });
+                                }
+                              },
+                              child: Padding(
+                                padding: EdgeInsets.all(8.0), // Padding to provide space for the ripple effect
+                                child: Icon(Icons.send, color: Theme.of(context).primaryColor),
+                              ),
+                            ),
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          contentPadding: EdgeInsets.symmetric(horizontal: 10),
+                        ),
+                        maxLines: null,
+                        keyboardType: TextInputType.multiline,
+                      ),
+                    ),
+                ],
+            );
             messageWidgets.add(messageWidget);
           }
         }
@@ -382,7 +452,7 @@ class MessageList extends StatelessWidget {
   }
 
   void _deleteMessage(String messageId) {
-    firestore.collection('messages').doc(messageId)
+    widget.firestore.collection('messages').doc(messageId)
         .delete()
         .then((_) {
       print('Message deleted successfully');
@@ -427,7 +497,7 @@ class _ReplyScreenState extends State<ReplyScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Replay Message", style: GoogleFonts.lato(fontSize: 20, letterSpacing: 1.0, color: Colors.black)),
+        title: Text("Reply Message", style: GoogleFonts.lato(fontSize: 20, letterSpacing: 1.0, color: Colors.black)),
         centerTitle: true,
         backgroundColor: Colors.yellow,
         leading: IconButton(
