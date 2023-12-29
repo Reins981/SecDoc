@@ -250,7 +250,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
       pw.MultiPage(
         header: (context) => pw.Header(
           level: 0,
-          child: pw.Text('Solar Data Report', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+          child: pw.Text('Solar Data Forecast', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
         ),
         build: (context) => [
           pw.Text('Overview', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
@@ -351,7 +351,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
       pw.MultiPage(
         header: (context) => pw.Header(
           level: 0,
-          child: pw.Text('Solar Data Report', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+          child: pw.Text('Solar Data Forecast', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
         ),
         build: (context) => [
           pw.Text('Overview', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
