@@ -9,6 +9,8 @@ import 'package:provider/provider.dart';
 import 'helpers.dart';
 import 'document.dart';
 import 'document_provider.dart';
+import 'language_service.dart';
+import 'text_contents.dart';
 
 
 class DocumentLibraryScreen extends StatefulWidget {
@@ -27,6 +29,30 @@ class DocumentLibraryScreen extends StatefulWidget {
 
 class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
   final TextEditingController _searchController = TextEditingController();
+  String _selectedLanguage = 'German';
+
+  String documentLibraryDownloadErrorGerman = getTextContentGerman("documentLibraryDownloadError");
+  String documentLibraryDownloadErrorEnglish = getTextContentEnglish("documentLibraryDownloadError");
+  String documentLibraryLoadingDataErrorGerman = getTextContentGerman("documentLibraryLoadingDataError");
+  String documentLibraryLoadingDataErrorEnglish = getTextContentEnglish("documentLibraryLoadingDataError");
+  String documentLibraryLoadingDocumentErrorGerman = getTextContentGerman("documentLibraryLoadingDocumentError");
+  String documentLibraryLoadingDocumentErrorEnglish = getTextContentEnglish("documentLibraryLoadingDocumentError");
+  String documentLibraryDownloadNotificationGerman = getTextContentGerman("documentLibraryDownloadNotification");
+  String documentLibraryDownloadNotificationEnglish = getTextContentEnglish("documentLibraryDownloadNotification");
+  String documentLibraryDownloadSuccessGerman = getTextContentGerman("documentLibraryDownloadSuccess");
+  String documentLibraryDownloadSuccessEnglish = getTextContentEnglish("documentLibraryDownloadSuccess");
+  String documentLibraryDeleteSuccessGerman = getTextContentGerman("documentLibraryDeleteSuccess");
+  String documentLibraryDeleteSuccessEnglish = getTextContentEnglish("documentLibraryDeleteSuccess");
+  String documentLibraryNoUserDataGerman = getTextContentGerman("documentLibraryNoUserData");
+  String documentLibraryNoUserDataEnglish = getTextContentEnglish("documentLibraryNoUserData");
+  String documentLibraryUserNotExistsGerman = getTextContentGerman("documentLibraryUserNotExists");
+  String documentLibraryUserNotExistsEnglish = getTextContentEnglish("documentLibraryUserNotExists");
+  String documentLibraryUserRoleNotExistsGerman = getTextContentGerman("documentLibraryUserRoleNotExists");
+  String documentLibraryUserRoleNotExistsEnglish = getTextContentEnglish("documentLibraryUserRoleNotExists");
+  String documentLibraryUserDomainNotExistsGerman = getTextContentGerman("documentLibraryUserDomainNotExists");
+  String documentLibraryUserDomainNotExistsEnglish = getTextContentEnglish("documentLibraryUserDomainNotExists");
+  String documentLibraryNoDocsGerman = getTextContentGerman("documentLibraryNoDocs");
+  String documentLibraryNoDocsEnglish = getTextContentEnglish("documentLibraryNoDocs");
 
   @override
   void dispose() {
@@ -36,7 +62,15 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
   @override
   void initState() {
     super.initState();
+    _loadLanguage();
     widget.helper.initializeNotifications();
+  }
+
+  Future<void> _loadLanguage() async {
+    final selectedLanguage = await LanguageService.getLanguage();
+    setState(() {
+      _selectedLanguage = selectedLanguage;
+    });
   }
 
   Future<void> _handleLogout(BuildContext context) async {
@@ -57,15 +91,16 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
     String downloadPath = await widget.documentOperations.createDownloadPathForFile(document.name);
 
     if (downloadPath == "Failed") {
-      widget.helper.showSnackBar("Could not access download directory", "Error", scaffoldContext);
+      widget.helper.showSnackBar(_selectedLanguage == 'German' ? documentLibraryDownloadErrorGerman : documentLibraryDownloadErrorEnglish, "Error", scaffoldContext);
     } else {
       widget.documentOperations.downloadDocument(document, downloadPath).then((String status) async {
         if (status != "Success") {
           widget.helper.showSnackBar(status, "Error", scaffoldContext);
         } else {
+          String successMessage = _selectedLanguage == 'German' ? "Dokument ${document.name}$documentLibraryDeleteSuccessGerman" : "Document ${document.name}$documentLibraryDeleteSuccessEnglish";
           await widget.helper.showCustomNotificationAndroid(
-              'Download Complete', // Notification title
-              'Document ${document.name} downloaded successfully', // Notification content
+              _selectedLanguage == 'German' ? documentLibraryDownloadNotificationGerman : documentLibraryDownloadNotificationEnglish, // Notification title
+              successMessage, // Notification content
               downloadPath
           );
         }
@@ -83,11 +118,12 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
         widget.helper.showSnackBar(status, "Error", scaffoldContext);
         return 'Failed';
       } else {
-        widget.helper.showSnackBar("${document.name} deleted successfully", "Success", scaffoldContext);
+        String successMessage = _selectedLanguage == 'German' ? "${document.name}$documentLibraryDeleteSuccessGerman" : "${document.name}$documentLibraryDeleteSuccessEnglish";
+        widget.helper.showSnackBar(successMessage, "Success", scaffoldContext);
         return 'Success';
       }
     } catch (e) {
-      widget.helper.showSnackBar('Error: $e', "Error", scaffoldContext);
+      widget.helper.showSnackBar('$e', "Error", scaffoldContext);
       return 'Failed';
     }
   }
@@ -105,7 +141,7 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
         if (snapshot.hasError) {
           return Center(
             child: Text(
-              'Error loading data: ${snapshot.error}',
+                _selectedLanguage == 'German' ? '$documentLibraryLoadingDataErrorGerman: ${snapshot.error}' : '$documentLibraryLoadingDataErrorEnglish: ${snapshot.error}',
                 style: GoogleFonts.lato(
                 fontSize: 16,
                 color: Colors.black,
@@ -118,7 +154,7 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
         if (!snapshot.hasData) {
           return Center(
             child: Text(
-              'No user data available',
+              _selectedLanguage == 'German' ? documentLibraryNoUserDataGerman : documentLibraryNoUserDataEnglish,
               style: GoogleFonts.lato(
                 fontSize: 16,
                 color: Colors.black,
@@ -139,11 +175,11 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
         final userUid = user?.uid;
 
         if (user == null) {
-          return const Center(child: Text('The user does not exist.'));
+          return Center(child: Text(_selectedLanguage == 'German' ? documentLibraryUserNotExistsGerman : documentLibraryUserNotExistsEnglish));
         }
 
         if (userRole == null) {
-          final String errorMessage = 'User Role for user $userUid not defined.';
+          final String errorMessage = _selectedLanguage == 'German' ? '$documentLibraryUserRoleNotExistsGerman ($userUid)' : '$documentLibraryUserRoleNotExistsEnglish ($userUid)';
           return Center(
             child: Text(
               errorMessage,
@@ -157,7 +193,7 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
         }
 
         if (userDomain == null) {
-          final String errorMessage = 'User Domain for user $userUid not defined.';
+          final String errorMessage = _selectedLanguage == 'German' ? '$documentLibraryUserDomainNotExistsGerman ($userDomain)' : '$documentLibraryUserDomainNotExistsEnglish ($userDomain)';
           return Center(
             child: Text(
               errorMessage,
@@ -193,7 +229,7 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
             if (!snapshot.hasData || snapshot.data == null) {
               return Center(
                 child: Text(
-                  'No documents available.',
+                  _selectedLanguage == 'German' ? documentLibraryNoDocsGerman : documentLibraryNoDocsEnglish,
                   style: GoogleFonts.lato(
                     fontSize: 16,
                     color: Colors.black,
@@ -240,6 +276,7 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
                     borderRadius: BorderRadius.circular(15.0),
                   ),
                   child: DocumentListWidget(
+                    language: _selectedLanguage,
                     mergedData: mergedData,
                     handleLogout: _handleLogout,
                     searchController: _searchController,
@@ -262,6 +299,7 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
 }
 
 class DocumentListWidget extends StatefulWidget {
+  final String language;
   final Stream<dynamic> mergedData;
   final Function(BuildContext) handleLogout;
   final TextEditingController searchController;
@@ -274,6 +312,7 @@ class DocumentListWidget extends StatefulWidget {
   final String userRole;
 
   const DocumentListWidget({super.key,
+    required this.language,
     required this.mergedData,
     required this.handleLogout,
     required this.searchController,
@@ -296,6 +335,11 @@ class _DocumentListWidgetState extends State<DocumentListWidget> {
   bool _isServerUpdate = false;
   List<DocumentSnapshot> displayDocuments = [];
   List<DocumentSnapshot> allDocumentsOrig = []; // Store all documents here
+
+  String documentLibraryLoadingDocumentErrorGerman = getTextContentGerman("documentLibraryLoadingDocumentError");
+  String documentLibraryLoadingDocumentErrorEnglish = getTextContentEnglish("documentLibraryLoadingDocumentError");
+  String documentLibraryNoDocsGerman = getTextContentGerman("documentLibraryNoDocs");
+  String documentLibraryNoDocsEnglish = getTextContentEnglish("documentLibraryNoDocs");
 
   @override
   Widget build(BuildContext context) {
@@ -323,7 +367,7 @@ class _DocumentListWidgetState extends State<DocumentListWidget> {
               controller: widget.searchController,
               style: const TextStyle(fontSize: 18.0), // Adjust font size
               decoration: InputDecoration(
-                labelText: 'Enter Document, Status, User, Email, or Category',
+                labelText: 'Document, Status, User, Email, Category, ..',
                 border: InputBorder.none,
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.refresh), // Reset filter icon
@@ -355,8 +399,9 @@ class _DocumentListWidgetState extends State<DocumentListWidget> {
               }
 
               if (snapshot.hasError) {
+                String errorMessageDefault = widget.language == 'German' ? documentLibraryLoadingDocumentErrorGerman : documentLibraryLoadingDocumentErrorEnglish;
                 String errorMessage = snapshot.error?.toString() ??
-                    'Error loading documents';
+                    errorMessageDefault;
                 return Center(
                   child: Text(
                     errorMessage,
@@ -371,7 +416,7 @@ class _DocumentListWidgetState extends State<DocumentListWidget> {
 
               if (!snapshot.hasData || snapshot.data == null) {
                 return Center(
-                  child: Text('No documents available.',
+                  child: Text(widget.language == 'German' ? documentLibraryNoDocsGerman : documentLibraryNoDocsEnglish,
                     style: GoogleFonts.lato(
                       fontSize: 16,
                       color: Colors.black,
@@ -390,6 +435,7 @@ class _DocumentListWidgetState extends State<DocumentListWidget> {
                 _isInitialized = true;
 
                 return CustomListWidget(
+                    language: widget.language,
                     groupedDocuments: groupedDocuments,
                     documentOperations: widget.documentOperations,
                     callbackDownload: widget.callbackDownload,
@@ -412,6 +458,7 @@ class _DocumentListWidgetState extends State<DocumentListWidget> {
                   builder: (context, documentProvider, _) {
                     final groupedDocuments = documentProvider.groupedDocuments;
                     return CustomListWidget(
+                        language: widget.language,
                         groupedDocuments: groupedDocuments!,
                         documentOperations: widget.documentOperations,
                         callbackDownload: widget.callbackDownload,
@@ -457,6 +504,7 @@ class _DocumentListWidgetState extends State<DocumentListWidget> {
 }
 
 class CustomListWidget extends StatelessWidget {
+  final String language;
   final Map<String, Map<int, Map<String, Map<String, DocumentRepository>>>> groupedDocuments;
   final DocumentOperations documentOperations;
   final void Function(BuildContext, Document) callbackDownload;
@@ -467,7 +515,23 @@ class CustomListWidget extends StatelessWidget {
   final Helper helper;
   final String userRole;
 
-  const CustomListWidget({super.key,
+  final String documentLibraryDomainGerman = getTextContentGerman("documentLibraryDomain");
+  final String documentLibraryDomainEnglish = getTextContentEnglish("documentLibraryDomain");
+  final String documentLibraryYearGerman = getTextContentGerman("documentLibraryYear");
+  final String documentLibraryYearEnglish = getTextContentEnglish("documentLibraryYear");
+  final String documentLibraryCategoryGerman = getTextContentGerman("documentLibraryCategory");
+  final String documentLibraryCategoryEnglish = getTextContentEnglish("documentLibraryCategory");
+  final String documentLibraryPrefixFromGerman = getTextContentGerman("documentLibraryPrefixFrom");
+  final String documentLibraryPrefixFromEnglish = getTextContentEnglish("documentLibraryPrefixFrom");
+  final String documentLibraryPrefixForGerman = getTextContentGerman("documentLibraryPrefixFor");
+  final String documentLibraryPrefixForEnglish = getTextContentEnglish("documentLibraryPrefixFor");
+  final String documentLibraryCategoryCustomerAdminGerman = getTextContentGerman("documentLibraryCategoryCustomerAdmin");
+  final String documentLibraryCategoryCustomerAdminEnglish = getTextContentEnglish("documentLibraryCategoryCustomerAdmin");
+  final String documentLibraryCategoryCustomerClientGerman = getTextContentGerman("documentLibraryCategoryCustomerClient");
+  final String documentLibraryCategoryCustomerClientEnglish = getTextContentEnglish("documentLibraryCategoryCustomerClient");
+
+  CustomListWidget({super.key,
+    required this.language,
     required this.groupedDocuments,
     required this.documentOperations,
     required this.callbackDownload,
@@ -498,7 +562,7 @@ class CustomListWidget extends StatelessWidget {
           return ExpansionTile(
             initiallyExpanded: isSearch || isServerUpdate,
             title: Text(
-              'Domain: $domain',
+              language == 'German' ? '$documentLibraryDomainGerman: $domain' : '$documentLibraryDomainEnglish: $domain',
               style: GoogleFonts.lato(
                 fontSize: 24,
                 color: Colors.black,
@@ -514,7 +578,7 @@ class CustomListWidget extends StatelessWidget {
               return ExpansionTile(
                 initiallyExpanded: isSearch || isServerUpdate,
                 title: Text(
-                  'Year: $year',
+                  language == 'German' ? '$documentLibraryYearGerman: $year' : '$documentLibraryYearEnglish: $year',
                   style: GoogleFonts.lato(
                     fontSize: 22,
                     color: Colors.black,
@@ -523,23 +587,24 @@ class CustomListWidget extends StatelessWidget {
                   ),
                 ),
                 children: categoryList.map((category) {
-                  String prefix = "For: ";
+                  String prefix = language == 'German' ? "$documentLibraryPrefixForGerman: " : "$documentLibraryPrefixForEnglish: ";
                   final userMap = categoryMap[category]!;
                   final userList = userMap.keys
                       .toList();
-                  if ((userRole == 'admin' || userRole == 'super_admin') && category == 'MyDocs') {
-                    category = 'CustomerDocs';
-                    prefix = "From: ";
-                  } else if (userRole == 'client' && category == 'MyDocs') {
+                  String expectedCategory = language == 'German' ? documentLibraryCategoryCustomerClientGerman : documentLibraryCategoryCustomerClientEnglish;
+                  if ((userRole == 'admin' || userRole == 'super_admin') && category == expectedCategory) {
+                    category = language == 'German' ? documentLibraryCategoryCustomerAdminGerman : documentLibraryCategoryCustomerAdminEnglish;
+                    prefix = language == 'German' ? "$documentLibraryPrefixFromGerman: " : "$documentLibraryPrefixFromEnglish: ";
+                  } else if (userRole == 'client' && category == expectedCategory) {
                     prefix = "";
                   } else if (userRole == 'client') {
-                    prefix = "From: ";
+                    prefix = language == 'German' ? "$documentLibraryPrefixFromGerman: " : "$documentLibraryPrefixFromEnglish: ";
                   }
 
                   return ExpansionTile(
                     initiallyExpanded: isSearch || isServerUpdate,
                     title: Text(
-                      'Category: $category',
+                      language == 'German' ? '$documentLibraryCategoryGerman: $category' : '$documentLibraryCategoryEnglish: $category',
                       style: GoogleFonts.lato(
                         fontSize: 20,
                         color: Colors.black,

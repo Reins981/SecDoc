@@ -17,6 +17,8 @@ import 'biometric_service.dart';
 import 'registration.dart';
 import 'user_details.dart';
 import 'solar_ai.dart';
+import 'language_service.dart';
+import 'text_contents.dart';
 
 
 class AppLifecycleObserver with WidgetsBindingObserver {
@@ -50,6 +52,16 @@ class _MyAppState extends State<MyApp> {
   final DocumentOperations docOperations = DocumentOperations();
   final AppLifecycleObserver appObserver = AppLifecycleObserver();
   bool _biometricsEnabled = false;
+  String _selectedLanguage = 'German';
+  // Language related content
+  String mainGooglePlayNotAvailableGerman = getTextContentGerman("mainGooglePlayNotAvailable");
+  String mainGooglePlayNotAvailableEnglish = getTextContentEnglish("mainGooglePlayNotAvailable");
+  String mainGooglePlayInstallMessageGerman = getTextContentGerman("mainGooglePlayInstallMessage");
+  String mainGooglePlayInstallMessageEnglish = getTextContentEnglish("mainGooglePlayInstallMessage");
+  String mainNotificationGerman = getTextContentGerman("mainNotification");
+  String mainNotificationEnglish = getTextContentEnglish("mainNotification");
+  String mainNewDocumentGerman = getTextContentGerman("mainNewDocument");
+  String mainNewDocumentEnglish = getTextContentEnglish("mainNewDocument");
 
   Future<void> checkGooglePlayServices() async {
     final GooglePlayServicesAvailability availability =
@@ -65,9 +77,17 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
+    _loadLanguage();
     _initializeFirebaseMessaging();
     _checkBiometricsEnabled();
     checkGooglePlayServices();
+  }
+
+  Future<void> _loadLanguage() async {
+    final selectedLanguage = await LanguageService.getLanguage();
+    setState(() {
+      _selectedLanguage = selectedLanguage;
+    });
   }
 
   void showGooglePlayServiceNotification() {
@@ -78,7 +98,7 @@ class _MyAppState extends State<MyApp> {
           borderRadius: BorderRadius.circular(20), // Rounded corners
         ),
         title: Text(
-          "Google Play Services Unavailable",
+          _selectedLanguage == "German" ? mainGooglePlayNotAvailableGerman : mainGooglePlayNotAvailableEnglish,
           style: GoogleFonts.lato(
             fontSize: 22,
             color: Colors.blue,
@@ -87,7 +107,7 @@ class _MyAppState extends State<MyApp> {
           ),
         ),
         content: Text(
-          "Please install or update Google Play Services.",
+          _selectedLanguage == "German" ? mainGooglePlayInstallMessageGerman : mainGooglePlayInstallMessageEnglish,
           style: GoogleFonts.lato(
             fontSize: 18,
             color: Colors.black87,
@@ -121,6 +141,8 @@ class _MyAppState extends State<MyApp> {
   }
 
   void showUserNotification(RemoteMessage message) {
+    String notification = _selectedLanguage == "German" ? mainNotificationGerman : mainNotificationEnglish;
+    String newDocument = _selectedLanguage == "German" ? mainNewDocumentGerman : mainNewDocumentEnglish;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -128,7 +150,7 @@ class _MyAppState extends State<MyApp> {
           borderRadius: BorderRadius.circular(20), // Rounded corners
         ),
         title: Text(
-          message.notification!.title ?? "New Notification",
+          message.notification!.title ?? notification,
           style: GoogleFonts.lato(
             fontSize: 22,
             color: Colors.blue,
@@ -137,7 +159,7 @@ class _MyAppState extends State<MyApp> {
           ),
         ),
         content: Text(
-          message.notification!.body ?? "You have a new document!",
+          message.notification!.body ?? newDocument,
           style: GoogleFonts.lato(
             fontSize: 18,
             color: Colors.black87,
@@ -272,7 +294,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => DocumentProvider(docOperations: docOperations)),
+        ChangeNotifierProvider(create: (_) => DocumentProvider(docOperations: docOperations, language: _selectedLanguage)),
         // Add other providers here as needed
       ],
       child: MaterialApp(

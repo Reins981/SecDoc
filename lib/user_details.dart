@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'helpers.dart';
 import 'user.dart';
+import 'language_service.dart';
+import 'text_contents.dart';
 
 class UserDetailsScreen extends StatefulWidget {
   final DocumentOperations docOperations;
@@ -18,10 +20,15 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
   List<UserInstance> users = [];
   bool isLoading = true;
   String? errorMessage;
+  String _selectedLanguage = 'German';
+  // Language related content
+  String userDetailsTitleGerman = getTextContentGerman("userDetailsTitle");
+  String userDetailsTitleEnglish = getTextContentEnglish("userDetailsTitle");
 
   @override
   void initState() {
     super.initState();
+    _loadLanguage();
     users = [];
     widget.helper.fetchUsersFromServer().then((fetchedUsers) {
       setState(() {
@@ -36,6 +43,13 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
     });
   }
 
+  Future<void> _loadLanguage() async {
+    final selectedLanguage = await LanguageService.getLanguage();
+    setState(() {
+      _selectedLanguage = selectedLanguage;
+    });
+  }
+
   Future<void> _handleLogout(BuildContext context) async {
     final FirebaseAuth auth = FirebaseAuth.instance;
     await auth.signOut();
@@ -47,7 +61,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Customers and Admins', style: GoogleFonts.lato(fontSize: 20, letterSpacing: 1.0, color: Colors.black)),
+        title: Text(_selectedLanguage == "German" ? userDetailsTitleGerman : userDetailsTitleEnglish, style: GoogleFonts.lato(fontSize: 20, letterSpacing: 1.0, color: Colors.black)),
         centerTitle: true,
         backgroundColor: Colors.yellow,
         leading: IconButton(
@@ -71,7 +85,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
             ? const Center(child: CircularProgressIndicator())
             : errorMessage != null
             ? Center(child: Text(errorMessage!))
-            : UsersTable(users, widget.docOperations),
+            : UsersTable(users, widget.docOperations, _selectedLanguage),
       ),
     );
   }
@@ -81,8 +95,12 @@ class UsersTable extends StatelessWidget {
   final List<UserInstance> users;
   final Helper helper = Helper();
   final DocumentOperations docOperations;
+  final String language;
+  // Language Settings
+  final String userDetailsNoUserDataGerman = getTextContentGerman("userDetailsNoUserData");
+  final String userDetailsNoUserDataEnglish = getTextContentEnglish("userDetailsNoUserData");
 
-  UsersTable(this.users, this.docOperations, {super.key});
+  UsersTable(this.users, this.docOperations, this.language, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -98,7 +116,7 @@ class UsersTable extends StatelessWidget {
         }
 
         if (!snapshot.hasData) {
-          return helper.showStatus('No user data available');
+          return helper.showStatus(language == "German" ? userDetailsNoUserDataGerman : userDetailsNoUserDataEnglish);
         }
 
         List<Map<String, dynamic>> userDetails = snapshot.data!;

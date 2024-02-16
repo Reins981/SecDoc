@@ -6,6 +6,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import 'user.dart';
+import 'text_contents.dart';
+import 'language_service.dart';
+
 
 String generateMessageId() {
   var uuid = Uuid();
@@ -26,6 +29,7 @@ class _ChatWindowState extends State<ChatWindow> with SingleTickerProviderStateM
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final Helper helper = Helper();
+  String _selectedLanguage = 'German';
   late AnimationController _animationController;
   late Animation<double> _animation;
   String? currentUserId = '';
@@ -36,15 +40,36 @@ class _ChatWindowState extends State<ChatWindow> with SingleTickerProviderStateM
   String? _replyingToMessageId;
   bool isSending = false;
 
+  String chatWindowError1German = getTextContentGerman("chatWindowError1");
+  String chatWindowError1English = getTextContentEnglish("chatWindowError1");
+  String chatWindowTextAdminGerman = getTextContentGerman("chatWindowTextAdmin");
+  String chatWindowTextAdminEnglish = getTextContentEnglish("chatWindowTextAdmin");
+  String chatWindowTextClientGerman = getTextContentGerman("chatWindowTextClient");
+  String chatWindowTextClientEnglish = getTextContentEnglish("chatWindowTextClient");
+  String chatWindowRequestHintTextGerman = getTextContentGerman("chatWindowRequestHintText");
+  String chatWindowRequestHintTextEnglish = getTextContentEnglish("chatWindowRequestHintText");
+  String chatWindowReplyTextGerman = getTextContentGerman("chatWindowReplyText");
+  String chatWindowReplyTextEnglish = getTextContentEnglish("chatWindowReplyText");
+  String chatWindowYourTextGerman = getTextContentGerman("chatWindowYourText");
+  String chatWindowYourTextEnglish = getTextContentEnglish("chatWindowYourText");
+
   @override
   void initState() {
     super.initState();
+    _loadLanguage();
     _initializeUser();
     _animationController = AnimationController(
       duration: const Duration(seconds: 1),
       vsync: this,
     )..repeat(reverse: true);
     _animation = Tween<double>(begin: 1.0, end: 1.05).animate(_animationController);
+  }
+
+  Future<void> _loadLanguage() async {
+    final selectedLanguage = await LanguageService.getLanguage();
+    setState(() {
+      _selectedLanguage = selectedLanguage;
+    });
   }
 
   void _initializeUser() async {
@@ -77,7 +102,7 @@ class _ChatWindowState extends State<ChatWindow> with SingleTickerProviderStateM
         var uuid = generateMessageId();
 
         if (allUsers.isEmpty) {
-          helper.showSnackBar("Could not find any administrative users!", 'Error', context);
+          helper.showSnackBar(_selectedLanguage == 'German' ? chatWindowError1German : chatWindowError1English, 'Error', context);
         }
 
         try {
@@ -162,7 +187,7 @@ class _ChatWindowState extends State<ChatWindow> with SingleTickerProviderStateM
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Text(
-                userRole == "client" ? "Chat with Us" : "Customer Chat Requests",
+                userRole == "client" ? _selectedLanguage == 'German' ? chatWindowTextClientGerman : chatWindowTextClientEnglish : _selectedLanguage == 'German' ? chatWindowTextAdminGerman : chatWindowTextAdminEnglish,
                 style: GoogleFonts.lato(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -173,6 +198,8 @@ class _ChatWindowState extends State<ChatWindow> with SingleTickerProviderStateM
             const Divider(),
             Expanded(
               child: MessageList(
+                  language: _selectedLanguage,
+                  helper: helper,
                   firestore: _firestore,
                   currentUserId: currentUserId,
                   currentUserEmail: email,
@@ -189,7 +216,7 @@ class _ChatWindowState extends State<ChatWindow> with SingleTickerProviderStateM
                   : TextField(
                       controller: _messageController,
                       decoration: InputDecoration(
-                        hintText: "Type your message here...",
+                        hintText: _selectedLanguage == 'German' ? chatWindowRequestHintTextGerman : chatWindowRequestHintTextEnglish,
                         suffixIcon: Material(
                           color: Colors.transparent, // to maintain the original color of the IconButton
                           child: InkWell(
@@ -226,6 +253,8 @@ class _ChatWindowState extends State<ChatWindow> with SingleTickerProviderStateM
 }
 
 class MessageList extends StatefulWidget {
+  final String language;
+  final Helper helper;
   final FirebaseFirestore firestore;
   final String? currentUserId;
   final String? currentUserEmail;
@@ -237,6 +266,8 @@ class MessageList extends StatefulWidget {
 
   const MessageList({
     Key? key,
+    required this.language,
+    required this.helper,
     required this.firestore,
     required this.currentUserId,
     required this.currentUserEmail,
@@ -256,10 +287,18 @@ class _MessageListState extends State<MessageList> {
   final TextEditingController _replyMessageController = TextEditingController();
   Map<String, bool> _replyingLoading = {};
 
+  String chatWindowFromTextGerman = getTextContentGerman("chatWindowFromText");
+  String chatWindowFromTextEnglish = getTextContentEnglish("chatWindowFromText");
+  String chatWindowDeleteMessageErrorGerman = getTextContentGerman("chatWindowDeleteMessageError");
+  String chatWindowDeleteMessageErrorEnglish = getTextContentEnglish("chatWindowDeleteMessageError");
+  String chatWindowReplyHintTextGerman = getTextContentGerman("chatWindowReplyHintText");
+  String chatWindowReplyHintTextEnglish = getTextContentEnglish("chatWindowReplyHintText");
+
   String? getLabelText(QueryDocumentSnapshot<Object?> message, String senderEmail) {
     // Message recipient
     if (message['destinationUserId'] == widget.currentUserId) {
-        return "From: $senderEmail";
+        String fromText = widget.language == 'German' ? "$chatWindowFromTextGerman: $senderEmail" : "$chatWindowFromTextEnglish: $senderEmail";
+        return fromText;
     } else {
       return null;
     }
@@ -312,7 +351,7 @@ class _MessageListState extends State<MessageList> {
               icon: Icon(Icons.delete, color: Colors.red),
               onPressed: () {
                 // Call function to delete the message
-                _deleteMessage(message.id);
+                _deleteMessage(message.id, context);
               },
             );
 
@@ -394,7 +433,7 @@ class _MessageListState extends State<MessageList> {
                           : TextField(
                         controller: _replyMessageController,
                         decoration: InputDecoration(
-                          hintText: "Type your reply here...",
+                          hintText: widget.language == 'German' ? chatWindowReplyHintTextGerman : chatWindowReplyHintTextEnglish,
                           suffixIcon: Material(
                             color: Colors.transparent, // to maintain the original color of the IconButton
                             child: InkWell(
@@ -451,18 +490,20 @@ class _MessageListState extends State<MessageList> {
     );
   }
 
-  void _deleteMessage(String messageId) {
+  void _deleteMessage(String messageId, BuildContext context) {
     widget.firestore.collection('messages').doc(messageId)
         .delete()
         .then((_) {
-      print('Message deleted successfully');
     }).catchError((error) {
-      print('Error deleting message: $error');
+      final scaffoldContext = ScaffoldMessenger.of(context);
+      String errorText = widget.language == 'German' ? "$chatWindowDeleteMessageErrorGerman: $error" : "$chatWindowDeleteMessageErrorEnglish: $error";
+      widget.helper.showSnackBar(errorText, 'Error', scaffoldContext);
     });
   }
 }
 
 class ReplyScreen extends StatefulWidget {
+  final String language;
   final String? newSenderId;
   final String? newSenderName;
   final String? newSenderEmail;
@@ -477,6 +518,7 @@ class ReplyScreen extends StatefulWidget {
 
   ReplyScreen({
     Key? key,
+    required this.language,
     required this.newSenderId,
     required this.newDestinationId,
     required this.newSenderName,
@@ -492,6 +534,13 @@ class ReplyScreen extends StatefulWidget {
 class _ReplyScreenState extends State<ReplyScreen> {
   final TextEditingController messageController = TextEditingController();
   bool isSending = false;
+
+  String chatWindowYourTextGerman = getTextContentGerman("chatWindowYourText");
+  String chatWindowYourTextEnglish = getTextContentEnglish("chatWindowYourText");
+  String chatWindowSendReplyTextGerman = getTextContentGerman("chatWindowSendReplyText");
+  String chatWindowSendReplyTextEnglish = getTextContentEnglish("chatWindowSendReplyText");
+  String chatWindowRequestHintTextGerman = getTextContentGerman("chatWindowRequestHintText");
+  String chatWindowRequestHintTextEnglish = getTextContentEnglish("chatWindowRequestHintText");
 
   @override
   Widget build(BuildContext context) {
@@ -545,7 +594,6 @@ class _ReplyScreenState extends State<ReplyScreen> {
 
                 // Implement sending message logic here
                 String messageToSend = messageController.text;
-                print("Sending reply: $messageToSend");
 
                 // Invoke the callback function
                 widget.callback(

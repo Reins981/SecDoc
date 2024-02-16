@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'helpers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
+import 'language_service.dart';
+import 'text_contents.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
@@ -21,6 +23,43 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   Helper _helper = Helper();
   bool registrationSuccess = false;
   bool isObscure = true;
+  String _selectedLanguage = 'German';
+  // Language related content
+  String registrationEmptyFieldGerman = getTextContentGerman("registrationEmptyField");
+  String registrationEmptyFieldEnglish = getTextContentEnglish("registrationEmptyField");
+  String registrationInvalidEmailGerman = getTextContentGerman("registrationInvalidEmail");
+  String registrationInvalidEmailEnglish = getTextContentEnglish("registrationInvalidEmail");
+  String registrationInvalidPasswordLengthGerman = getTextContentGerman("registrationInvalidPasswordLength");
+  String registrationInvalidPasswordLengthEnglish = getTextContentEnglish("registrationInvalidPasswordLength");
+  String registrationInvalidPasswordCharactersGerman = getTextContentGerman("registrationInvalidPasswordCharacters");
+  String registrationInvalidPasswordCharactersEnglish = getTextContentEnglish("registrationInvalidPasswordCharacters");
+  String registrationUsernameGerman = getTextContentGerman("registrationUsername");
+  String registrationUsernameEnglish = getTextContentEnglish("registrationUsername");
+  String registrationPasswordGerman = getTextContentGerman("registrationPassword");
+  String registrationPasswordEnglish = getTextContentEnglish("registrationPassword");
+  String registrationDomainGerman = getTextContentGerman("registrationDomain");
+  String registrationDomainEnglish = getTextContentEnglish("registrationDomain");
+  String registrationExampleGerman = getTextContentGerman("registrationExample");
+  String registrationExampleEnglish = getTextContentEnglish("registrationExample");
+  String registrationRegisterGerman = getTextContentGerman("registrationRegister");
+  String registrationRegisterEnglish = getTextContentEnglish("registrationRegister");
+  String registrationSuccessGerman = getTextContentGerman("registrationSuccess");
+  String registrationSuccessEnglish = getTextContentEnglish("registrationSuccess");
+  String registrationNextStepsGerman = getTextContentGerman("registrationNextSteps");
+  String registrationNextStepsEnglish = getTextContentEnglish("registrationNextSteps");
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLanguage();
+  }
+
+  Future<void> _loadLanguage() async {
+    final selectedLanguage = await LanguageService.getLanguage();
+    setState(() {
+      _selectedLanguage = selectedLanguage;
+    });
+  }
 
   String _validateForm() {
     // Check if any field is empty
@@ -28,7 +67,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         emailController.text.isEmpty ||
         passwordController.text.isEmpty) {
       // Show an error message or handle the validation as needed
-      return 'Please fill out Username, Email and Password';
+      return _selectedLanguage == "German" ? registrationEmptyFieldGerman: registrationEmptyFieldEnglish;
     }
 
     // Check if the email is valid
@@ -36,20 +75,20 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     RegExp emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
 
     if (!emailRegex.hasMatch(email)) {
-      return 'Please enter a valid email address';
+      return _selectedLanguage == "German" ? registrationInvalidEmailGerman: registrationInvalidEmailEnglish;
     }
 
     // Check if the password meets criteria (at least 8 characters and one special character)
     String password = passwordController.text;
     if (password.length < 8) {
-      return 'Password must be at least 8 characters long';
+      return _selectedLanguage == "German" ? registrationInvalidPasswordLengthGerman : registrationInvalidPasswordLengthEnglish;
     }
 
     // Define a pattern for a special character (you can adjust this pattern based on your requirements)
     RegExp specialChar = RegExp(r'[$&+,:;=?@#|<>.^*()%!-]');
 
     if (!specialChar.hasMatch(password)) {
-      return 'Password must contain at least one special character';
+      return _selectedLanguage == "German" ? registrationInvalidPasswordCharactersGerman : registrationInvalidPasswordCharactersEnglish;
     }
 
     // If all validations pass, return success
@@ -179,7 +218,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Registration', style: GoogleFonts.lato(fontSize: 20, letterSpacing: 1.0, color: Colors.black)),
+        title: Text(_selectedLanguage == "German" ? registrationRegisterGerman : registrationRegisterEnglish, style: GoogleFonts.lato(fontSize: 20, letterSpacing: 1.0, color: Colors.black)),
         centerTitle: true,
         backgroundColor: Colors.yellow,
         leading: IconButton(
@@ -200,7 +239,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   TextFormField(
                     controller: usernameController,
                     decoration: InputDecoration(
-                      labelText: 'Username',
+                      labelText: _selectedLanguage == "German" ? registrationUsernameGerman : registrationUsernameEnglish,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: BorderSide.none,
@@ -231,7 +270,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     controller: passwordController,
                     obscureText: isObscure,
                     decoration: InputDecoration(
-                      labelText: 'Password',
+                      labelText: _selectedLanguage == "German" ? registrationPasswordGerman : registrationPasswordEnglish,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: BorderSide.none,
@@ -269,7 +308,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Choose your domain based on your location:',
+                          _selectedLanguage == "German" ? registrationDomainGerman : registrationDomainEnglish,
                           style: GoogleFonts.lato(
                             fontSize: 18,
                             color: Colors.black,
@@ -281,7 +320,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildLocationInfo('Examples', ''),
+                            _buildLocationInfo(_selectedLanguage == "German" ? registrationExampleGerman : registrationExampleEnglish, ''),
                             _buildLocationInfo('Innsbruck', 'PV-IBK'),
                             _buildLocationInfo('Wattens', 'PV-IBK-L'),
                             _buildLocationInfo('Telfs', 'PV-IM'),
@@ -359,7 +398,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       minimumSize: Size(double.infinity, 60),
                     ),
                     child: Text(
-                      'Register',
+                      _selectedLanguage == "German" ? registrationRegisterGerman : registrationRegisterEnglish,
                       style: GoogleFonts.lato(
                         color: Colors.white,
                         letterSpacing: 1.0,
@@ -381,7 +420,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      'User registered successfully!',
+                      _selectedLanguage == "German" ? registrationSuccessGerman : registrationSuccessEnglish,
                       style: GoogleFonts.lato(
                         fontSize: 18,
                         color: Colors.black,
@@ -390,7 +429,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     ),
                     SizedBox(height: 20),
                     Text(
-                      'The next steps are:\n- Close this App or Return to the Login Screen\n- Verify your email address with the verification link sent to you by email\n- Login with your email address and password',
+                      _selectedLanguage == "German" ? registrationNextStepsGerman : registrationNextStepsEnglish,
                       style: GoogleFonts.lato(
                         fontSize: 16,
                         color: Colors.black,

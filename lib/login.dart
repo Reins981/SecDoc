@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'helpers.dart';
 import 'dashboard_section.dart';
 import 'biometric_service.dart';
+import 'language_service.dart';
+import 'text_contents.dart';
 
 class LoginScreen extends StatefulWidget {
 
@@ -23,6 +25,41 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final Helper _helper = Helper();
   bool _biometricsEnabled = false;
+  String _selectedLanguage = 'German';
+
+  String biometricsTextGerman = getTextContentGerman("biometricsText");
+  String biometricsTextEnglish = getTextContentEnglish("biometricsText");
+  String forgotPasswordTextGerman = getTextContentGerman("forgotPasswordText");
+  String forgotPasswordTextEnglish = getTextContentEnglish("forgotPasswordText");
+  String notRegisteredTextGerman = getTextContentGerman("notRegisteredText");
+  String notRegisteredTextEnglish = getTextContentEnglish("notRegisteredText");
+  String resetPasswordTextGerman = getTextContentGerman("resetPasswordText");
+  String resetPasswordTextEnglish = getTextContentEnglish("resetPasswordText");
+  String resetPasswordHintTextGerman = getTextContentGerman("resetPasswordHintText");
+  String resetPasswordHintTextEnglish = getTextContentEnglish("resetPasswordHintText");
+  String resetPasswordNotificationTextGerman = getTextContentGerman("resetPasswordNotificationText");
+  String resetPasswordNotificationTextEnglish = getTextContentEnglish("resetPasswordNotificationText");
+  String handleLoginError1German = getTextContentGerman("handleLoginError1");
+  String handleLoginError1English = getTextContentEnglish("handleLoginError1");
+  String handleLoginError2German = getTextContentGerman("handleLoginError2");
+  String handleLoginError2English = getTextContentEnglish("handleLoginError2");
+  String handleLoginError3German = getTextContentGerman("handleLoginError3");
+  String handleLoginError3English = getTextContentEnglish("handleLoginError3");
+  String handleLoginErrorGeneralGerman = getTextContentGerman("handleLoginErrorGeneral");
+  String handleLoginErrorGeneralEnglish = getTextContentEnglish("handleLoginErrorGeneral");
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLanguage();
+  }
+
+  Future<void> _loadLanguage() async {
+    final selectedLanguage = await LanguageService.getLanguage();
+    setState(() {
+      _selectedLanguage = selectedLanguage;
+    });
+  }
 
   // Function to show an input dialog for the email address
   Future<void> _showEmailInputDialog(BuildContext context) async {
@@ -32,11 +69,11 @@ class _LoginScreenState extends State<LoginScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Reset Password'),
+          title: Text(_selectedLanguage == 'German' ? resetPasswordTextGerman : resetPasswordTextEnglish),
           content: TextField(
             controller: _emailController,
             decoration: InputDecoration(
-                hintText: 'Enter your email',
+                hintText: _selectedLanguage == 'German' ? resetPasswordHintTextGerman : resetPasswordHintTextEnglish,
               enabledBorder: OutlineInputBorder(
                 borderSide: BorderSide(color: Colors.yellow, width: 2.0),
                 borderRadius: BorderRadius.circular(10),
@@ -69,7 +106,7 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Text('Send',
                 style: GoogleFonts.lato(
                   fontSize: 16,
-                  color: Colors.black,
+                  color: Colors.white,
                   letterSpacing: 1.0,
                 ),
               ),
@@ -86,7 +123,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       await auth.sendPasswordResetEmail(email: email);
-      _helper.showSnackBar("A notification has been sent to your email account", "Success", scaffoldContext, duration: 6);
+      _helper.showSnackBar(_selectedLanguage == 'German' ? resetPasswordNotificationTextGerman : resetPasswordNotificationTextEnglish, "Success", scaffoldContext, duration: 6);
     } catch (e) {
       _helper.showSnackBar('$e', "Error", scaffoldContext);
     }
@@ -112,6 +149,55 @@ class _LoginScreenState extends State<LoginScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 30),
                 child: Column(
                   children: [
+                    Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.blue,
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      child: Theme(
+                        data: Theme.of(context).copyWith(
+                          canvasColor: Colors.blue,
+                        ),
+                        child: DropdownButton<String>(
+                          value: _selectedLanguage,
+                          items: <String>['English', 'German'].map((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Center(
+                                child: Text(
+                                  value,
+                                  style: GoogleFonts.lato(
+                                      fontSize: 16.0,
+                                      color: Colors.white,
+                                      letterSpacing: 1.0
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (String? newValue) {
+                            if (newValue != null) {
+                              setState(() {
+                                _selectedLanguage = newValue;
+                                LanguageService.setLanguage(newValue);
+                              });
+                            }
+                          },
+                          icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+                          underline: Container(
+                            height: 0,
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.transparent),
+                            ),
+                          ),
+                          isExpanded: true,
+                          iconSize: 24.0,
+                          elevation: 16,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 15),
                     TextFormField(
                       controller: _emailController,
                       decoration: InputDecoration(
@@ -145,7 +231,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 20),
                     SwitchListTile(
                       title: Text(
-                        'Enable Biometrics',
+                        _selectedLanguage == 'German' ? biometricsTextGerman : biometricsTextEnglish,
                         style: GoogleFonts.lato(
                           fontSize: 18,
                           color: Colors.black,
@@ -194,7 +280,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             await _showEmailInputDialog(context);
                           },
                           child: Text(
-                            'Forgot Password?',
+                            _selectedLanguage == 'German' ? forgotPasswordTextGerman : forgotPasswordTextEnglish,
                             style: GoogleFonts.lato(
                               color: Colors.black,
                               letterSpacing: 1.0,
@@ -206,7 +292,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             Navigator.pushReplacementNamed(context, '/registration');
                           },
                           child: Text(
-                            'Not yet registered?',
+                            _selectedLanguage == 'German' ? notRegisteredTextGerman : notRegisteredTextEnglish,
                             style: GoogleFonts.lato(
                               color: Colors.black,
                               letterSpacing: 1.0,
@@ -233,7 +319,8 @@ class _LoginScreenState extends State<LoginScreen> {
       final String password = _passwordController.text;
 
       if (email.isEmpty || password.isEmpty) {
-        _helper.showSnackBar('Please enter both email and password.', 'Error', scaffoldContext);
+        _helper.showSnackBar( _selectedLanguage == 'German' ? handleLoginError1German : handleLoginError1English,
+            'Error', scaffoldContext);
         return;
       }
 
@@ -248,11 +335,13 @@ class _LoginScreenState extends State<LoginScreen> {
       bool disabled = userDetails['disabled'];
 
       if (!verified) {
-        _helper.showSnackBar('User ${user.displayName} is not verified. Please verify your identity first!', 'Error', scaffoldContext);
+        String errorText = _selectedLanguage == 'German' ? "Benutzer ${user.displayName}$handleLoginError2German" : "User ${user.displayName}$handleLoginError2English";
+        _helper.showSnackBar(errorText, 'Error', scaffoldContext);
         return;
       }
       if (disabled) {
-        _helper.showSnackBar('User ${user.displayName} is disabled. Please contact the support team!', 'Error', scaffoldContext);
+        String errorText = _selectedLanguage == 'German' ? "Benutzer ${user.displayName}$handleLoginError3German" : "User ${user.displayName}$handleLoginError3English";
+        _helper.showSnackBar(errorText, 'Error', scaffoldContext);
         return;
       }
 
@@ -268,7 +357,7 @@ class _LoginScreenState extends State<LoginScreen> {
       _showWelcomeAnimation(context, user.displayName!);
     } catch (e) {
       // Handle login error
-      String errorMessage = 'An error occurred during login.';
+      String errorMessage = _selectedLanguage == 'German' ? handleLoginErrorGeneralGerman : handleLoginErrorGeneralEnglish;
       if (e is FirebaseAuthException) {
         errorMessage = e.message ?? errorMessage;
       }
@@ -280,7 +369,7 @@ class _LoginScreenState extends State<LoginScreen> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return _WelcomeDialog(displayName: displayName, docOperations: widget.docOperations);
+        return _WelcomeDialog(displayName: displayName, language: _selectedLanguage, docOperations: widget.docOperations);
       },
     );
   }
@@ -288,9 +377,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
 class _WelcomeDialog extends StatefulWidget {
   final String displayName;
+  final String language;
   final DocumentOperations docOperations;
 
-  _WelcomeDialog({Key? key, required this.displayName, required this.docOperations}) : super(key: key);
+  _WelcomeDialog({Key? key, required this.displayName, required this.language, required this.docOperations}) : super(key: key);
 
   @override
   _WelcomeDialogState createState() => _WelcomeDialogState();
@@ -298,6 +388,12 @@ class _WelcomeDialog extends StatefulWidget {
 
 class _WelcomeDialogState extends State<_WelcomeDialog> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
+
+  // Language related content
+  String welcomeTextGerman = getTextContentGerman("welcomeText");
+  String welcomeTextEnglish = getTextContentEnglish("welcomeText");
+  String continueTextGerman = getTextContentGerman("continueText");
+  String continueTextEnglish = getTextContentEnglish("continueText");
 
   @override
   void initState() {
@@ -345,7 +441,7 @@ class _WelcomeDialogState extends State<_WelcomeDialog> with SingleTickerProvide
                     Align(
                       alignment: Alignment.center,
                       child: Text(
-                        'Welcome, ${widget.displayName}!',
+                        widget.language == 'German' ? "$welcomeTextGerman${widget.displayName}!" : "$welcomeTextEnglish${widget.displayName}!",
                         style: GoogleFonts.lato(
                           fontSize: 24,
                           color: Colors.black,
@@ -369,7 +465,7 @@ class _WelcomeDialogState extends State<_WelcomeDialog> with SingleTickerProvide
                         minimumSize: const Size(double.infinity, 50),
                       ),
                       child: Text(
-                        'Continue',
+                        widget.language == 'German' ? continueTextGerman : continueTextEnglish,
                         style: GoogleFonts.lato(
                           fontSize: 18,
                           color: Colors.black,

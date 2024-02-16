@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:local_auth/local_auth.dart';
 import 'helpers.dart';
+import 'text_contents.dart';
+import 'language_service.dart';
 
 class AuthenticatedScreen extends StatefulWidget {
   @override
@@ -12,6 +14,35 @@ class AuthenticatedScreen extends StatefulWidget {
 class _AuthenticatedScreenState extends State<AuthenticatedScreen> {
   final LocalAuthentication auth = LocalAuthentication();
   final Helper _helper = Helper();
+  String _selectedLanguage = 'German';
+
+  String biometricSetupError1German = getTextContentGerman("biometricSetupError1");
+  String biometricSetupError1English = getTextContentEnglish("biometricSetupError1");
+  String biometricSetupErrorGeneralGerman = getTextContentGerman("biometricSetupErrorGeneral");
+  String biometricSetupErrorGeneralEnglish = getTextContentEnglish("biometricSetupErrorGeneral");
+  String biometricSetupSuccessGerman = getTextContentGerman("biometricSetupSuccess");
+  String biometricSetupSuccessEnglish = getTextContentEnglish("biometricSetupSuccess");
+  String localizedReasonGerman = getTextContentGerman("localizedReason");
+  String localizedReasonEnglish = getTextContentEnglish("localizedReason");
+  String biometricAuthMethodGerman = getTextContentGerman("biometricAuthMethod");
+  String biometricAuthMethodEnglish = getTextContentEnglish("biometricAuthMethod");
+  String biometricAuthGerman = getTextContentGerman("biometricAuth");
+  String biometricAuthEnglish = getTextContentEnglish("biometricAuth");
+  String welcomeTextGerman = getTextContentGerman("welcomeText");
+  String welcomeTextEnglish = getTextContentEnglish("welcomeText");
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLanguage();
+  }
+
+  Future<void> _loadLanguage() async {
+    final selectedLanguage = await LanguageService.getLanguage();
+    setState(() {
+      _selectedLanguage = selectedLanguage;
+    });
+  }
 
   Future<void> delay(int seconds) async {
     // Sleep for x seconds
@@ -28,7 +59,7 @@ class _AuthenticatedScreenState extends State<AuthenticatedScreen> {
     }
 
     if (!canCheckBiometric) {
-      _helper.showSnackBar("Hardware does not support Biometrics", "Error", context);
+      _helper.showSnackBar(_selectedLanguage == 'German' ? biometricSetupError1German : biometricSetupError1English, "Error", context);
     }
 
     return canCheckBiometric;
@@ -61,7 +92,7 @@ class _AuthenticatedScreenState extends State<AuthenticatedScreen> {
     bool authenticated = false;
     try {
       authenticated = await auth.authenticate(
-        localizedReason: "Scan your finger to authenticate",
+        localizedReason: _selectedLanguage == 'German' ? localizedReasonGerman : localizedReasonEnglish,
       );
     } on PlatformException catch (e) {
       _helper.showSnackBar('$e', "Error", scaffoldContext);
@@ -70,10 +101,10 @@ class _AuthenticatedScreenState extends State<AuthenticatedScreen> {
 
     if (authenticated) {
       // Navigate to another screen upon successful authentication
-      _helper.showSnackBar("Biometric Authentication successful!", "Success", scaffoldContext, duration: 1);
+      _helper.showSnackBar(_selectedLanguage == 'German' ? biometricSetupSuccessGerman : biometricSetupSuccessEnglish, "Success", scaffoldContext, duration: 1);
       return true;
     } else {
-      _helper.showSnackBar('Biometric Authentication failed', "Error", scaffoldContext);
+      _helper.showSnackBar(_selectedLanguage == 'German' ? biometricSetupErrorGeneralGerman : biometricSetupErrorGeneralEnglish, "Error", scaffoldContext);
       return false;
     }
   }
@@ -112,7 +143,7 @@ class _AuthenticatedScreenState extends State<AuthenticatedScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          "Welcome, $userName",
+                          _selectedLanguage == 'German' ? "$welcomeTextGerman $userName!" : "$welcomeTextEnglish $userName!",
                           style: GoogleFonts.lato(
                             fontSize: 36,
                             color: Colors.black,
@@ -128,7 +159,7 @@ class _AuthenticatedScreenState extends State<AuthenticatedScreen> {
                         ),
                         const SizedBox(height: 20.0),
                         Text(
-                          "Authenticate using your fingerprint instead of your password",
+                          _selectedLanguage == 'German' ? biometricAuthMethodGerman : biometricAuthMethodEnglish,
                           textAlign: TextAlign.center,
                           style: GoogleFonts.lato(
                             fontSize: 18,
@@ -153,7 +184,7 @@ class _AuthenticatedScreenState extends State<AuthenticatedScreen> {
                             ),
                           ),
                           child: Text(
-                            "Authenticate",
+                            _selectedLanguage == 'German' ? biometricAuthGerman : biometricAuthEnglish,
                             style: GoogleFonts.lato(
                               fontSize: 18,
                               color: Colors.white,

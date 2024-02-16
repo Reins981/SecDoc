@@ -7,6 +7,8 @@ import 'helpers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'chat_window.dart';
+import 'language_service.dart';
+import 'text_contents.dart';
 
 class DashboardSection extends StatefulWidget {
 
@@ -27,11 +29,48 @@ class _DashboardSectionState extends State<DashboardSection> with SingleTickerPr
   String _userName = '';
   bool _isChatVisible = false;
   int selectedDashboardIndex = 0;
+  String _selectedLanguage = 'German';
+
+  String welcomeTextGerman = getTextContentGerman("welcomeText");
+  String welcomeTextEnglish = getTextContentEnglish("welcomeText");
+  String dashboardTitle1German = getTextContentGerman("dashboardTitle1");
+  String dashboardTitle1English = getTextContentEnglish("dashboardTitle1");
+  String dashboardTitle2German = getTextContentGerman("dashboardTitle2");
+  String dashboardTitle2English = getTextContentEnglish("dashboardTitle2");
+  String dashboardTitle3German = getTextContentGerman("dashboardTitle3");
+  String dashboardTitle3English = getTextContentEnglish("dashboardTitle3");
+  String dashboardDescription1German = getTextContentGerman("dashboardDescription1");
+  String dashboardDescription1English = getTextContentEnglish("dashboardDescription1");
+  String dashboardDescription2German = getTextContentGerman("dashboardDescription2");
+  String dashboardDescription2English = getTextContentEnglish("dashboardDescription2");
+  String dashboardDescription3German = getTextContentGerman("dashboardDescription3");
+  String dashboardDescription3English = getTextContentEnglish("dashboardDescription3");
+  String dashboardDetailedDescription1German = getTextContentGerman("dashboardDetailedDescription1");
+  String dashboardDetailedDescription1English = getTextContentEnglish("dashboardDetailedDescription1");
+  String dashboardDetailedDescription2German = getTextContentGerman("dashboardDetailedDescription2");
+  String dashboardDetailedDescription2English = getTextContentEnglish("dashboardDetailedDescription2");
+  String dashboardDetailedDescription3German = getTextContentGerman("dashboardDetailedDescription3");
+  String dashboardDetailedDescription3English = getTextContentEnglish("dashboardDetailedDescription3");
+  String dashboardDetailedDescriptionAdmin1German = getTextContentGerman("dashboardDetailedDescriptionAdmin1");
+  String dashboardDetailedDescriptionAdmin1English = getTextContentEnglish("dashboardDetailedDescriptionAdmin1");
+  String dashboardDetailedDescriptionAdmin2German = getTextContentGerman("dashboardDetailedDescriptionAdmin2");
+  String dashboardDetailedDescriptionAdmin2English = getTextContentEnglish("dashboardDetailedDescriptionAdmin2");
+  String dashboardDetailedDescriptionAdmin3German = getTextContentGerman("dashboardDetailedDescriptionAdmin3");
+  String dashboardDetailedDescriptionAdmin3English = getTextContentEnglish("dashboardDetailedDescriptionAdmin3");
+  String dashboardButtonText1German = getTextContentGerman("dashboardButtonText1");
+  String dashboardButtonText1English = getTextContentEnglish("dashboardButtonText1");
+  String dashboardButtonText2German = getTextContentGerman("dashboardButtonText2");
+  String dashboardButtonText2English = getTextContentEnglish("dashboardButtonText2");
+  String dashboardButtonText3German = getTextContentGerman("dashboardButtonText3");
+  String dashboardButtonText3English = getTextContentEnglish("dashboardButtonText3");
+
+
 
   // Mock news data
   @override
   void initState() {
     super.initState();
+    _loadLanguage();
     _initializeUser();
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
@@ -40,41 +79,31 @@ class _DashboardSectionState extends State<DashboardSection> with SingleTickerPr
     dashboardItems = [
       DashboardItem(
         id: "1",
-        title: "Document Library",
-        description: "Seamless Access",
-        detailedDescription: "Effortlessly access, download, and seamlessly navigate through our comprehensive document library, "
-            "\n ensuring easy and efficient management of all your important files.",
-        detailedDescriptionAdmin: "Effortlessly access, download, and seamlessly navigate through our comprehensive document library, "
-            "\n ensuring easy and efficient management of all your important files.",
-        buttonText: "Access Docs Now",
+        title: _selectedLanguage == 'German' ? dashboardTitle1German: dashboardTitle1English,
+        description: _selectedLanguage == 'German' ? dashboardDescription1German : dashboardDescription1English,
+        detailedDescription: _selectedLanguage == 'German' ? dashboardDetailedDescription1German : dashboardDetailedDescription1English,
+        detailedDescriptionAdmin: _selectedLanguage == 'German' ? dashboardDetailedDescriptionAdmin1German : dashboardDetailedDescriptionAdmin1English,
+        buttonText: _selectedLanguage == 'German' ? dashboardButtonText1German : dashboardButtonText1English,
         icon: Icons.folder,
         itemType: DashboardItemType.library
       ),
       DashboardItem(
         id: "2",
-        title: "Document Upload",
-        description: "Easy Upload",
-        detailedDescription: "Empower your solar panel planning by effortlessly uploading your own documents to our cloud, "
-          "\nlaying the foundation for personalized solar panel design tailored to your specific needs.",
-        detailedDescriptionAdmin: "Empower customer solar panel planning by effortlessly uploading Plans and Offers to our cloud, "
-            "\nlaying the foundation for personalized solar panel design tailored to customers specific needs.",
-        buttonText: "Upload Docs Now",
+        title: _selectedLanguage == 'German' ? dashboardTitle2German: dashboardTitle2English,
+        description: _selectedLanguage == 'German' ? dashboardDescription2German : dashboardDescription2English,
+        detailedDescription: _selectedLanguage == 'German' ? dashboardDetailedDescription2German : dashboardDetailedDescription2English,
+        detailedDescriptionAdmin: _selectedLanguage == 'German' ? dashboardDetailedDescriptionAdmin2German : dashboardDetailedDescriptionAdmin2English,
+        buttonText: _selectedLanguage == 'German' ? dashboardButtonText2German : dashboardButtonText2English,
         icon: Icons.cloud_upload,
         itemType: DashboardItemType.upload
       ),
       DashboardItem(
           id: "3",
-          title: "Solar Insights",
-          description: "Gain Performance Forecasts",
-          detailedDescription: "Explore tailored forecasts for solar panel performance across diverse environments, configurations, and conditions. "
-              "Get detailed insights that enable informed decisions about solar installations by predicting efficiency, energy output, and other critical factors crucial "
-              "for optimizing solar projects. "
-              "Send us your specifications for personalized forecasts!",
-          detailedDescriptionAdmin: "Explore tailored forecasts for solar panel performance across diverse environments, configurations, and conditions. "
-              "Get detailed insights that enable informed decisions about solar installations by predicting efficiency, energy output, and other critical factors crucial "
-              "for optimizing solar projects. "
-              "Send us your specifications for personalized forecasts!",
-          buttonText: "Get Forecasts Now",
+          title: _selectedLanguage == 'German' ? dashboardTitle3German: dashboardTitle3English,
+          description: _selectedLanguage == 'German' ? dashboardDescription3German : dashboardDescription3English,
+          detailedDescription: _selectedLanguage == 'German' ? dashboardDetailedDescription3German : dashboardDetailedDescription3English,
+          detailedDescriptionAdmin: _selectedLanguage == 'German' ? dashboardDetailedDescriptionAdmin3German : dashboardDetailedDescriptionAdmin3English,
+          buttonText: _selectedLanguage == 'German' ? dashboardButtonText3German : dashboardButtonText3English,
           icon: Icons.code,
           itemType: DashboardItemType.ai
       )
@@ -86,6 +115,13 @@ class _DashboardSectionState extends State<DashboardSection> with SingleTickerPr
   void dispose() {
     _animationController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadLanguage() async {
+    final selectedLanguage = await LanguageService.getLanguage();
+    setState(() {
+      _selectedLanguage = selectedLanguage;
+    });
   }
 
   void _initializeUser() {
@@ -166,7 +202,7 @@ class _DashboardSectionState extends State<DashboardSection> with SingleTickerPr
         mainAxisAlignment: MainAxisAlignment.spaceBetween, // Align items in row
         children: [
           Text(
-            'Welcome, $_userName',
+            _selectedLanguage == 'German' ? '$welcomeTextGerman, $_userName' : '$welcomeTextEnglish, $_userName',
             style: GoogleFonts.lato(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,

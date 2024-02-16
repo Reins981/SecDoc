@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sec_doc/helpers.dart';
+import 'language_service.dart';
+import 'text_contents.dart';
 
 
 class Document {
@@ -62,10 +64,27 @@ class DocumentDetailScreen extends StatefulWidget {
 class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
   late Future<Map<String, dynamic>> _documentContent;
 
+  String _selectedLanguage = 'German';
+
+  String documentErrorLoadingGerman = getTextContentGerman("documentErrorLoading");
+  String documentErrorLoadingEnglish = getTextContentEnglish("documentErrorLoading");
+  String documentErrorShowGerman = getTextContentGerman("documentErrorShow");
+  String documentErrorShowEnglish = getTextContentEnglish("documentErrorShow");
+  String documentErrorFormatGerman = getTextContentGerman("documentErrorFormat");
+  String documentErrorFormatEnglish = getTextContentEnglish("documentErrorFormat");
+
   @override
   void initState() {
     super.initState();
+    _loadLanguage();
     _documentContent = fetchDocument(widget.document.documentUrl, widget.document.name);
+  }
+
+  Future<void> _loadLanguage() async {
+    final selectedLanguage = await LanguageService.getLanguage();
+    setState(() {
+      _selectedLanguage = selectedLanguage;
+    });
   }
 
   Future<Map<String, dynamic>> fetchDocument(String documentUrl, String documentName) async {
@@ -89,7 +108,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
           } else if (snapshot.hasError || snapshot.data == null) {
             return Center(
                 child: Text(
-                  'Error loading document',
+                  _selectedLanguage == 'German' ? documentErrorLoadingGerman : documentErrorLoadingEnglish,
                   style: GoogleFonts.lato(
                     fontSize: 16,
                     color: Colors.black,
@@ -105,7 +124,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
             bool isTxt = data['isTxt'];
 
             if (content == null) {
-              return widget.helper.showStatus("Unable to show document");
+              return widget.helper.showStatus(_selectedLanguage == 'German' ? documentErrorShowGerman : documentErrorShowEnglish);
             }
 
             if (isPdf) {
@@ -145,7 +164,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                 return widget.helper.showStatus('$e');
               }
             } else {
-              return widget.helper.showStatus('Unsupported document format');
+              return widget.helper.showStatus(_selectedLanguage == 'German' ? documentErrorFormatGerman : documentErrorFormatEnglish);
             }
           }
         },

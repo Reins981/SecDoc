@@ -3,17 +3,23 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sec_doc/helpers.dart';
-import 'document.dart'; // Import your DocumentRepository class here
+import 'document.dart';
+import 'text_contents.dart';
 
 class DocumentProvider extends ChangeNotifier {
   Map<String, Map<int, Map<String, Map<String, DocumentRepository>>>>? _groupedDocuments;
   Timer? _debounceTimer;
+  final String documentLibraryCategoryCustomerAdminGerman = getTextContentGerman("documentLibraryCategoryCustomerAdmin");
+  final String documentLibraryCategoryCustomerAdminEnglish = getTextContentEnglish("documentLibraryCategoryCustomerAdmin");
+  final String documentLibraryCategoryCustomerClientGerman = getTextContentGerman("documentLibraryCategoryCustomerClient");
+  final String documentLibraryCategoryCustomerClientEnglish = getTextContentEnglish("documentLibraryCategoryCustomerClient");
 
   Map<String, Map<int, Map<String, Map<String, DocumentRepository>>>>? get groupedDocuments => _groupedDocuments;
 
   final DocumentOperations docOperations;
+  final String language;
 
-  DocumentProvider({required this.docOperations});
+  DocumentProvider({required this.docOperations, required this.language});
 
   // Setter for groupedDocuments
   setGroupedDocuments(Map<String, Map<int, Map<String, Map<String, DocumentRepository>>>> newGroupedDocuments) {
@@ -70,8 +76,9 @@ class DocumentProvider extends ChangeNotifier {
     } else if (searchText.toLowerCase() == "updated") {
       documentStatus = "false";
     }
-    if (searchText.toLowerCase() == "customerdocs" && userRole.contains("admin")) {
-      searchText = "MyDocs";
+    String expectedCategory = language == 'German' ? documentLibraryCategoryCustomerAdminGerman : documentLibraryCategoryCustomerAdminEnglish;
+    if (searchText.toLowerCase() == expectedCategory && userRole.contains("admin")) {
+      searchText = language == 'German' ? documentLibraryCategoryCustomerClientGerman : documentLibraryCategoryCustomerClientEnglish;
     }
 
     List<DocumentSnapshot> allDocumentsCopy = List.from(documentsOrig);

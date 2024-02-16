@@ -19,18 +19,22 @@ import 'dart:convert';
 import 'user.dart';
 import 'mail_settings.dart';
 import 'package:sendgrid_mailer/sendgrid_mailer.dart';
+import 'text_contents.dart';
+import 'language_service.dart';
 
 class Helper {
 
   late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
+  String _selectedLanguage = 'German';
+  String helperUserNotSignedInGerman = getTextContentGerman('helperUserNotSignedIn');
+  String helperUserNotSignedInEnglish = getTextContentEnglish('helperUserNotSignedIn');
+
+  Future<void> _loadLanguage() async {
+    final selectedLanguage = await LanguageService.getLanguage();
+    _selectedLanguage = selectedLanguage;
+  }
 
   void _openFile(String filePath) {
-    // You'll need to use platform-specific code to open the file
-    // For Android, you can use plugins like 'open_file' or 'android_intent'
-    // For iOS, you might use 'open_file' or 'url_launcher'
-
-    // Example for opening a file on Android using the 'open_file' plugin
-    print("Open file triggered");
     OpenFile.open(filePath);
   }
 
@@ -301,7 +305,9 @@ class Helper {
   Future<IdTokenResult> getIdTokenResult(User? thisUser) async {
     final User? user = thisUser ?? FirebaseAuth.instance.currentUser;
     if (user == null) {
-      throw Exception('User is not signed in!');
+      _loadLanguage();
+      String errorMessage = _selectedLanguage == 'German' ? helperUserNotSignedInGerman: helperUserNotSignedInEnglish;
+      throw Exception(errorMessage);
     }
 
     return await user.getIdTokenResult();
@@ -378,6 +384,18 @@ class DocumentOperations {
 
   late Map<String, dynamic> _progressNotifierDict = {};
   late String downloadPath;
+  String _selectedLanguage = 'German';
+  final String documentLibraryCategoryCustomerClientGerman = getTextContentGerman("documentLibraryCategoryCustomerClient");
+  final String documentLibraryCategoryCustomerClientEnglish = getTextContentEnglish("documentLibraryCategoryCustomerClient");
+  final String docOperationsNoDocsGerman = getTextContentGerman("docOperationsNoDocs");
+  final String docOperationsNoDocsEnglish = getTextContentEnglish("docOperationsNoDocs");
+  final String docOperationsUploadSuccessGerman = getTextContentGerman("docOperationsUploadSuccess");
+  final String docOperationsUploadSuccessEnglish = getTextContentEnglish("docOperationsUploadSuccess");
+
+  Future<void> _loadLanguage() async {
+    final selectedLanguage = await LanguageService.getLanguage();
+    _selectedLanguage = selectedLanguage;
+  }
 
   Map<String, dynamic> getProgressNotifierDict() {
     return _progressNotifierDict;
@@ -698,11 +716,8 @@ class DocumentOperations {
           "is_new": false
           // Add fields to update here as needed
         });
-
-        print('Updated existing document: $documentName');
       } else {
         print('Adding new document: $documentName');
-        print('documents_$userDomainLowerCase');
         // Create a new document
         await FirebaseFirestore.instance.collection('documents_$userDomainLowerCase')
             .add({
@@ -723,8 +738,6 @@ class DocumentOperations {
           "last_update": FieldValue.serverTimestamp(),
           "is_new": true,
         });
-
-        print('Added new document...: $documentName');
       }
     } catch (e) {
       errorMessage = '$e';
@@ -742,6 +755,8 @@ class DocumentOperations {
 
   Future<void> uploadDocuments(String? documentId, File? specificFile, ScaffoldMessengerState context) async {
     Helper _helper = Helper();
+    _loadLanguage();
+
     List<File> files = [];
     if (specificFile == null) {
       files = await selectDocumentsForUpload();
@@ -751,7 +766,7 @@ class DocumentOperations {
 
     String? errorMessage;
     if (files.isEmpty) {
-      errorMessage = "No Documents available for upload";
+      errorMessage = _selectedLanguage == 'German' ? docOperationsNoDocsGerman : docOperationsNoDocsEnglish;
       _helper.showSnackBar(errorMessage, 'Error', context);
       return;
     }
@@ -771,7 +786,7 @@ class DocumentOperations {
 
     try {
       Map<String, dynamic> userDetails = await _helper.getCurrentUserDetails();
-      String category = "MyDocs";
+      String category = _selectedLanguage == 'German' ? documentLibraryCategoryCustomerClientGerman : documentLibraryCategoryCustomerClientEnglish;
       int year = DateTime.now().year;
       String userDomain = userDetails['userDomain'].toLowerCase();
       String userName = userDetails['userName'];
@@ -826,7 +841,8 @@ class DocumentOperations {
                   String? errorMessage = result['message'];
                   _helper.showSnackBar(errorMessage ?? "Default Error Message", 'Error', context);
                 } else {
-                  _helper.showSnackBar("Document $documentName uploaded successfully", 'Success', context);
+                  String successMessage = _selectedLanguage == 'German' ? "Dokument $documentName$docOperationsUploadSuccessGerman" : "Document $documentName$docOperationsUploadSuccessEnglish";
+                  _helper.showSnackBar(successMessage, 'Success', context);
                 }
                 uploadedFilesCount++;
                 if (uploadedFilesCount == filesCount) {

@@ -11,6 +11,8 @@ import 'solar_ai_card.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'dart:io';
+import 'language_service.dart';
+import 'text_contents.dart';
 
 class SolarDataFetcher extends StatefulWidget {
   final DocumentOperations docOperations;
@@ -86,9 +88,255 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
   Helper helper = Helper();
   final ScrollController _scrollController = ScrollController();
 
+  String _selectedLanguage = 'German';
+  // Language related content
+  String solarDataTitleGerman = getTextContentGerman("solarDataTitle");
+  String solarDataTitleEnglish = getTextContentEnglish("solarDataTitle");
+
+  String solarDataForecastGerman = getTextContentGerman("solarDataForecast");
+  String solarDataForecastEnglish = getTextContentEnglish("solarDataForecast");
+
+  String solarDataOverviewGerman = getTextContentGerman("solarDataOverview");
+  String solarDataOverviewEnglish = getTextContentEnglish("solarDataOverview");
+
+  String solarDataMaxBudgetGerman = getTextContentGerman("solarDataMaxBudget");
+  String solarDataMaxBudgetEnglish = getTextContentEnglish("solarDataMaxBudget");
+
+  String solarDataMaxLifetimeGerman = getTextContentGerman("solarDataMaxLifetime");
+  String solarDataMaxLifetimeEnglish = getTextContentEnglish("solarDataMaxLifetime");
+
+  String solarDataTechnologyGerman = getTextContentGerman("solarDataTechnology");
+  String solarDataTechnologyEnglish = getTextContentEnglish("solarDataTechnology");
+
+  String solarDataPeakPowerGerman = getTextContentGerman("solarDataPeakPower");
+  String solarDataPeakPowerEnglish = getTextContentEnglish("solarDataPeakPower");
+
+  String solarDataSystemLossGerman = getTextContentGerman("solarDataSystemLoss");
+  String solarDataSystemLossEnglish = getTextContentEnglish("solarDataSystemLoss");
+
+  String solarDataDatabaseGerman = getTextContentGerman("solarDataDatabase");
+  String solarDataDatabaseEnglish = getTextContentEnglish("solarDataDatabase");
+
+  String solarDataLocationDataGerman = getTextContentGerman("solarDataLocationData");
+  String solarDataLocationDataEnglish = getTextContentEnglish("solarDataLocationData");
+
+  String solarDataElevationGerman = getTextContentGerman("solarDataElevation");
+  String solarDataElevationEnglish = getTextContentEnglish("solarDataElevation");
+
+  String solarDataMountingSystemGerman = getTextContentGerman("solarDataMountingSystem");
+  String solarDataMountingSystemEnglish = getTextContentEnglish("solarDataMountingSystem");
+
+  String solarDataTypeGerman = getTextContentGerman("solarDataType");
+  String solarDataTypeEnglish = getTextContentEnglish("solarDataType");
+
+  String solarDataSlopeGerman = getTextContentGerman("solarDataSlope");
+  String solarDataSlopeEnglish = getTextContentEnglish("solarDataSlope");
+
+  String solarDataSlopeOptimalGerman = getTextContentGerman("solarDataSlopeOptimal");
+  String solarDataSlopeOptimalEnglish = getTextContentEnglish("solarDataSlopeOptimal");
+
+  String solarDataOrientationAngleGerman = getTextContentGerman("solarDataOrientationAngle");
+  String solarDataOrientationAngleEnglish = getTextContentEnglish("solarDataOrientationAngle");
+
+  String solarDataOrientationAngleOptimalGerman = getTextContentGerman("solarDataOrientationAngleOptimal");
+  String solarDataOrientationAngleOptimalEnglish = getTextContentEnglish("solarDataOrientationAngleOptimal");
+
+  String solarDataBatteryCapacityGerman = getTextContentGerman("solarDataBatteryCapacity");
+  String solarDataBatteryCapacityEnglish = getTextContentEnglish("solarDataBatteryCapacity");
+
+  String solarDataBatteryDischargeCutoffLimitGerman = getTextContentGerman("solarDataBatteryDischargeCutoffLimit");
+  String solarDataBatteryDischargeCutoffLimitEnglish = getTextContentEnglish("solarDataBatteryDischargeCutoffLimit");
+
+  String solarDataDailyEnergyConsumptionGerman = getTextContentGerman("solarDataDailyEnergyConsumption");
+  String solarDataDailyEnergyConsumptionEnglish = getTextContentEnglish("solarDataDailyEnergyConsumption");
+
+  String solarDataMonthGerman = getTextContentGerman("solarDataMonth");
+  String solarDataMonthEnglish = getTextContentEnglish("solarDataMonth");
+
+  String solarDataDailyEnergyGerman = getTextContentGerman("solarDataDailyEnergy");
+  String solarDataDailyEnergyEnglish = getTextContentEnglish("solarDataDailyEnergy");
+
+  String solarDataMonthlyEnergyGerman = getTextContentGerman("solarDataMonthlyEnergy");
+  String solarDataMonthlyEnergyEnglish = getTextContentEnglish("solarDataMonthlyEnergy");
+
+  String solarDataDailyIrradianceGerman = getTextContentGerman("solarDataDailyIrradiance");
+  String solarDataDailyIrradianceEnglish = getTextContentEnglish("solarDataDailyIrradiance");
+
+  String solarDataMonthlyIrradianceGerman = getTextContentGerman("solarDataMonthlyIrradiance");
+  String solarDataMonthlyIrradianceEnglish = getTextContentEnglish("solarDataMonthlyIrradiance");
+
+  String solarDataSunshineDurationGerman = getTextContentGerman("solarDataSunshineDuration");
+  String solarDataSunshineDurationEnglish = getTextContentEnglish("solarDataSunshineDuration");
+
+  String solarDataEnergyLostPerDayGerman = getTextContentGerman("solarDataEnergyLostPerDay");
+  String solarDataEnergyLostPerDayEnglish = getTextContentEnglish("solarDataEnergyLostPerDay");
+
+  String solarDataFillFactorGerman = getTextContentGerman("solarDataFillFactor");
+  String solarDataFillFactorEnglish = getTextContentEnglish("solarDataFillFactor");
+
+  String solarDataFactorOfEfficiencyGerman = getTextContentGerman("solarDataFactorOfEfficiency");
+  String solarDataFactorOfEfficiencyEnglish = getTextContentEnglish("solarDataFactorOfEfficiency");
+
+  String solarDataLocationDataPermissionErrorGerman = getTextContentGerman("solarDataLocationDataPermissionError");
+  String solarDataLocationDataPermissionErrorEnglish = getTextContentEnglish("solarDataLocationDataPermissionError");
+
+  String solarDataPermanentLocationDataPermissionErrorGerman = getTextContentGerman("solarDataPermanentLocationDataPermissionError");
+  String solarDataPermanentLocationDataPermissionErrorEnglish = getTextContentEnglish("solarDataPermanentLocationDataPermissionError");
+
+  String solarDataErrorFetchingLocationGerman = getTextContentGerman("solarDataErrorFetchingLocation");
+  String solarDataErrorFetchingLocationEnglish = getTextContentEnglish("solarDataErrorFetchingLocation");
+
+  String solarDataMaxBudgetEurosGerman = getTextContentGerman("solarDataMaxBudgetEuros");
+  String solarDataMaxBudgetEurosEnglish = getTextContentEnglish("solarDataMaxBudgetEuros");
+
+  String solarDataMaxBudgetDescriptionGerman = getTextContentGerman("solarDataMaxBudgetDescription");
+  String solarDataMaxBudgetDescriptionEnglish = getTextContentEnglish("solarDataMaxBudgetDescription");
+
+  String solarDataMountingPlaceGerman = getTextContentGerman("solarDataMountingPlace");
+  String solarDataMountingPlaceEnglish = getTextContentEnglish("solarDataMountingPlace");
+
+  String solarDataTypeDescriptionGerman = getTextContentGerman("solarDataTypeDescription");
+  String solarDataTypeDescriptionEnglish = getTextContentEnglish("solarDataTypeDescription");
+
+  String solarDataFixedGerman = getTextContentGerman("solarDataFixed");
+  String solarDataFixedEnglish = getTextContentEnglish("solarDataFixed");
+
+  String solarDataFixedDescriptionGerman = getTextContentGerman("solarDataFixedDescription");
+  String solarDataFixedDescriptionEnglish = getTextContentEnglish("solarDataFixedDescription");
+
+  String solarDataInclinedAxisGerman = getTextContentGerman("solarDataInclinedAxis");
+  String solarDataInclinedAxisEnglish = getTextContentEnglish("solarDataInclinedAxis");
+
+  String solarDataInclinedAxisDescriptionGerman = getTextContentGerman("solarDataInclinedAxisDescription");
+  String solarDataInclinedAxisDescriptionEnglish = getTextContentEnglish("solarDataInclinedAxisDescription");
+
+  String solarDataVerticalAxisGerman = getTextContentGerman("solarDataVerticalAxis");
+  String solarDataVerticalAxisEnglish = getTextContentEnglish("solarDataVerticalAxis");
+
+  String solarDataVerticalAxisDescriptionGerman = getTextContentGerman("solarDataVerticalAxisDescription");
+  String solarDataVerticalAxisDescriptionEnglish = getTextContentEnglish("solarDataVerticalAxisDescription");
+
+  String solarDataTwoAxisGerman = getTextContentGerman("solarDataTwoAxis");
+  String solarDataTwoAxisEnglish = getTextContentEnglish("solarDataTwoAxis");
+
+  String solarDataTwoAxisDescriptionGerman = getTextContentGerman("solarDataTwoAxisDescription");
+  String solarDataTwoAxisDescriptionEnglish = getTextContentEnglish("solarDataTwoAxisDescription");
+
+  String solarDataPvTechChoiceGerman = getTextContentGerman("solarDataPvTechChoice");
+  String solarDataPvTechChoiceEnglish = getTextContentEnglish("solarDataPvTechChoice");
+
+  String solarDataPvTechDescriptionGerman = getTextContentGerman("solarDataPvTechDescription");
+  String solarDataPvTechDescriptionEnglish = getTextContentEnglish("solarDataPvTechDescription");
+
+  String solarDataPeakPowerKwGerman = getTextContentGerman("solarDataPeakPowerKw");
+  String solarDataPeakPowerKwEnglish = getTextContentEnglish("solarDataPeakPowerKw");
+
+  String solarDataPeakPowerKwDescriptionGerman = getTextContentGerman("solarDataPeakPowerKwDescription");
+  String solarDataPeakPowerKwDescriptionEnglish = getTextContentEnglish("solarDataPeakPowerKwDescription");
+
+  String solarDataLossPercentageGerman = getTextContentGerman("solarDataLossPercentage");
+  String solarDataLossPercentageEnglish = getTextContentEnglish("solarDataLossPercentage");
+
+  String solarDataLossPercentageDescriptionGerman = getTextContentGerman("solarDataLossPercentageDescription");
+  String solarDataLossPercentageDescriptionEnglish = getTextContentEnglish("solarDataLossPercentageDescription");
+
+  String solarDataAngleGerman = getTextContentGerman("solarDataAngle");
+  String solarDataAngleEnglish = getTextContentEnglish("solarDataAngle");
+
+  String solarDataAngleDescriptionGerman = getTextContentGerman("solarDataAngleDescription");
+  String solarDataAngleDescriptionEnglish = getTextContentEnglish("solarDataAngleDescription");
+
+  String solarDataAspectGerman = getTextContentGerman("solarDataAspect");
+  String solarDataAspectEnglish = getTextContentEnglish("solarDataAspect");
+
+  String solarDataAspectDescriptionGerman = getTextContentGerman("solarDataAspectDescription");
+  String solarDataAspectDescriptionEnglish = getTextContentEnglish("solarDataAspectDescription");
+
+  String solarDataLifetimeYearsGerman = getTextContentGerman("solarDataLifetimeYears");
+  String solarDataLifetimeYearsEnglish = getTextContentEnglish("solarDataLifetimeYears");
+
+  String solarDataLifetimeYearsDescriptionGerman = getTextContentGerman("solarDataLifetimeYearsDescription");
+  String solarDataLifetimeYearsDescriptionEnglish = getTextContentEnglish("solarDataLifetimeYearsDescription");
+
+  String solarDataUseHorizonGerman = getTextContentGerman("solarDataUseHorizon");
+  String solarDataUseHorizonEnglish = getTextContentEnglish("solarDataUseHorizon");
+
+  String solarDataUseHorizonDescriptionGerman = getTextContentGerman("solarDataUseHorizonDescription");
+  String solarDataUseHorizonDescriptionEnglish = getTextContentEnglish("solarDataUseHorizonDescription");
+
+  String solarDataOptimalInclinationGerman = getTextContentGerman("solarDataOptimalInclination");
+  String solarDataOptimalInclinationEnglish = getTextContentEnglish("solarDataOptimalInclination");
+
+  String solarDataOptimalInclinationDescriptionGerman = getTextContentGerman("solarDataOptimalInclinationDescription");
+  String solarDataOptimalInclinationDescriptionEnglish = getTextContentEnglish("solarDataOptimalInclinationDescription");
+
+  String solarDataOptimalAnglesGerman = getTextContentGerman("solarDataOptimalAngles");
+  String solarDataOptimalAnglesEnglish = getTextContentEnglish("solarDataOptimalAngles");
+
+  String solarDataOptimalAnglesDescriptionGerman = getTextContentGerman("solarDataOptimalAnglesDescription");
+  String solarDataOptimalAnglesDescriptionEnglish = getTextContentEnglish("solarDataOptimalAnglesDescription");
+
+  String solarDataInclinedOptimumGerman = getTextContentGerman("solarDataInclinedOptimum");
+  String solarDataInclinedOptimumEnglish = getTextContentEnglish("solarDataInclinedOptimum");
+
+  String solarDataInclinedOptimumDescriptionGerman = getTextContentGerman("solarDataInclinedOptimumDescription");
+  String solarDataInclinedOptimumDescriptionEnglish = getTextContentEnglish("solarDataInclinedOptimumDescription");
+
+  String solarDataInclinedAxisAngleGerman = getTextContentGerman("solarDataInclinedAxisAngle");
+  String solarDataInclinedAxisAngleEnglish = getTextContentEnglish("solarDataInclinedAxisAngle");
+
+  String solarDataInclinedAxisAngleDescriptionGerman = getTextContentGerman("solarDataInclinedAxisAngleDescription");
+  String solarDataInclinedAxisAngleDescriptionEnglish = getTextContentEnglish("solarDataInclinedAxisAngleDescription");
+
+  String solarDataVerticalOptimumGerman = getTextContentGerman("solarDataVerticalOptimum");
+  String solarDataVerticalOptimumEnglish = getTextContentEnglish("solarDataVerticalOptimum");
+
+  String solarDataVerticalOptimumDescriptionGerman = getTextContentGerman("solarDataVerticalOptimumDescription");
+  String solarDataVerticalOptimumDescriptionEnglish = getTextContentEnglish("solarDataVerticalOptimumDescription");
+
+  String solarDataVerticalAxisAngleGerman = getTextContentGerman("solarDataVerticalAxisAngle");
+  String solarDataVerticalAxisAngleEnglish = getTextContentEnglish("solarDataVerticalAxisAngle");
+
+  String solarDataVerticalAxisAngleDescriptionGerman = getTextContentGerman("solarDataVerticalAxisAngleDescription");
+  String solarDataVerticalAxisAngleDescriptionEnglish = getTextContentEnglish("solarDataVerticalAxisAngleDescription");
+
+  String solarDataBatterySizeGerman = getTextContentGerman("solarDataBatterySize");
+  String solarDataBatterySizeEnglish = getTextContentEnglish("solarDataBatterySize");
+
+  String solarDataBatterySizeDescriptionGerman = getTextContentGerman("solarDataBatterySizeDescription");
+  String solarDataBatterySizeDescriptionEnglish = getTextContentEnglish("solarDataBatterySizeDescription");
+
+  String solarDataBatteryCutoffGerman = getTextContentGerman("solarDataBatteryCutoff");
+  String solarDataBatteryCutoffEnglish = getTextContentEnglish("solarDataBatteryCutoff");
+
+  String solarDataBatteryCutoffDescriptionGerman = getTextContentGerman("solarDataBatteryCutoffDescription");
+  String solarDataBatteryCutoffDescriptionEnglish = getTextContentEnglish("solarDataBatteryCutoffDescription");
+
+  String solarDataRadiationDatabaseGerman = getTextContentGerman("solarDataRadiationDatabase");
+  String solarDataRadiationDatabaseEnglish = getTextContentEnglish("solarDataRadiationDatabase");
+
+  String solarDataRadiationDatabaseDescriptionGerman = getTextContentGerman("solarDataRadiationDatabaseDescription");
+  String solarDataRadiationDatabaseDescriptionEnglish = getTextContentEnglish("solarDataRadiationDatabaseDescription");
+
+  String solarDataConsumptionPerDayGerman = getTextContentGerman("solarDataConsumptionPerDay");
+  String solarDataConsumptionPerDayEnglish = getTextContentEnglish("solarDataConsumptionPerDay");
+
+  String solarDataConsumptionPerDayDescriptionGerman = getTextContentGerman("solarDataConsumptionPerDayDescription");
+  String solarDataConsumptionPerDayDescriptionEnglish = getTextContentEnglish("solarDataConsumptionPerDayDescription");
+
+
+
   @override
   void initState() {
     super.initState();
+    _loadLanguage();
+  }
+
+  Future<void> _loadLanguage() async {
+    final selectedLanguage = await LanguageService.getLanguage();
+    setState(() {
+      _selectedLanguage = selectedLanguage;
+    });
   }
 
   Future<void> _handleLogout(BuildContext context) async {
@@ -165,7 +413,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Solar Data',  style: GoogleFonts.lato(fontSize: 20, letterSpacing: 1.0, color: Colors.black)),
+        title: Text(_selectedLanguage == 'German' ? solarDataTitleGerman : solarDataTitleEnglish,  style: GoogleFonts.lato(fontSize: 20, letterSpacing: 1.0, color: Colors.black)),
         centerTitle: true,
         backgroundColor: Colors.yellow,
         leading: IconButton(
@@ -245,66 +493,79 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
 
   Future<void> generateAndPreviewPdf(Map<String, dynamic> solarData, ScaffoldMessengerState context) async {
     final pdf = pw.Document();
+    String maxBudget = _selectedLanguage == 'German' ? solarDataMaxBudgetGerman : solarDataMaxBudgetEnglish;
+    String technology = _selectedLanguage == 'German' ? solarDataTechnologyGerman : solarDataTechnologyEnglish;
+    String peakPower = _selectedLanguage == 'German' ? solarDataPeakPowerGerman : solarDataPeakPowerEnglish;
+    String systemLoss = _selectedLanguage == 'German' ? solarDataSystemLossGerman : solarDataSystemLossEnglish;
+    String database = _selectedLanguage == 'German' ? solarDataDatabaseGerman : solarDataDatabaseEnglish;
+    String maxLifetime = _selectedLanguage == 'German' ? solarDataMaxLifetimeGerman : solarDataMaxLifetimeEnglish;
+    String elevation = _selectedLanguage == 'German' ? solarDataElevationGerman : solarDataElevationEnglish;
+
+    String type = _selectedLanguage == 'German' ? solarDataTypeGerman : solarDataTypeEnglish;
+    String slope = _selectedLanguage == 'German' ? solarDataSlopeGerman : solarDataSlopeEnglish;
+    String slopeIsOptimal = _selectedLanguage == 'German' ? solarDataSlopeOptimalGerman : solarDataSlopeOptimalEnglish;
+    String orientationAngle = _selectedLanguage == 'German' ? solarDataOrientationAngleGerman : solarDataOrientationAngleEnglish;
+    String orientationAngleIsOptimal = _selectedLanguage == 'German' ? solarDataOrientationAngleOptimalGerman : solarDataOrientationAngleEnglish;
 
     pdf.addPage(
       pw.MultiPage(
         header: (context) => pw.Header(
           level: 0,
-          child: pw.Text('Solar Data Forecast', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+          child: pw.Text(_selectedLanguage == 'German' ? solarDataForecastGerman : solarDataForecastEnglish, style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
         ),
         build: (context) => [
-          pw.Text('Overview', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+          pw.Text(_selectedLanguage == 'German' ? solarDataOverviewGerman : solarDataOverviewEnglish, style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
           pw.Padding(
             padding: pw.EdgeInsets.only(top: 10),
-            child: pw.Text('Maximum Budget: ${solarData['Maximum Budget (Euros)']} Euros'
-                '\nMaximum Lifetime: ${solarData['Maximum Lifetime (Years)']} Years'
-                '\nTechnology: ${solarData['Technology']}'
-                '\nPeak Power: ${solarData['Peak Power (kW)']} kW'
-                '\nSystem Loss: ${solarData['System Loss (%)']} %'
-                '\nDatabase: ${solarData['Radiation Database']}'),
+            child: pw.Text('$maxBudget ${solarData['Maximum Budget (Euros)']} Euros'
+                '\n$maxLifetime ${solarData['Maximum Lifetime (Years)']} Years'
+                '\n$technology ${solarData['Technology']}'
+                '\n$peakPower ${solarData['Peak Power (kW)']} kW'
+                '\n$systemLoss ${solarData['System Loss (%)']} %'
+                '\n$database ${solarData['Radiation Database']}'),
           ),
           pw.SizedBox(height: 20),
-          pw.Text('Location Data', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+          pw.Text(_selectedLanguage == 'German' ? solarDataLocationDataGerman : solarDataLocationDataEnglish, style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
           pw.Padding(
             padding: pw.EdgeInsets.only(top: 10),
             child: pw.Text('Latitude: ${solarData['Location Data']['Latitude']},'
                 '\nLongitude: ${solarData['Location Data']['Longitude']},'
-                '\nElevation: ${solarData['Location Data']['Elevation']}'),
+                '\n$elevation ${solarData['Location Data']['Elevation']}'),
           ),
           pw.SizedBox(height: 20),
-          pw.Text('Mounting System', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+          pw.Text(_selectedLanguage == 'German' ? solarDataMountingSystemGerman : solarDataMountingSystemEnglish, style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
           if (solarData['Mounting System'].containsKey('Type'))
             pw.Padding(
               padding: pw.EdgeInsets.only(top: 10),
-              child: pw.Text('Type: ${solarData['Mounting System']['Type']}'
-                  '\nSlope: ${solarData['Mounting System']['Slope (°)']} °'
-                  '\nSlope is Optimal: ${solarData['Mounting System']['Slope is Optimal']}'
-                  '\nOrientation Angle: ${solarData['Mounting System']['Orientation Angle (°)']} °'
-                  '\nOrientation Angle is Optimal: ${solarData['Mounting System']['Orientation Angle is Optimal']}'),
+              child: pw.Text('$type ${solarData['Mounting System']['Type']}'
+                  '\n$slope ${solarData['Mounting System']['Slope (°)']} °'
+                  '\n$slopeIsOptimal ${solarData['Mounting System']['Slope is Optimal']}'
+                  '\n$orientationAngle ${solarData['Mounting System']['Orientation Angle (°)']} °'
+                  '\n$orientationAngleIsOptimal ${solarData['Mounting System']['Orientation Angle is Optimal']}'),
             ),
           if (solarData['Mounting System'].containsKey('Inclined Axis'))
             pw.Padding(
               padding: pw.EdgeInsets.only(top: 10),
-              child: pw.Text('Slope: ${solarData['Mounting System']['Inclined Axis']['Slope (°)']} °'
-                  '\nSlope is Optimal: ${solarData['Mounting System']['Inclined Axis']['Slope is Optimal']}'
-                  '\nOrientation Angle: ${solarData['Mounting System']['Inclined Axis']['Orientation Angle (°)']} °'
-                  '\nOrientation Angle is Optimal: ${solarData['Mounting System']['Inclined Axis']['Orientation Angle is Optimal']}'),
+              child: pw.Text('$slope ${solarData['Mounting System']['Inclined Axis']['Slope (°)']} °'
+                  '\n$slopeIsOptimal ${solarData['Mounting System']['Inclined Axis']['Slope is Optimal']}'
+                  '\n$orientationAngle ${solarData['Mounting System']['Inclined Axis']['Orientation Angle (°)']} °'
+                  '\n$orientationAngleIsOptimal ${solarData['Mounting System']['Inclined Axis']['Orientation Angle is Optimal']}'),
             ),
           if (solarData['Mounting System'].containsKey('Vertical Axis'))
             pw.Padding(
               padding: pw.EdgeInsets.only(top: 10),
-              child: pw.Text('Slope: ${solarData['Mounting System']['Vertical Axis']['Slope (°)']} °'
-                  '\nSlope is Optimal: ${solarData['Mounting System']['Vertical Axis']['Slope is Optimal']}'
-                  '\nOrientation Angle: ${solarData['Mounting System']['Vertical Axis']['Orientation Angle (°)']} °'
-                  '\nOrientation Angle is Optimal: ${solarData['Mounting System']['Vertical Axis']['Orientation Angle is Optimal']}'),
+              child: pw.Text('$slope ${solarData['Mounting System']['Vertical Axis']['Slope (°)']} °'
+                  '\n$slopeIsOptimal ${solarData['Mounting System']['Vertical Axis']['Slope is Optimal']}'
+                  '\n$orientationAngle ${solarData['Mounting System']['Vertical Axis']['Orientation Angle (°)']} °'
+                  '\n$orientationAngleIsOptimal ${solarData['Mounting System']['Vertical Axis']['Orientation Angle is Optimal']}'),
             ),
           if (solarData['Mounting System'].containsKey('Two Axis'))
             pw.Padding(
               padding: pw.EdgeInsets.only(top: 10),
-              child: pw.Text('Slope: ${solarData['Mounting System']['Two Axis']['Slope (°)']} °'
-                  '\nSlope is Optimal: ${solarData['Mounting System']['Two Axis']['Slope is Optimal']}'
-                  '\nOrientation Angle: ${solarData['Mounting System']['Two Axis']['Orientation Angle (°)']} °'
-                  '\nOrientation Angle is Optimal: ${solarData['Mounting System']['Two Axis']['Orientation Angle is Optimal']}'),
+              child: pw.Text('$slope ${solarData['Mounting System']['Two Axis']['Slope (°)']} °'
+                  '\n$slopeIsOptimal ${solarData['Mounting System']['Two Axis']['Slope is Optimal']}'
+                  '\n$orientationAngle ${solarData['Mounting System']['Two Axis']['Orientation Angle (°)']} °'
+                  '\n$orientationAngleIsOptimal ${solarData['Mounting System']['Two Axis']['Orientation Angle is Optimal']}'),
             ),
           pw.SizedBox(height: 20),
           _buildMonthlyDataTable(solarData),
@@ -346,40 +607,53 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
 
   Future<void> generateAndPreviewPdfOffGrid(Map<String, dynamic> solarData, ScaffoldMessengerState context) async {
     final pdf = pw.Document();
+    String maxBudget = _selectedLanguage == 'German' ? solarDataMaxBudgetGerman : solarDataMaxBudgetEnglish;
+    String batteryCapacity = _selectedLanguage == 'German' ? solarDataBatteryCapacityGerman : solarDataBatteryCapacityEnglish;
+    String peakPower = _selectedLanguage == 'German' ? solarDataPeakPowerGerman : solarDataPeakPowerEnglish;
+    String batteryCutoffLimit = _selectedLanguage == 'German' ? solarDataBatteryCutoffGerman : solarDataBatteryCutoffEnglish;
+    String database = _selectedLanguage == 'German' ? solarDataDatabaseGerman : solarDataDatabaseEnglish;
+    String dailyEnergyConsumption = _selectedLanguage == 'German' ? solarDataDailyEnergyConsumptionGerman : solarDataDailyEnergyConsumptionEnglish;
+    String elevation = _selectedLanguage == 'German' ? solarDataElevationGerman : solarDataElevationEnglish;
+
+    String slope = _selectedLanguage == 'German' ? solarDataSlopeGerman : solarDataSlopeEnglish;
+    String slopeIsOptimal = _selectedLanguage == 'German' ? solarDataSlopeOptimalGerman : solarDataSlopeOptimalEnglish;
+    String orientationAngle = _selectedLanguage == 'German' ? solarDataOrientationAngleGerman : solarDataOrientationAngleEnglish;
+    String orientationAngleIsOptimal = _selectedLanguage == 'German' ? solarDataOrientationAngleOptimalGerman : solarDataOrientationAngleEnglish;
+
 
     pdf.addPage(
       pw.MultiPage(
         header: (context) => pw.Header(
           level: 0,
-          child: pw.Text('Solar Data Forecast', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+          child: pw.Text(_selectedLanguage == 'German' ? solarDataForecastGerman : solarDataForecastEnglish, style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
         ),
         build: (context) => [
-          pw.Text('Overview', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+          pw.Text(_selectedLanguage == 'German' ? solarDataOverviewGerman : solarDataOverviewEnglish, style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
           pw.Padding(
             padding: pw.EdgeInsets.only(top: 10),
-            child: pw.Text('Maximum Budget: ${solarData['Maximum Budget (Euros)']} Euros'
-                '\nPeak Power: ${solarData['Peak Power (kW)']} kW'
-                '\nBattery Capacity: ${solarData['Battery Capacity (Wh)']} Wh'
-                '\nBattery Discharge Cutoff Limit: ${solarData['Battery Discharge Cutoff Limit (%)']} %'
-                '\nDaily Energy Consumption: ${solarData['Daily Energy Consumption (Wh)']} Wh'
-                '\nDatabase: ${solarData['Radiation Database']}'),
+            child: pw.Text('$maxBudget ${solarData['Maximum Budget (Euros)']} Euros'
+                '\n$peakPower ${solarData['Peak Power (kW)']} kW'
+                '\n$batteryCapacity ${solarData['Battery Capacity (Wh)']} Wh'
+                '\n$batteryCutoffLimit ${solarData['Battery Discharge Cutoff Limit (%)']} %'
+                '\n$dailyEnergyConsumption ${solarData['Daily Energy Consumption (Wh)']} Wh'
+                '\n$database ${solarData['Radiation Database']}'),
           ),
           pw.SizedBox(height: 20),
-          pw.Text('Location Data', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+          pw.Text(_selectedLanguage == 'German' ? solarDataLocationDataGerman : solarDataLocationDataEnglish, style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
           pw.Padding(
             padding: pw.EdgeInsets.only(top: 10),
             child: pw.Text('Latitude: ${solarData['Location Data']['Latitude']},'
                 '\nLongitude: ${solarData['Location Data']['Longitude']},'
-                '\nElevation: ${solarData['Location Data']['Elevation']}'),
+                '\n$elevation ${solarData['Location Data']['Elevation']}'),
           ),
           pw.SizedBox(height: 20),
-          pw.Text('Mounting System', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+          pw.Text(_selectedLanguage == 'German' ? solarDataMountingSystemGerman : solarDataLocationDataEnglish, style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
           pw.Padding(
             padding: pw.EdgeInsets.only(top: 10),
-            child: pw.Text('Slope: ${solarData['Mounting System']['Slope (°)']} °'
-                '\nSlope is Optimal: ${solarData['Mounting System']['Slope is Optimal']}'
-                '\nOrientation Angle: ${solarData['Mounting System']['Orientation Angle (°)']} °'
-                '\nOrientation Angle is Optimal: ${solarData['Mounting System']['Orientation Angle is Optimal']}'),
+            child: pw.Text('$slope ${solarData['Mounting System']['Slope (°)']} °'
+                '\n$slopeIsOptimal ${solarData['Mounting System']['Slope is Optimal']}'
+                '\n$orientationAngle ${solarData['Mounting System']['Orientation Angle (°)']} °'
+                '\n$orientationAngleIsOptimal ${solarData['Mounting System']['Orientation Angle is Optimal']}'),
           ),
           pw.SizedBox(height: 20),
           _buildMonthlyDataTableOffGrid(solarData),
@@ -421,8 +695,15 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
   }
 
   pw.Widget _buildMonthlyDataTable(Map<String, dynamic> solarData) {
+    String month = _selectedLanguage == 'German' ? solarDataMonthGerman : solarDataMonthEnglish;
+    String dailyEnergy = _selectedLanguage == 'German' ? solarDataDailyEnergyGerman : solarDataDailyEnergyEnglish;
+    String monthlyEnergy = _selectedLanguage == 'German' ? solarDataMonthlyEnergyGerman : solarDataMonthlyEnergyEnglish;
+    String dailyIrradiance = _selectedLanguage == 'German' ? solarDataDailyIrradianceGerman : solarDataDailyIrradianceEnglish;
+    String monthlyIrradiance = _selectedLanguage == 'German' ? solarDataMonthlyIrradianceGerman : solarDataMonthlyIrradianceEnglish;
+    String sunshineDuration = _selectedLanguage == 'German' ? solarDataSunshineDurationGerman : solarDataSunshineDurationEnglish;
+
     return pw.TableHelper.fromTextArray(
-      headers: ['Month', 'Daily Energy', 'Monthly Energy', 'Daily Irradiance', 'Monthly Irradiance', 'Sunshine Duration'],
+      headers: [month, dailyEnergy, monthlyEnergy, dailyIrradiance, monthlyIrradiance, sunshineDuration],
       data: List<List<String>>.generate(12, (index) {
         final monthData = solarData['Month ${index + 1}'] ?? {};
         return [
@@ -438,8 +719,14 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
   }
 
   pw.Widget _buildMonthlyDataTableOffGrid(Map<String, dynamic> solarData) {
+    String month = _selectedLanguage == 'German' ? solarDataMonthGerman : solarDataMonthEnglish;
+    String dailyEnergy = _selectedLanguage == 'German' ? solarDataDailyEnergyGerman : solarDataDailyEnergyEnglish;
+    String energyLostPerDay = _selectedLanguage == 'German' ? solarDataEnergyLostPerDayGerman : solarDataEnergyLostPerDayEnglish;
+    String fillFactor = _selectedLanguage == 'German' ? solarDataFillFactorGerman : solarDataFillFactorEnglish;
+    String factorOfEfficiency = _selectedLanguage == 'German' ? solarDataFactorOfEfficiencyGerman : solarDataFactorOfEfficiencyEnglish;
+
     return pw.TableHelper.fromTextArray(
-      headers: ['Month', 'Daily Energy', 'Energy lost Per Day', 'Fill Factor', 'Factor Of Efficiency'],
+      headers: [month, dailyEnergy, energyLostPerDay, fillFactor, factorOfEfficiency],
       data: List<List<String>>.generate(12, (index) {
         final monthData = solarData['Month ${index + 1}'] ?? {};
         return [
@@ -454,20 +741,22 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
   }
 
   Future<bool> fetchLocation(BuildContext context) async {
+    String errorMessagePermissionLocationError = _selectedLanguage == 'German' ? solarDataLocationDataPermissionErrorGerman : solarDataLocationDataPermissionErrorEnglish;
+    String errorMessagePermanentLocationError = _selectedLanguage == 'German' ? solarDataPermanentLocationDataPermissionErrorGerman : solarDataPermanentLocationDataPermissionErrorEnglish;
+    String errorMessageFetchingLocationError = _selectedLanguage == 'German' ? solarDataErrorFetchingLocationGerman : solarDataErrorFetchingLocationEnglish;
     final scaffoldContext = ScaffoldMessenger.of(context);
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
         // Handle permission denied scenario
-        helper.showSnackBar('Location data permission error.\n'
-            'Please enable location permissions for this App in your phone settings', "Error", scaffoldContext);
+        helper.showSnackBar(errorMessagePermissionLocationError, "Error", scaffoldContext);
         return false;
       }
     }
 
     if (permission == LocationPermission.deniedForever) {
-      helper.showSnackBar('Permanent Location data permission error', "Error", scaffoldContext);
+      helper.showSnackBar(errorMessagePermanentLocationError, "Error", scaffoldContext);
       return false;
     }
 
@@ -484,7 +773,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
         queryParamsOffGrid['lon'] = position.longitude.toString();
       }
     } catch (e) {
-      helper.showSnackBar('Error fetching location: $e', "Error", scaffoldContext);
+      helper.showSnackBar('$errorMessageFetchingLocationError $e', "Error", scaffoldContext);
       return false;
     }
     return true;
@@ -963,7 +1252,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
   List<Widget> buildGridConnectedFields() {
     return [
       buildTextFormFieldWithCard(
-        'Maximum Budget (Euros)',
+        _selectedLanguage == 'German' ? solarDataMaxBudgetEurosGerman : solarDataMaxBudgetEurosEnglish,
         '0',
             (String newValue) {
           setState(() {
@@ -971,13 +1260,11 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
           });
         },
         null,
-        'The Maximum Budget parameter allows users to input the total cost they anticipate or plan to spend on installing the entire PV system.\n\n'
-            'This cost encompasses all the expenses associated with acquiring and installing the solar panels,\n '
-            'inverters, mounting hardware, wiring, labor, permits, and any additional costs required for the installation of the PV system.\n\n',
+        _selectedLanguage == 'German' ? solarDataMaxBudgetDescriptionGerman : solarDataMaxBudgetDescriptionEnglish,
       ),
       const SizedBox(height: 20),
       buildItemFormFieldWithCard(
-        'Mountingplace',
+        _selectedLanguage == 'German' ? solarDataMountingPlaceGerman : solarDataMountingPlaceEnglish,
         [
           'free',
           'building',
@@ -989,15 +1276,13 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
             queryParams['mountingplace'] = newValue;
           });
         },
-        'Type of mounting of the PV modules. Choices are:\n\n'
-            '"free" for free-standing\n'
-            '"building" for building-integrated\n\n',
+        _selectedLanguage == 'German' ? solarDataTypeDescriptionGerman : solarDataTypeDescriptionEnglish,
       ),
       const SizedBox(height: 20),
       Column(
         children: [
           buildSwitchWithCard(
-            'Fixed',
+            _selectedLanguage == 'German' ? solarDataFixedGerman : solarDataFixedEnglish,
             fixed,
                 (bool newValue) {
               setState(() {
@@ -1006,11 +1291,11 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
                 calcButtonEnabled = isAtLeastOneSwitchEnabled();
               });
             },
-            'Calculate a fixed mounted system.\n\n',
+            _selectedLanguage == 'German' ? solarDataFixedDescriptionGerman : solarDataFixedDescriptionEnglish,
           ),
           const SizedBox(height: 10),
           buildSwitchWithCard(
-            'Inclined Axis',
+            _selectedLanguage == 'German' ? solarDataInclinedAxisGerman : solarDataInclinedAxisEnglish,
             inclined_axis,
                 (bool newValue) {
               setState(() {
@@ -1019,11 +1304,11 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
                 calcButtonEnabled = isAtLeastOneSwitchEnabled();
               });
             },
-            'Calculate a single inclined axis system.\n\n',
+            _selectedLanguage == 'German' ? solarDataInclinedAxisDescriptionGerman : solarDataInclinedAxisDescriptionEnglish,
           ),
           const SizedBox(height: 10),
           buildSwitchWithCard(
-            'Vertical Axis',
+            _selectedLanguage == 'German' ? solarDataVerticalAxisGerman : solarDataVerticalAxisEnglish,
             vertical_axis,
                 (bool newValue) {
               setState(() {
@@ -1032,11 +1317,11 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
                 calcButtonEnabled = isAtLeastOneSwitchEnabled();
               });
             },
-            'Calculate a single vertical axis system.\n\n',
+            _selectedLanguage == 'German' ? solarDataVerticalAxisDescriptionGerman : solarDataVerticalAxisDescriptionEnglish,
           ),
           const SizedBox(height: 10),
           buildSwitchWithCard(
-            'Two Axis',
+            _selectedLanguage == 'German' ? solarDataTwoAxisGerman : solarDataTwoAxisEnglish,
             twoaxis,
                 (bool newValue) {
               setState(() {
@@ -1045,13 +1330,13 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
                 calcButtonEnabled = isAtLeastOneSwitchEnabled();
               });
             },
-            'Calculate a two axis tracking system.\n\n',
+            _selectedLanguage == 'German' ? solarDataTwoAxisDescriptionGerman : solarDataTwoAxisDescriptionEnglish,
           ),
         ],
       ),
       const SizedBox(height: 10),
       buildItemFormFieldWithCard(
-          'Pvtechchoice',
+          _selectedLanguage == 'German' ? solarDataPvTechChoiceGerman : solarDataPvTechChoiceEnglish,
           [
             'crystSi',
             'CIS',
@@ -1065,12 +1350,11 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
               queryParams['pvtechchoice'] = newValue;
             });
           },
-          'Solar Panel technology in use.\n\n'
-              'PV technology. Choices are: "crystSi", "CIS", "CdTe" and "Unknown".\n\n'
+          _selectedLanguage == 'German' ? solarDataPvTechDescriptionGerman : solarDataPvTechDescriptionEnglish
       ),
       const SizedBox(height: 20),
       buildTextFormFieldWithCard(
-          'Peak Power (kW)',
+          _selectedLanguage == 'German' ? solarDataPeakPowerKwGerman : solarDataPeakPowerKwEnglish,
           '5',
               (String newValue) {
             setState(() {
@@ -1079,12 +1363,11 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
             });
           },
           null,
-          'Enter the peak power of the solar system in kilowatts.\n\n '
-              'This is the maximum power that can be generated by the system under ideal conditions.\n\n'
+          _selectedLanguage == 'German' ? solarDataPeakPowerKwDescriptionGerman : solarDataPeakPowerKwDescriptionEnglish
       ),
       const SizedBox(height: 20),
       buildTextFormFieldWithCard(
-          'Loss (%)',
+          _selectedLanguage == 'German' ? solarDataLossPercentageGerman : solarDataLossPercentageEnglish,
           '15',
               (String newValue) {
             int? value = int.tryParse(newValue);
@@ -1107,12 +1390,11 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
             }
           },
           null,
-          'Enter the percentage of system loss.\n\n'
-              'This accounts for various losses in the system, including efficiency losses and shading.\n\n'
+          _selectedLanguage == 'German' ? solarDataLossPercentageDescriptionGerman : solarDataLossPercentageDescriptionEnglish
       ),
       const SizedBox(height: 20),
       buildItemFormFieldWithCard(
-          'Raddatabase',
+          _selectedLanguage == 'German' ? solarDataRadiationDatabaseGerman : solarDataRadiationDatabaseEnglish,
           [
             'PVGIS-SARAH',
             'PVGIS-NSRDB',
@@ -1125,12 +1407,12 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
               queryParams['raddatabase'] = newValue;
             });
           },
-          'The default DBs are PVGIS-SARAH, PVGIS-NSRDB and PVGIS-ERA5 based on the chosen location.\n\n'
+        _selectedLanguage == 'German' ? solarDataRadiationDatabaseDescriptionGerman : solarDataRadiationDatabaseDescriptionEnglish
       ),
       const SizedBox(height: 20),
       if (fixed || twoaxis) ...[
         buildTextFormFieldWithCard(
-            'Angle (°)',
+            _selectedLanguage == 'German' ? solarDataAngleGerman : solarDataAngleEnglish,
             '0',
                 (String newValue) {
               int? value = int.tryParse(newValue);
@@ -1153,13 +1435,11 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
               }
             },
             null,
-            'Enter the angle of inclination for the solar panels.\n\n'
-                'This is the tilt angle from the horizontal plane at which the solar panels are installed.\n\n'
-                '0=south, 90=west, -90=east.\n\n'
+            _selectedLanguage == 'German' ? solarDataAngleDescriptionGerman : solarDataAngleDescriptionEnglish
         ),
         const SizedBox(height: 20),
         buildTextFormFieldWithCard(
-            'Aspect (°)',
+            _selectedLanguage == 'German' ? solarDataAspectGerman : solarDataAspectEnglish,
             '0',
                 (String newValue) {
               int? value = int.tryParse(newValue);
@@ -1181,16 +1461,12 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
               }
             },
             null,
-            'Enter the aspect of the solar panels.\n\n'
-                'This refers to the orientation of the panels with respect to the horizon.\n'
-                'An "aspect" value of 0 implies that the panels are oriented towards the south.\n\n'
-                'An aspect value of 90 represents a west-facing orientation.\n\n'
-                'An aspect value of -90 implies an east-facing orientation..\n\n'
+            _selectedLanguage == 'German' ? solarDataAspectDescriptionGerman : solarDataAspectDescriptionEnglish
         ),
         const SizedBox(height: 20),
       ],
       buildTextFormFieldWithCard(
-          'Lifetime (Years)',
+          _selectedLanguage == 'German' ? solarDataLifetimeYearsGerman : solarDataLifetimeYearsEnglish,
           '25',
               (String newValue) {
             int? value = int.tryParse(newValue);
@@ -1213,11 +1489,11 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
             }
           },
           null,
-          'Expected lifetime of the PV system in years.\n\n'
+          _selectedLanguage == 'German' ? solarDataLifetimeYearsDescriptionGerman : solarDataLifetimeYearsDescriptionEnglish
       ),
       const SizedBox(height: 20),
       buildSwitchWithCard(
-        'Use Horizon',
+        _selectedLanguage == 'German' ? solarDataUseHorizonGerman : solarDataUseHorizonEnglish,
         useHorizon,
             (bool newValue) {
           setState(() {
@@ -1225,12 +1501,12 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
             queryParams['usehorizon'] = newValue ? '1' : '0';
           });
         },
-        'Calculate taking into account shadows from high horizon.\n\n',
+        _selectedLanguage == 'German' ? solarDataUseHorizonDescriptionGerman : solarDataUseHorizonDescriptionEnglish,
       ),
       const SizedBox(height: 20),
       if (fixed || twoaxis) ...[
         buildSwitchWithCard(
-          'Optimal Inclination',
+          _selectedLanguage == 'German' ? solarDataOptimalInclinationGerman : solarDataOptimalInclinationEnglish,
           optimalinclination,
               (bool newValue) {
             setState(() {
@@ -1238,12 +1514,11 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
               queryParams['optimalinclination'] = newValue ? '1' : '0';
             });
           },
-          'Calculate the optimum inclination angle.\n\n'
-              'For the fixed PV system, if this parameter is enabled, the value defined for the "Angle" parameter is ignored',
+          _selectedLanguage == 'German' ? solarDataOptimalInclinationDescriptionGerman : solarDataOptimalInclinationDescriptionEnglish,
         ),
         const SizedBox(height: 20),
         buildSwitchWithCard(
-            'Optimal Angles',
+            _selectedLanguage == 'German' ? solarDataOptimalAnglesGerman : solarDataOptimalAnglesEnglish,
             optimalangles,
                 (bool newValue) {
               setState(() {
@@ -1251,14 +1526,13 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
                 queryParams['optimalangles'] = newValue ? '1' : '0';
               });
             },
-            'Calculate the optimum inclination and orientation angles.\n\n'
-                'If this parameter is enabled, values defined for "Angle" and "Aspect" are ignored and therefore are not necessary'
+            _selectedLanguage == 'German' ? solarDataOptimalAnglesDescriptionGerman : solarDataOptimalAnglesDescriptionEnglish
         ),
         const SizedBox(height: 20),
       ],
       if (inclined_axis) ...[
         buildSwitchWithCard(
-            'Inclined Optimum',
+            _selectedLanguage == 'German' ? solarDataInclinedOptimumGerman : solarDataInclinedOptimumEnglish,
             inclined_optimum,
                 (bool newValue) {
               setState(() {
@@ -1266,11 +1540,11 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
                 queryParams['inclined_optimum'] = newValue ? '1' : '0';
               });
             },
-            'Calculate optimum angle for a single inclined axis system.\n\n'
+            _selectedLanguage == 'German' ? solarDataInclinedOptimumDescriptionGerman : solarDataInclinedOptimumDescriptionEnglish
         ),
         const SizedBox(height: 20),
         buildTextFormFieldWithCard(
-            'Inclined Axis Angle (°)',
+            _selectedLanguage == 'German' ? solarDataInclinedAxisAngleGerman : solarDataInclinedAxisAngleEnglish,
             '0',
                 (String newValue) {
               setState(() {
@@ -1278,14 +1552,13 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
               });
             },
             null,
-            'Inclination angle for a single inclined axis system.\n\n'
-                'Ignored if the optimum angle should be calculated.\n\n'
+            _selectedLanguage == 'German' ? solarDataInclinedAxisAngleDescriptionGerman : solarDataInclinedAxisAngleDescriptionEnglish
         ),
         const SizedBox(height: 20),
       ],
       if (vertical_axis) ...[
         buildSwitchWithCard(
-            'Vertical Optimum',
+            _selectedLanguage == 'German' ? solarDataVerticalOptimumGerman : solarDataVerticalOptimumEnglish,
             vertical_optimum,
                 (bool newValue) {
               setState(() {
@@ -1293,11 +1566,11 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
                 queryParams['vertical_optimum'] = newValue ? '1' : '0';
               });
             },
-            'Calculate optimum angle for a single vertical axis system.\n\n'
+            _selectedLanguage == 'German' ? solarDataVerticalOptimumDescriptionGerman : solarDataVerticalOptimumDescriptionEnglish
         ),
         const SizedBox(height: 20),
         buildTextFormFieldWithCard(
-            'Vertical Axis Angle (°)',
+            _selectedLanguage == 'German' ? solarDataVerticalAxisAngleGerman : solarDataVerticalAxisAngleEnglish,
             '0',
                 (String newValue) {
               setState(() {
@@ -1305,8 +1578,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
               });
             },
             null,
-            'Inclination angle for a single vertical axis system.\n\n'
-                'Ignored if the optimum angle should be calculated.\n\n'
+            _selectedLanguage == 'German' ? solarDataVerticalAxisAngleDescriptionGerman : solarDataVerticalAxisAngleDescriptionEnglish
         ),
         const SizedBox(height: 20),
       ],
@@ -1329,7 +1601,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
   List<Widget> buildOffGridFields() {
     return [
       buildTextFormFieldWithCard(
-        'Maximum Budget (Euros)',
+        _selectedLanguage == 'German' ? solarDataMaxBudgetEurosGerman : solarDataMaxBudgetEurosEnglish,
         '0',
             (String newValue) {
           setState(() {
@@ -1337,13 +1609,11 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
           });
         },
         null,
-        'The Maximum Budget parameter allows users to input the total cost they anticipate or plan to spend on installing the entire PV system.\n\n'
-            'This cost encompasses all the expenses associated with acquiring and installing the solar panels,\n '
-            'inverters, mounting hardware, wiring, labor, permits, and any additional costs required for the installation of the PV system.\n\n',
+        _selectedLanguage == 'German' ? solarDataMaxBudgetDescriptionGerman : solarDataMaxBudgetDescriptionEnglish,
       ),
       const SizedBox(height: 20),
       buildTextFormFieldWithCard(
-          'Peak Power (kW)',
+          _selectedLanguage == 'German' ? solarDataPeakPowerKwGerman : solarDataPeakPowerKwEnglish,
           '5',
               (String newValue) {
             setState(() {
@@ -1352,12 +1622,11 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
             });
           },
           null,
-          'Enter the peak power of the solar system in kilowatts.\n\n '
-              'This is the maximum power that can be generated by the system under ideal conditions.\n\n'
+          _selectedLanguage == 'German' ? solarDataPeakPowerKwDescriptionGerman : solarDataPeakPowerKwDescriptionEnglish
       ),
       const SizedBox(height: 20),
       buildTextFormFieldWithCard(
-          'Battery Size (Wh)',
+          _selectedLanguage == 'German' ? solarDataBatterySizeGerman : solarDataBatterySizeEnglish,
           '50',
               (String newValue) {
             int? value = int.tryParse(newValue);
@@ -1371,11 +1640,10 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
             });
           },
           null,
-          'This is the size, or energy capacity, of the battery used in the off-grid system, '
-              'measured in watt-hours (Wh).\n\n'
+          _selectedLanguage == 'German' ? solarDataBatterySizeDescriptionGerman : solarDataBatterySizeDescriptionEnglish
       ),
       buildTextFormFieldWithCard(
-          'Battery Cutoff (%)',
+          _selectedLanguage == 'German' ? solarDataBatteryCutoffGerman : solarDataBatteryCutoffEnglish,
           '50',
               (String newValue) {
             int? value = int.tryParse(newValue);
@@ -1398,12 +1666,11 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
             }
           },
           null,
-          'Batteries cutoff in %. '
-              'The cutoff is imposed so that the battery charge cannot go below a certain percentage of full charge..\n\n'
+          _selectedLanguage == 'German' ? solarDataBatteryCutoffDescriptionGerman : solarDataBatteryCutoffDescriptionEnglish
       ),
       const SizedBox(height: 20),
       buildItemFormFieldWithCard(
-          'Raddatabase',
+          _selectedLanguage == 'German' ? solarDataRadiationDatabaseGerman : solarDataRadiationDatabaseEnglish,
           [
             'PVGIS-SARAH',
             'PVGIS-NSRDB',
@@ -1417,14 +1684,11 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
               queryParamsOffGrid['raddatabase'] = newValue;
             });
           },
-          'Name of the radiation database. '
-              '"PVGIS-SARAH" for Europe, Africa and Asia or '
-              '"PVGIS-NSRDB" for the Americas between 60°N and 20°S, '
-              '"PVGIS-ERA5" and "PVGIS-COSMO" for Europe (including high-latitudes).\n\n'
+          _selectedLanguage == 'German' ? solarDataRadiationDatabaseDescriptionGerman : solarDataRadiationDatabaseDescriptionEnglish
       ),
       const SizedBox(height: 20),
       buildTextFormFieldWithCard(
-          'Angle (°)',
+          _selectedLanguage == 'German' ? solarDataAngleGerman : solarDataAngleEnglish,
           '0',
               (String newValue) {
             int? value = int.tryParse(newValue);
@@ -1447,13 +1711,11 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
             }
           },
           null,
-          'Enter the angle of inclination for the solar panels.\n\n'
-              'This is the tilt angle from the horizontal plane at which the solar panels are installed.\n\n'
-              '0=south, 90=west, -90=east.\n\n'
+          _selectedLanguage == 'German' ? solarDataAngleDescriptionGerman : solarDataAngleDescriptionEnglish
       ),
       const SizedBox(height: 20),
       buildTextFormFieldWithCard(
-          'Aspect (°)',
+          _selectedLanguage == 'German' ? solarDataAspectGerman : solarDataAspectEnglish,
           '0',
               (String newValue) {
             int? value = int.tryParse(newValue);
@@ -1475,15 +1737,11 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
             }
           },
           null,
-          'Enter the aspect of the solar panels.\n\n'
-              'This refers to the orientation of the panels with respect to the horizon.\n'
-              'An "aspect" value of 0 implies that the panels are oriented towards the south.\n\n'
-              'An aspect value of 90 represents a west-facing orientation.\n\n'
-              'An aspect value of -90 implies an east-facing orientation..\n\n'
+          _selectedLanguage == 'German' ? solarDataAspectDescriptionGerman : solarDataAspectDescriptionEnglish
       ),
       const SizedBox(height: 20),
       buildSwitchWithCard(
-        'Use Horizon',
+        _selectedLanguage == 'German' ? solarDataUseHorizonGerman : solarDataUseHorizonEnglish,
         useHorizon,
             (bool newValue) {
           setState(() {
@@ -1491,11 +1749,11 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
             queryParamsOffGrid['usehorizon'] = newValue ? '1' : '0';
           });
         },
-        'Calculate taking into account shadows from high horizon.\n\n',
+        _selectedLanguage == 'German' ? solarDataUseHorizonDescriptionGerman : solarDataUseHorizonDescriptionEnglish,
       ),
       const SizedBox(height: 20),
       buildTextFormFieldWithCard(
-          'Consumption Per Day (Wh)',
+          _selectedLanguage == 'German' ? solarDataConsumptionPerDayGerman: solarDataConsumptionPerDayEnglish,
           '200',
               (String newValue) {
             int? value = int.tryParse(newValue);
@@ -1509,7 +1767,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
             });
           },
           null,
-          'Energy consumption of all the electrical equipment connected to the system during a 24 hour period (Wh).\n\n'
+          _selectedLanguage == 'German' ? solarDataConsumptionPerDayDescriptionGerman: solarDataConsumptionPerDayDescriptionEnglish
       ),
       const SizedBox(height: 20),
       ElevatedButton(
