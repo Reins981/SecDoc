@@ -52,7 +52,7 @@ String getTextContentGerman(String textContentType) {
     "Damit legen Sie den Grundstein für eine maßgeschneiderte Solarmodulplanung, die auf die spezifischen Bedürfnisse Ihrer Kunden zugeschnitten ist.",
     "dashboardButtonText2": "Jetzt Dokumente hochladen",
     "dashboardTitle3": "Solar Insights",
-    "dashboardDescription3": "Leistungsprognosen erhalten",
+    "dashboardDescription3": "Leistungsprognose erhalten",
     "dashboardDetailedDescription3": "Erkunden Sie maßgeschneiderte Prognosen für die Leistung von Solarmodulen in verschiedenen Umgebungen, Konfigurationen und Bedingungen. "
     "Erhalten Sie detaillierte Einblicke, die informierte Entscheidungen über Solarinstallationen ermöglichen, indem Sie Effizienz, Energieerzeugung und andere wichtige Faktoren vorhersagen, die für die Optimierung von Solarprojekten entscheidend sind. "
     "Senden Sie uns Ihre Spezifikationen für personalisierte Prognosen!",
