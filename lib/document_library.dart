@@ -597,8 +597,10 @@ class CustomListWidget extends StatelessWidget {
                     prefix = language == 'German' ? "$documentLibraryPrefixFromGerman: " : "$documentLibraryPrefixFromEnglish: ";
                   } else if (userRole == 'client' && category == expectedCategory) {
                     prefix = "";
-                  } else if (userRole == 'client') {
+                  } else if (userRole == 'client' && category != expectedCategory) {
                     prefix = language == 'German' ? "$documentLibraryPrefixFromGerman: " : "$documentLibraryPrefixFromEnglish: ";
+                  } else if ((userRole == 'admin' || userRole == 'super_admin') && category != expectedCategory) {
+                    prefix = language == 'German' ? "$documentLibraryPrefixForGerman: " : "$documentLibraryPrefixForEnglish: ";
                   }
 
                   return ExpansionTile(

@@ -202,7 +202,7 @@ class _DetailedDashboardPageState extends State<DetailedDashboardPage> {
                                     isUploading = true;
                                   });
                                   final scaffoldContext = ScaffoldMessenger.of(context);
-                                  await widget.docOperations.uploadDocuments(documentId, null, scaffoldContext);
+                                  await widget.docOperations.uploadDocuments(documentId, null, null, scaffoldContext);
                                   if (mounted) {
                                     setState(() {
                                       isUploading = false; // This should be false after uploading

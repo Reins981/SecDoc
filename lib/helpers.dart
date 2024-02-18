@@ -753,7 +753,7 @@ class DocumentOperations {
     };
   }
 
-  Future<void> uploadDocuments(String? documentId, File? specificFile, ScaffoldMessengerState context) async {
+  Future<void> uploadDocuments(String? documentId, File? specificFile, String? category, ScaffoldMessengerState context) async {
     Helper _helper = Helper();
     _loadLanguage();
 
@@ -786,7 +786,7 @@ class DocumentOperations {
 
     try {
       Map<String, dynamic> userDetails = await _helper.getCurrentUserDetails();
-      String category = _selectedLanguage == 'German' ? documentLibraryCategoryCustomerClientGerman : documentLibraryCategoryCustomerClientEnglish;
+      category ??= _selectedLanguage == 'German' ? documentLibraryCategoryCustomerClientGerman : documentLibraryCategoryCustomerClientEnglish;
       int year = DateTime.now().year;
       String userDomain = userDetails['userDomain'].toLowerCase();
       String userName = userDetails['userName'];
@@ -835,7 +835,7 @@ class DocumentOperations {
                 _helper.showSnackBar(errorMessage, 'Error', context);
                 break;
               case TaskState.success:
-                Map<String, String> result = await _addDocument(ref, userDetails, documentName, category);
+                Map<String, String> result = await _addDocument(ref, userDetails, documentName, category!);
                 if (result['status'] == 'Error') {
                   _progressNotifierDict[documentId].value = 0.0;
                   String? errorMessage = result['message'];

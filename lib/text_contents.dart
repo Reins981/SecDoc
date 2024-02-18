@@ -3,7 +3,7 @@ String getTextContentGerman(String textContentType) {
 
   Map<String, String> textContents = {
     // Login
-    "welcomeText": "Willkommen",
+    "welcomeText": "Willkommen ",
     "continueText": "Weiter",
     "biometricsText": "Biometrische Daten aktivieren",
     "forgotPasswordText": "Passw. vergessen?",
@@ -84,7 +84,7 @@ String getTextContentGerman(String textContentType) {
     "documentLibraryPrefixFrom": "Von",
     "documentLibraryPrefixFor": "Für",
     "documentLibraryCategoryCustomerAdmin": "Kundendokumente",
-    "documentLibraryCategoryCustomerClient": "MeineDokumente",
+    "documentLibraryCategoryCustomerClient": "Meine Dokumente",
 
     // Helpers
     "helperUserNotSignedIn": "Benutzer ist nicht angemeldet!",
@@ -213,7 +213,7 @@ String getTextContentEnglish(String textContentType) {
 
   Map<String, String> textContents = {
     // Login
-    "welcomeText": "Welcome",
+    "welcomeText": "Welcome ",
     "continueText": "Continue",
     "biometricsText": "Enable Biometrics",
     "forgotPasswordText": "Forgot Password?",
@@ -295,8 +295,8 @@ String getTextContentEnglish(String textContentType) {
     "documentLibraryCategory": "Category",
     "documentLibraryPrefixFrom": "From",
     "documentLibraryPrefixFor": "For",
-    "documentLibraryCategoryCustomerAdmin": "CustomerDocs",
-    "documentLibraryCategoryCustomerClient": "MyDocs",
+    "documentLibraryCategoryCustomerAdmin": "Customer Docs",
+    "documentLibraryCategoryCustomerClient": "My Docs",
 
     // Helpers
     "helperUserNotSignedIn": "User is not signed in!",
