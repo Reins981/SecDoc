@@ -52,8 +52,6 @@ class Helper {
 
   Future<Map<String, String>> getSignedUrl(String documentPath, String token) async {
     const String serverUrl = 'YOUR_FLASK_SERVER_URL/get_signed_url';
-    Map<String, String> result = {};
-
     Map<String, dynamic> requestData = {'document_path': documentPath};
 
     final response = await http.post(

@@ -70,45 +70,47 @@ class _DashboardSectionState extends State<DashboardSection> with SingleTickerPr
   @override
   void initState() {
     super.initState();
-    _loadLanguage();
     _initializeUser();
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    dashboardItems = [
-      DashboardItem(
-        id: "1",
-        title: _selectedLanguage == 'German' ? dashboardTitle1German: dashboardTitle1English,
-        description: _selectedLanguage == 'German' ? dashboardDescription1German : dashboardDescription1English,
-        detailedDescription: _selectedLanguage == 'German' ? dashboardDetailedDescription1German : dashboardDetailedDescription1English,
-        detailedDescriptionAdmin: _selectedLanguage == 'German' ? dashboardDetailedDescriptionAdmin1German : dashboardDetailedDescriptionAdmin1English,
-        buttonText: _selectedLanguage == 'German' ? dashboardButtonText1German : dashboardButtonText1English,
-        icon: Icons.folder,
-        itemType: DashboardItemType.library
-      ),
-      DashboardItem(
-        id: "2",
-        title: _selectedLanguage == 'German' ? dashboardTitle2German: dashboardTitle2English,
-        description: _selectedLanguage == 'German' ? dashboardDescription2German : dashboardDescription2English,
-        detailedDescription: _selectedLanguage == 'German' ? dashboardDetailedDescription2German : dashboardDetailedDescription2English,
-        detailedDescriptionAdmin: _selectedLanguage == 'German' ? dashboardDetailedDescriptionAdmin2German : dashboardDetailedDescriptionAdmin2English,
-        buttonText: _selectedLanguage == 'German' ? dashboardButtonText2German : dashboardButtonText2English,
-        icon: Icons.cloud_upload,
-        itemType: DashboardItemType.upload
-      ),
-      DashboardItem(
-          id: "3",
-          title: _selectedLanguage == 'German' ? dashboardTitle3German: dashboardTitle3English,
-          description: _selectedLanguage == 'German' ? dashboardDescription3German : dashboardDescription3English,
-          detailedDescription: _selectedLanguage == 'German' ? dashboardDetailedDescription3German : dashboardDetailedDescription3English,
-          detailedDescriptionAdmin: _selectedLanguage == 'German' ? dashboardDetailedDescriptionAdmin3German : dashboardDetailedDescriptionAdmin3English,
-          buttonText: _selectedLanguage == 'German' ? dashboardButtonText3German : dashboardButtonText3English,
-          icon: Icons.code,
-          itemType: DashboardItemType.ai
-      )
-      // Add more news items as needed
-    ];
+    _loadLanguage().then((_) {
+      setState(() {
+        dashboardItems = [
+          DashboardItem(
+            id: "1",
+            title: _selectedLanguage == 'German' ? dashboardTitle1German: dashboardTitle1English,
+            description: _selectedLanguage == 'German' ? dashboardDescription1German : dashboardDescription1English,
+            detailedDescription: _selectedLanguage == 'German' ? dashboardDetailedDescription1German : dashboardDetailedDescription1English,
+            detailedDescriptionAdmin: _selectedLanguage == 'German' ? dashboardDetailedDescriptionAdmin1German : dashboardDetailedDescriptionAdmin1English,
+            buttonText: _selectedLanguage == 'German' ? dashboardButtonText1German : dashboardButtonText1English,
+            icon: Icons.folder,
+            itemType: DashboardItemType.library
+          ),
+          DashboardItem(
+            id: "2",
+            title: _selectedLanguage == 'German' ? dashboardTitle2German: dashboardTitle2English,
+            description: _selectedLanguage == 'German' ? dashboardDescription2German : dashboardDescription2English,
+            detailedDescription: _selectedLanguage == 'German' ? dashboardDetailedDescription2German : dashboardDetailedDescription2English,
+            detailedDescriptionAdmin: _selectedLanguage == 'German' ? dashboardDetailedDescriptionAdmin2German : dashboardDetailedDescriptionAdmin2English,
+            buttonText: _selectedLanguage == 'German' ? dashboardButtonText2German : dashboardButtonText2English,
+            icon: Icons.cloud_upload,
+            itemType: DashboardItemType.upload
+          ),
+          DashboardItem(
+            id: "3",
+            title: _selectedLanguage == 'German' ? dashboardTitle3German: dashboardTitle3English,
+            description: _selectedLanguage == 'German' ? dashboardDescription3German : dashboardDescription3English,
+            detailedDescription: _selectedLanguage == 'German' ? dashboardDetailedDescription3German : dashboardDetailedDescription3English,
+            detailedDescriptionAdmin: _selectedLanguage == 'German' ? dashboardDetailedDescriptionAdmin3German : dashboardDetailedDescriptionAdmin3English,
+            buttonText: _selectedLanguage == 'German' ? dashboardButtonText3German : dashboardButtonText3English,
+            icon: Icons.code,
+            itemType: DashboardItemType.ai
+          )
+        ];
+      });
+    });
   }
 
   @override
