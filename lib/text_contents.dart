@@ -41,21 +41,21 @@ String getTextContentGerman(String textContentType) {
     "chatWindowFromText": "Von",
 
     // Dashboard Section
-    "dashboardTitle1": "Dokumentenbibliothek",
+    "dashboardTitle1": "Bibliothek",
     "dashboardDescription1": "Nahtloser Zugang",
     "dashboardDetailedDescription1": "Greifen Sie mühelos auf unsere umfassende Dokumentenbibliothek zu, laden Sie Dokumente herunter und navigieren Sie nahtlos durch sie. "
     "Damit können Sie Ihre wichtigen Dateien einfach und effizient verwalten.",
     "dashboardDetailedDescriptionAdmin1": "Greifen Sie mühelos auf unsere umfassende Dokumentenbibliothek zu, laden Sie Dokumente herunter und navigieren Sie nahtlos durch sie. "
     "Damit können Sie Ihre wichtigen Dateien einfach und effizient verwalten.",
     "dashboardButtonText1": "Jetzt auf Dokumente zugreifen",
-    "dashboardTitle2": "Dokumentenupload",
+    "dashboardTitle2": "Upload Dokumente",
     "dashboardDescription2": "Einfaches Hochladen",
     "dashboardDetailedDescription2": "Stärken Sie Ihre Planung für Solarmodule, indem Sie mühelos Ihre eigenen Dokumente in unsere Cloud hochladen. "
     "Damit legen Sie den Grundstein für eine maßgeschneiderte Solarmodulplanung, die auf Ihre spezifischen Bedürfnisse zugeschnitten ist.",
     "dashboardDetailedDescriptionAdmin2": "Stärken Sie die Planung für Solarmodule für Ihre Kunden, indem Sie Pläne und Angebote mühelos in unsere Cloud hochladen. "
     "Damit legen Sie den Grundstein für eine maßgeschneiderte Solarmodulplanung, die auf die spezifischen Bedürfnisse Ihrer Kunden zugeschnitten ist.",
     "dashboardButtonText2": "Jetzt Dokumente hochladen",
-    "dashboardTitle3": "Solar Insights",
+    "dashboardTitle3": "Solar Prognose",
     "dashboardDescription3": "Leistungsprognose erhalten",
     "dashboardDetailedDescription3": "Erkunden Sie maßgeschneiderte Prognosen für die Leistung von Solarmodulen in verschiedenen Umgebungen, Konfigurationen und Bedingungen. "
     "Erhalten Sie detaillierte Einblicke, die informierte Entscheidungen über Solarinstallationen ermöglichen, indem Sie Effizienz, Energieerzeugung und andere wichtige Faktoren vorhersagen, die für die Optimierung von Solarprojekten entscheidend sind. "
@@ -249,7 +249,7 @@ String getTextContentEnglish(String textContentType) {
     "chatWindowFromText": "From",
 
     // Dashboard Section
-    "dashboardTitle1": "Document Library",
+    "dashboardTitle1": "Library",
     "dashboardDescription1": "Seamless Access",
     "dashboardDetailedDescription1": "Effortlessly access, download, and seamlessly navigate through our comprehensive document library, "
         "\n ensuring easy and efficient management of all your important files.",

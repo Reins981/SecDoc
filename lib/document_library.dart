@@ -545,14 +545,14 @@ class CustomListWidget extends StatelessWidget {
     List<dynamic> results = [];
     String prefix = "";
 
-    if ((userRole == "admin" || userRole == "superAdmin") && currentCategory == expectedCategory) {
+    if ((userRole == "admin" || userRole == "super_admin") && currentCategory == expectedCategory) {
       currentCategory = documentLibraryCategoryCustomerAdminEnglish;
       prefix = language == 'German' ? "$documentLibraryPrefixFromGerman: " : "$documentLibraryPrefixFromEnglish: ";
     } else {
       // No language change
       if (userRole == "client" && immutableCategories.contains(currentCategory)) {
         prefix = language == 'German' ? "$documentLibraryPrefixFromGerman: " : "$documentLibraryPrefixFromEnglish: ";
-      } else if ((userRole == "admin" || userRole == "superAdmin") && immutableCategories.contains(currentCategory)) {
+      } else if ((userRole == "admin" || userRole == "super_admin") && immutableCategories.contains(currentCategory)) {
         prefix = language == 'German' ? "$documentLibraryPrefixForGerman: " : "$documentLibraryPrefixForEnglish: ";
       }
     }

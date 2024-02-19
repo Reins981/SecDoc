@@ -22,7 +22,7 @@ class DashboardSection extends StatefulWidget {
 
 class _DashboardSectionState extends State<DashboardSection> with SingleTickerProviderStateMixin {
 
-  late List<DashboardItem> dashboardItems;
+  List<DashboardItem> dashboardItems = [];
   // Global Helper Instance
   final _helper = Helper();
   late AnimationController _animationController;
@@ -163,20 +163,22 @@ class _DashboardSectionState extends State<DashboardSection> with SingleTickerPr
             child: Column(
               children: [
                 _buildUserBadge(), // User badge
-                DashboardSlider(
-                  dashboardItems: dashboardItems,
-                  onDashboardSelected: (index) {
-                    setState(() {
-                      selectedDashboardIndex = index;
-                    });
-                  },
-                  selectedDashboardIndex: selectedDashboardIndex,
-                ),
+                if (dashboardItems.isNotEmpty)
+                  DashboardSlider(
+                    dashboardItems: dashboardItems,
+                    onDashboardSelected: (index) {
+                      setState(() {
+                        selectedDashboardIndex = index;
+                      });
+                    },
+                    selectedDashboardIndex: selectedDashboardIndex,
+                  ),
                 const SizedBox(height: 20),
                 if (selectedDashboardIndex < dashboardItems.length)
                   DetailedDashboardPage(
                       dashboardItem: dashboardItems[selectedDashboardIndex],
-                      helper: _helper, docOperations: widget.docOperations),
+                      helper: _helper, docOperations: widget.docOperations
+                  ),
               ],
             ),
           ),
