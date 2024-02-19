@@ -385,7 +385,6 @@ class DocumentOperations {
   late Map<String, dynamic> _progressNotifierDict = {};
   late String downloadPath;
   String _selectedLanguage = 'German';
-  final String documentLibraryCategoryCustomerClientGerman = getTextContentGerman("documentLibraryCategoryCustomerClient");
   final String documentLibraryCategoryCustomerClientEnglish = getTextContentEnglish("documentLibraryCategoryCustomerClient");
   final String docOperationsNoDocsGerman = getTextContentGerman("docOperationsNoDocs");
   final String docOperationsNoDocsEnglish = getTextContentEnglish("docOperationsNoDocs");
@@ -786,7 +785,7 @@ class DocumentOperations {
 
     try {
       Map<String, dynamic> userDetails = await _helper.getCurrentUserDetails();
-      category ??= _selectedLanguage == 'German' ? documentLibraryCategoryCustomerClientGerman : documentLibraryCategoryCustomerClientEnglish;
+      category ??= documentLibraryCategoryCustomerClientEnglish;
       int year = DateTime.now().year;
       String userDomain = userDetails['userDomain'].toLowerCase();
       String userName = userDetails['userName'];

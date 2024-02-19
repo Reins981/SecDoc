@@ -87,8 +87,6 @@ String getTextContentGerman(String textContentType) {
     "documentLibraryCategory": "Kategorie",
     "documentLibraryPrefixFrom": "Von",
     "documentLibraryPrefixFor": "Für",
-    "documentLibraryCategoryCustomerAdmin": "Kundendokumente",
-    "documentLibraryCategoryCustomerClient": "Meine Dokumente",
 
     // Helpers
     "helperUserNotSignedIn": "Benutzer ist nicht angemeldet!",
@@ -299,8 +297,8 @@ String getTextContentEnglish(String textContentType) {
     "documentLibraryCategory": "Category",
     "documentLibraryPrefixFrom": "From",
     "documentLibraryPrefixFor": "For",
-    "documentLibraryCategoryCustomerAdmin": "Customer Docs",
-    "documentLibraryCategoryCustomerClient": "My Docs",
+    "documentLibraryCategoryCustomerAdmin": "Customer Documents",
+    "documentLibraryCategoryCustomerClient": "My Documents",
 
     // Helpers
     "helperUserNotSignedIn": "User is not signed in!",
