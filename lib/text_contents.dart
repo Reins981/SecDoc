@@ -1,3 +1,5 @@
+// Immutable categories must be defined here first and then added to the list
+// of immutable categories
 String category1 = "Plans";
 String category2 = "Offers";
 
