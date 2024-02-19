@@ -543,6 +543,36 @@ class CustomListWidget extends StatelessWidget {
     required this.userRole,
   });
 
+  List<dynamic> modifyCategoryBasedOnLanguageSelection(String currentCategory, String expectedCategory) {
+    List<dynamic> results = [];
+    String prefix;
+
+    if ((userRole == "admin" || userRole == "superAdmin") && currentCategory == expectedCategory) {
+      currentCategory = language == 'German' ? documentLibraryCategoryCustomerAdminGerman : documentLibraryCategoryCustomerAdminEnglish;
+      prefix = language == 'German' ? "$documentLibraryPrefixFromGerman: " : "$documentLibraryPrefixFromEnglish: ";
+    } else if (userRole == "client" && currentCategory == expectedCategory) {
+      prefix = "";
+    } else {
+      // No language change
+      if (userRole == "client" && immutableCategories.contains(currentCategory)) {
+        prefix = language == 'German' ? "$documentLibraryPrefixFromGerman: " : "$documentLibraryPrefixFromEnglish: ";
+      } else if ((userRole == "admin" || userRole == "superAdmin") && immutableCategories.contains(currentCategory)) {
+        prefix = language == 'German' ? "$documentLibraryPrefixForGerman: " : "$documentLibraryPrefixForEnglish: ";
+      }
+      // Language change detected
+      else {
+        if (userRole == "client") {
+          prefix = "";
+        } else {
+          prefix = language == 'German' ? "$documentLibraryPrefixFromGerman: " : "$documentLibraryPrefixFromEnglish: ";
+        }
+      }
+    }
+    results.add(currentCategory);
+    results.add(prefix);
+    return results;
+  }
+
   @override
   Widget build(BuildContext context) {
     // Use groupedDocuments to build your custom UI here
@@ -591,17 +621,11 @@ class CustomListWidget extends StatelessWidget {
                   final userMap = categoryMap[category]!;
                   final userList = userMap.keys
                       .toList();
+                  // Expected client category based on language;
                   String expectedCategory = language == 'German' ? documentLibraryCategoryCustomerClientGerman : documentLibraryCategoryCustomerClientEnglish;
-                  if ((userRole == 'admin' || userRole == 'super_admin') && category == expectedCategory) {
-                    category = language == 'German' ? documentLibraryCategoryCustomerAdminGerman : documentLibraryCategoryCustomerAdminEnglish;
-                    prefix = language == 'German' ? "$documentLibraryPrefixFromGerman: " : "$documentLibraryPrefixFromEnglish: ";
-                  } else if (userRole == 'client' && category == expectedCategory) {
-                    prefix = "";
-                  } else if (userRole == 'client' && category != expectedCategory) {
-                    prefix = language == 'German' ? "$documentLibraryPrefixFromGerman: " : "$documentLibraryPrefixFromEnglish: ";
-                  } else if ((userRole == 'admin' || userRole == 'super_admin') && category != expectedCategory) {
-                    prefix = language == 'German' ? "$documentLibraryPrefixForGerman: " : "$documentLibraryPrefixForEnglish: ";
-                  }
+                  List<dynamic> results = modifyCategoryBasedOnLanguageSelection(category, expectedCategory);
+                  category = results[0];
+                  prefix = results[1];
 
                   return ExpansionTile(
                     initiallyExpanded: isSearch || isServerUpdate,

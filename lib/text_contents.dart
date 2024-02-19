@@ -1,3 +1,7 @@
+String category1 = "Plans";
+String category2 = "Offers";
+
+List<String> immutableCategories = [category1, category2];
 
 String getTextContentGerman(String textContentType) {
 
