@@ -31,10 +31,12 @@ class _DashboardSectionState extends State<DashboardSection> with SingleTickerPr
   int selectedDashboardIndex = 0;
   String _selectedLanguage = 'German';
 
+  String dashboardTitleGerman = getTextContentGerman("dashboardTitle1");
+  String dashboardTitleEnglish = getTextContentEnglish("dashboardTitle1");
   String welcomeTextGerman = getTextContentGerman("welcomeText");
   String welcomeTextEnglish = getTextContentEnglish("welcomeText");
-  String dashboardTitle1German = getTextContentGerman("dashboardTitle1");
-  String dashboardTitle1English = getTextContentEnglish("dashboardTitle1");
+  String dashboardTitle1German = getTextContentGerman("documentLibraryTitle");
+  String dashboardTitle1English = getTextContentEnglish("documentLibraryTitle");
   String dashboardTitle2German = getTextContentGerman("dashboardTitle2");
   String dashboardTitle2English = getTextContentEnglish("dashboardTitle2");
   String dashboardTitle3German = getTextContentGerman("dashboardTitle3");
@@ -144,7 +146,7 @@ class _DashboardSectionState extends State<DashboardSection> with SingleTickerPr
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_selectedLanguage == 'German' ? dashboardTitle1German : dashboardTitle1English, style: GoogleFonts.lato(fontSize: 20, letterSpacing: 1.0, color: Colors.black)),
+        title: Text(_selectedLanguage == 'German' ? dashboardTitleGerman : dashboardTitleEnglish, style: GoogleFonts.lato(fontSize: 20, letterSpacing: 1.0, color: Colors.black)),
         centerTitle: true,
         backgroundColor: Colors.yellow,
         automaticallyImplyLeading: false,
