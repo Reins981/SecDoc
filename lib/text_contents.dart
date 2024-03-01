@@ -44,7 +44,7 @@ String getTextContentGerman(String textContentType) {
     "chatWindowFromText": "Von",
 
     // Dashboard Section
-    "dashboardTitle1": "Bibliothek",
+    "dashboardTitle1": "Übersicht",
     "dashboardDescription1": "Nahtloser Zugang",
     "dashboardDetailedDescription1": "Greifen Sie mühelos auf unsere umfassende Dokumentenbibliothek zu, laden Sie Dokumente herunter und navigieren Sie nahtlos durch sie. "
     "Damit können Sie Ihre wichtigen Dateien einfach und effizient verwalten.",
@@ -254,7 +254,7 @@ String getTextContentEnglish(String textContentType) {
     "chatWindowFromText": "From",
 
     // Dashboard Section
-    "dashboardTitle1": "Library",
+    "dashboardTitle1": "Dashboard",
     "dashboardDescription1": "Seamless Access",
     "dashboardDetailedDescription1": "Effortlessly access, download, and seamlessly navigate through our comprehensive document library, "
         "\n ensuring easy and efficient management of all your important files.",
