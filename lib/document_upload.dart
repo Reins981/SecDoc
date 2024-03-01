@@ -3,6 +3,9 @@ import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:sec_doc/text_contents.dart';
+
+import 'language_service.dart';
 
 class DocumentUploadPage extends StatefulWidget {
   final Function(String?, ScaffoldMessengerState) cameraUpload;
@@ -25,13 +28,36 @@ class DocumentUploadPage extends StatefulWidget {
 class _DocumentUploadPageState extends State<DocumentUploadPage> {
 
   bool isUploading = false;
+  String _selectedLanguage = 'German';
+  String documentUploadPageTitleGerman = getTextContentGerman("documentUploadPageTitle");
+  String documentUploadPageTitleEnglish = getTextContentEnglish("documentUploadPageTitle");
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLanguage();
+  }
+
+  Future<void> _loadLanguage() async {
+    final selectedLanguage = await LanguageService.getLanguage();
+    setState(() {
+      _selectedLanguage = selectedLanguage;
+    });
+  }
+
+  Future<void> _handleLogout(BuildContext context) async {
+    final FirebaseAuth auth = FirebaseAuth.instance;
+    await auth.signOut();
+    widget.clearProgressNotifier();
+    Navigator.pushReplacementNamed(context, '/login');
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Document Upload Page',
+          _selectedLanguage == 'German' ? documentUploadPageTitleGerman : documentUploadPageTitleEnglish,
           style: GoogleFonts.lato(fontSize: 20, letterSpacing: 1.0, color: Colors.black),
         ),
         centerTitle: true,
@@ -98,13 +124,6 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
         ],
       ),
     );
-  }
-
-  Future<void> _handleLogout(BuildContext context) async {
-    final FirebaseAuth auth = FirebaseAuth.instance;
-    await auth.signOut();
-    widget.clearProgressNotifier();
-    Navigator.pushReplacementNamed(context, '/login');
   }
 }
 

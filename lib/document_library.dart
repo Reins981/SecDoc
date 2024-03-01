@@ -31,6 +31,8 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _selectedLanguage = 'German';
 
+  String documentLibraryTitleGerman = getTextContentGerman("documentLibraryTitle");
+  String documentLibraryTitleEnglish = getTextContentEnglish("documentLibraryTitle");
   String documentLibraryDownloadErrorGerman = getTextContentGerman("documentLibraryDownloadError");
   String documentLibraryDownloadErrorEnglish = getTextContentEnglish("documentLibraryDownloadError");
   String documentLibraryLoadingDataErrorGerman = getTextContentGerman("documentLibraryLoadingDataError");
@@ -250,7 +252,7 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
 
             return Scaffold(
               appBar: AppBar(
-                title: Text('Document Library', style: GoogleFonts.lato(fontSize: 20, letterSpacing: 1.0, color: Colors.black)),
+                title: Text(_selectedLanguage == 'German' ? documentLibraryTitleGerman : documentLibraryTitleEnglish, style: GoogleFonts.lato(fontSize: 20, letterSpacing: 1.0, color: Colors.black)),
                 centerTitle: true,
                 backgroundColor: Colors.yellow,
                 leading: IconButton(

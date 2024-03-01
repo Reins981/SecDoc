@@ -144,7 +144,7 @@ class _DashboardSectionState extends State<DashboardSection> with SingleTickerPr
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Dashboard", style: GoogleFonts.lato(fontSize: 20, letterSpacing: 1.0, color: Colors.black)),
+        title: Text(_selectedLanguage == 'German' ? dashboardTitle1German : dashboardTitle1English, style: GoogleFonts.lato(fontSize: 20, letterSpacing: 1.0, color: Colors.black)),
         centerTitle: true,
         backgroundColor: Colors.yellow,
         automaticallyImplyLeading: false,

@@ -52,7 +52,7 @@ String getTextContentGerman(String textContentType) {
     "Damit können Sie Ihre wichtigen Dateien einfach und effizient verwalten.",
     "dashboardButtonText1": "Jetzt auf Dokumente zugreifen",
     "dashboardTitle2": "Upload Dokumente",
-    "dashboardDescription2": "Einfaches Hochladen",
+    "dashboardDescription2": "Einfach und schnell",
     "dashboardDetailedDescription2": "Stärken Sie Ihre Planung für Solarmodule, indem Sie mühelos Ihre eigenen Dokumente in unsere Cloud hochladen. "
     "Damit legen Sie den Grundstein für eine maßgeschneiderte Solarmodulplanung, die auf Ihre spezifischen Bedürfnisse zugeschnitten ist.",
     "dashboardDetailedDescriptionAdmin2": "Stärken Sie die Planung für Solarmodule für Ihre Kunden, indem Sie Pläne und Angebote mühelos in unsere Cloud hochladen. "
@@ -61,11 +61,9 @@ String getTextContentGerman(String textContentType) {
     "dashboardTitle3": "Solar Prognose",
     "dashboardDescription3": "Leistungsprognose erhalten",
     "dashboardDetailedDescription3": "Erkunden Sie maßgeschneiderte Prognosen für die Leistung von Solarmodulen in verschiedenen Umgebungen, Konfigurationen und Bedingungen. "
-    "Erhalten Sie detaillierte Einblicke, die informierte Entscheidungen über Solarinstallationen ermöglichen, indem Sie Effizienz, Energieerzeugung und andere wichtige Faktoren vorhersagen, die für die Optimierung von Solarprojekten entscheidend sind. "
-    "Senden Sie uns Ihre Spezifikationen für personalisierte Prognosen!",
+    "Erhalten Sie detaillierte Einblicke, die informierte Entscheidungen über Solarinstallationen ermöglichen, indem Sie Effizienz, Energieerzeugung und andere wichtige Faktoren vorhersagen, die für die Optimierung von Solarprojekten entscheidend sind.",
     "dashboardDetailedDescriptionAdmin3": "Erkunden Sie maßgeschneiderte Prognosen für die Leistung von Solarmodulen in verschiedenen Umgebungen, Konfigurationen und Bedingungen. "
-    "Erhalten Sie detaillierte Einblicke, die informierte Entscheidungen über Solarinstallationen ermöglichen, indem Sie Effizienz, Energieerzeugung und andere wichtige Faktoren vorhersagen, die für die Optimierung von Solarprojekten entscheidend sind. "
-    "Senden Sie uns Ihre Spezifikationen für personalisierte Prognosen!",
+    "Erhalten Sie detaillierte Einblicke, die informierte Entscheidungen über Solarinstallationen ermöglichen, indem Sie Effizienz, Energieerzeugung und andere wichtige Faktoren vorhersagen, die für die Optimierung von Solarprojekten entscheidend sind.",
     "dashboardButtonText3": "Jetzt Prognosen erhalten",
 
     // Document
@@ -74,6 +72,7 @@ String getTextContentGerman(String textContentType) {
     "documentErrorFormat": "Nicht unterstütztes Dokumentenformat",
 
     // Document Library
+    "documentLibraryTitle": "Bibliothek",
     "documentLibraryDownloadError": "Konnte das Download-Verzeichnis nicht erreichen",
     "documentLibraryLoadingDataError": "Fehler beim Laden von Daten",
     "documentLibraryLoadingDocumentError": "Fehler beim Laden von Dokumenten",
@@ -90,6 +89,9 @@ String getTextContentGerman(String textContentType) {
     "documentLibraryCategory": "Kategorie",
     "documentLibraryPrefixFrom": "Von",
     "documentLibraryPrefixFor": "Für",
+
+    // Document Upload Page
+    "documentUploadPageTitle": "Hochladen Dokumente",
 
     // Helpers
     "helperUserNotSignedIn": "Benutzer ist nicht angemeldet!",
@@ -260,7 +262,7 @@ String getTextContentEnglish(String textContentType) {
         "\n ensuring easy and efficient management of all your important files.",
     "dashboardButtonText1": "Access Docs Now",
     "dashboardTitle2": "Document Upload",
-    "dashboardDescription2": "Easy Upload",
+    "dashboardDescription2": "Simple and Fast",
     "dashboardDetailedDescription2": "Empower your solar panel planning by effortlessly uploading your own documents to our cloud, "
         "\nlaying the foundation for personalized solar panel design tailored to your specific needs.",
     "dashboardDetailedDescriptionAdmin2": "Empower customer solar panel planning by effortlessly uploading Plans and Offers to our cloud, "
@@ -270,12 +272,10 @@ String getTextContentEnglish(String textContentType) {
     "dashboardDescription3": "Gain Performance Forecasts",
     "dashboardDetailedDescription3": "Explore tailored forecasts for solar panel performance across diverse environments, configurations, and conditions. "
         "Get detailed insights that enable informed decisions about solar installations by predicting efficiency, energy output, and other critical factors crucial "
-        "for optimizing solar projects. "
-        "Send us your specifications for personalized forecasts!",
+        "for optimizing solar projects.",
     "dashboardDetailedDescriptionAdmin3": "Explore tailored forecasts for solar panel performance across diverse environments, configurations, and conditions. "
         "Get detailed insights that enable informed decisions about solar installations by predicting efficiency, energy output, and other critical factors crucial "
-        "for optimizing solar projects. "
-        "Send us your specifications for personalized forecasts!",
+        "for optimizing solar projects.",
     "dashboardButtonText3": "Get Forecasts Now",
 
     // Document
@@ -284,6 +284,7 @@ String getTextContentEnglish(String textContentType) {
     "documentErrorFormat": "Unsupported document format",
 
     // Document Library
+    "documentLibraryTitle": "Library",
     "documentLibraryDownloadError": "Could not access download directory",
     "documentLibraryLoadingDataError": "Error loading data",
     "documentLibraryLoadingDocumentError": "Error loading documents",
@@ -302,6 +303,9 @@ String getTextContentEnglish(String textContentType) {
     "documentLibraryPrefixFor": "For",
     "documentLibraryCategoryCustomerAdmin": "Customer Documents",
     "documentLibraryCategoryCustomerClient": "My Documents",
+
+    // Document Upload Page
+    "documentUploadPageTitle": "Document Upload",
 
     // Helpers
     "helperUserNotSignedIn": "User is not signed in!",
