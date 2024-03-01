@@ -782,7 +782,7 @@ class DocumentOperations {
       String documentNameOrig = filePathAbs.path.split('/').last;
       String extensionOrig = documentNameOrig.split('.').last;
       // Change the document name to a new one
-      String newDocumentName = "solarPhotoDoc.$extensionOrig";
+      String newDocumentName = "SolarPhotoDoc.$extensionOrig";
       newDocumentName = addTimestampToDocumentName(newDocumentName);
       File renamedFile = changeDocumentName(filePathAbs, newDocumentName);
       await uploadDocuments(documentId, File(renamedFile.path), null, context);
