@@ -21,6 +21,8 @@ import 'mail_settings.dart';
 import 'package:sendgrid_mailer/sendgrid_mailer.dart';
 import 'text_contents.dart';
 import 'language_service.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart' as path;
 
 class Helper {
 
@@ -748,6 +750,43 @@ class DocumentOperations {
       'status': 'Success',
       'message': ""
     };
+  }
+
+  String addTimestampToDocumentName(String documentName) {
+    DateTime now = DateTime.now();
+    String timestamp = now.toIso8601String(); // Use ISO8601 format for a unique timestamp
+    String extension = documentName.split('.').last;  // Get the extension
+    documentName = path.basenameWithoutExtension(documentName); // Extract the basename
+    // Concatenate timestamp and extension to the original document name
+    String newDocumentName = '${documentName}_$timestamp.$extension';
+
+    return newDocumentName;
+  }
+
+  File changeDocumentName(File file, String newDocumentName) {
+    String directory = file.parent.path;
+    String newPath = '$directory/$newDocumentName';
+
+    File renamedFile = file.renameSync(newPath);
+    return renamedFile;
+  }
+
+  // Function to open the camera and upload the photo to Firebase
+  Future<void> openCameraAndUpload(String? documentId, ScaffoldMessengerState context) async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.camera);
+
+    if (pickedFile != null) {
+      // Upload the image to Firebase Cloud Storage
+      File filePathAbs = File(pickedFile.path);
+      String documentNameOrig = filePathAbs.path.split('/').last;
+      String extensionOrig = documentNameOrig.split('.').last;
+      // Change the document name to a new one
+      String newDocumentName = "solarPhotoDoc.$extensionOrig";
+      newDocumentName = addTimestampToDocumentName(newDocumentName);
+      File renamedFile = changeDocumentName(filePathAbs, newDocumentName);
+      await uploadDocuments(documentId, File(renamedFile.path), null, context);
+    }
   }
 
   Future<void> uploadDocuments(String? documentId, File? specificFile, String? category, ScaffoldMessengerState context) async {

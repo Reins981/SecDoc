@@ -4,6 +4,7 @@ String category1 = "Plans";
 String category2 = "Offers";
 
 List<String> immutableCategories = [category1, category2];
+String solarAiUrl = "https://pvaustria.at/pv-rechner/";
 
 String getTextContentGerman(String textContentType) {
 

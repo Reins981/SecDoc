@@ -1,8 +1,13 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:sec_doc/text_contents.dart';
 import 'dashboard_item.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'helpers.dart';
 import 'document_library.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'document_upload.dart';
 
 class DetailedDashboardPage extends StatefulWidget {
   final DashboardItem dashboardItem;
@@ -20,8 +25,7 @@ class DetailedDashboardPage extends StatefulWidget {
 
 class _DetailedDashboardPageState extends State<DetailedDashboardPage> {
 
-  bool isLoading = false;
-  bool isUploading = false;
+  Uri solarCalcUrl = Uri.parse(solarAiUrl);
 
   @override
   Widget build(BuildContext context) {
@@ -43,6 +47,7 @@ class _DetailedDashboardPageState extends State<DetailedDashboardPage> {
           Map<String, dynamic> userDetails = snapshot.data!;
           final userRole = userDetails['userRole'];
 
+          final scaffoldContext = ScaffoldMessenger.of(context);
           String documentId = "uploadDocIdDefault";
           widget.docOperations.setProgressNotifierDictValue(documentId);
           String detailedDescription = userRole == 'client'
@@ -105,23 +110,16 @@ class _DetailedDashboardPageState extends State<DetailedDashboardPage> {
                             width: double.infinity,
                             child: ElevatedButton(
                               onPressed: () async {
-                                setState(() {
-                                  isLoading = true;
-                                });
-                                
                                 await Future.delayed(Duration.zero);
                                 
-                                Navigator.of(context).pushReplacement(MaterialPageRoute(
-                                  builder: (context) => DocumentLibraryScreen(
-                                      documentOperations: widget.docOperations,
-                                      helper: widget.helper),
-                                )).then ((_) {
-                                  if (mounted) {
-                                    setState(() {
-                                      isLoading = false;
-                                    });
-                                  }
-                                });
+                                Navigator.of(context).pushReplacement(
+                                    MaterialPageRoute(
+                                      builder: (context) => DocumentLibraryScreen(
+                                          documentOperations: widget.docOperations,
+                                          helper: widget.helper
+                                      ),
+                                    )
+                                );
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.yellow.withOpacity(1.0),
@@ -151,19 +149,16 @@ class _DetailedDashboardPageState extends State<DetailedDashboardPage> {
                             width: double.infinity,
                             child: ElevatedButton(
                               onPressed: () async {
-                                setState(() {
-                                  isLoading = true;
-                                });
+                                /*await Future.delayed(Duration.zero);
+                                Navigator.pushReplacementNamed(context, '/solar').then((_);*/
 
                                 await Future.delayed(Duration.zero);
-
-                                Navigator.pushReplacementNamed(context, '/solar').then((_) {
-                                  if (mounted) {
-                                    setState(() {
-                                      isLoading = false;
-                                    });
-                                  }
-                                });
+                                if (await canLaunchUrl(solarCalcUrl)) {
+                                  await launchUrl(solarCalcUrl);
+                                } else {
+                                  // Handle the case where the web page could not be launched.
+                                  widget.helper.showSnackBar('Could not launch URL: $solarCalcUrl', "Error", scaffoldContext);
+                                }
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.yellow.withOpacity(1.0),
@@ -193,34 +188,22 @@ class _DetailedDashboardPageState extends State<DetailedDashboardPage> {
                             width: double.infinity,
                             child: ElevatedButton(
                               onPressed: () async {
-                                setState(() {
-                                  isLoading = true; // Set loading state to true
-                                });
-
                                 if (userRole == 'client') {
-                                  setState(() {
-                                    isUploading = true;
-                                  });
-                                  final scaffoldContext = ScaffoldMessenger.of(context);
-                                  await widget.docOperations.uploadDocuments(documentId, null, null, scaffoldContext);
-                                  if (mounted) {
-                                    setState(() {
-                                      isUploading = false; // This should be false after uploading
-                                    });
-                                  }
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => DocumentUploadPage(
+                                            cameraUpload: widget.docOperations.openCameraAndUpload,
+                                            uploadDocuments: widget.docOperations.uploadDocuments,
+                                            clearProgressNotifier: widget.docOperations.clearProgressNotifierDict,
+                                            documentId: documentId,
+                                        ),
+                                    ),
+                                  );
                                 } else {
                                   await Future.delayed(Duration.zero);
-                                  Navigator.pushReplacementNamed(context, '/details').then((_) {
-                                    if (mounted) {
-                                      setState(() {
-                                        isLoading = false;
-                                      });
-                                    }
-                                  });
+                                  Navigator.pushReplacementNamed(context, '/details');
                                 }
-                                setState(() {
-                                  isLoading = false; // Set loading state to false after operation completes
-                                });
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.yellow.withOpacity(1.0),
@@ -245,17 +228,6 @@ class _DetailedDashboardPageState extends State<DetailedDashboardPage> {
                           ),
                         ),
                         widget.dashboardItem.itemType == DashboardItemType.library ? const SizedBox(height: 8) : const SizedBox(height: 16),
-                        Visibility(
-                          visible: (isLoading && widget.dashboardItem.itemType == DashboardItemType.upload && userRole == "client"),
-                          child: Align(
-                            alignment: Alignment.center,
-                            child: LinearProgressIndicator(
-                              minHeight: 4.0, // Adjust the thickness
-                              backgroundColor: Colors.grey.shade300,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
-                            ),
-                          ),
-                        ),
                       ],
                     ),
                   ),
