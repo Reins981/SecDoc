@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:open_file/open_file.dart';
@@ -11,6 +13,7 @@ import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:async'; // Import the async package for using StreamController
 import 'package:dio/dio.dart';
+import 'package:rxdart/rxdart.dart';
 import 'document.dart';
 import 'package:http/http.dart' as http;
 import 'package:file_picker/file_picker.dart';
@@ -446,9 +449,12 @@ class DocumentOperations {
 
       // Clients can only access their own documents, admins all of them
       if (userRole == 'client') {
-        result = documentsCollection
-            .where('owner', isEqualTo: userUid)
-            .snapshots();
+        // Create two separate streams for each query
+        Stream<QuerySnapshot> stream1 = documentsCollection.where('owner', isEqualTo: userUid).snapshots();
+        Stream<QuerySnapshot> stream2 = documentsCollection.where('selected_user', isEqualTo: userUid).snapshots();
+
+        // Combine the streams using merge
+        result = Rx.merge([stream1, stream2]);
       } else {
         result = documentsCollection
             .where('user_domain', isEqualTo: userDomain)
@@ -489,7 +495,8 @@ class DocumentOperations {
       final name = documentData['document_name'];
       final owner = documentData['owner'];
       final lastUpdate = documentData['last_update'];
-      final isNew= documentData['is_new'];
+      final isNew = documentData['is_new'];
+      final viewed = documentData['viewed'];
       final deletedAt = documentData['deleted_at'];
       final documentUrl = documentData['document_url'];
       String user = userMail + " (" + userName + ")";
@@ -524,6 +531,7 @@ class DocumentOperations {
           owner: owner,
           lastUpdate: lastUpdate,
           isNew: isNew,
+          viewed: viewed,
           deletedAt: deletedAt,
           documentUrl: documentUrl,
           domain: domain,
@@ -670,6 +678,43 @@ class DocumentOperations {
     return files;
   }
 
+  Future<Map<String, String>> updateDocumentFieldAsBool(
+      Map<String, dynamic> userDetails,
+      String docId,
+      String fieldName,
+      bool fieldValue
+      ) async {
+
+    String userDomain = userDetails['userDomain'];
+    String userDomainLowerCase = userDomain.toLowerCase();
+    String errorMessage = "";
+    bool isError = false;
+
+    try {
+      print('Updating existing document...: $docId for documents_$userDomainLowerCase');
+      // Update the existing document
+      DocumentReference documentRef =
+      FirebaseFirestore.instance.collection('documents_$userDomainLowerCase')
+          .doc(
+          docId);
+
+      await documentRef.update({
+        fieldName: fieldValue
+      });
+    } catch (e) {
+      errorMessage = '$e';
+      isError = true;
+    }
+
+    return isError ? {
+      'status': 'Error',
+      'message': errorMessage
+    } : {
+      'status': 'Success',
+      'message': ""
+    };
+  }
+
   Future<Map<String, String>> _addDocument(
       Reference ref,
       Map<String, dynamic> userDetails,
@@ -690,6 +735,7 @@ class DocumentOperations {
           ? await FirebaseFirestore.instance
             .collection('documents_$userDomainLowerCase')
             .where('owner', isEqualTo: userDetails['userUid'])
+            .where('selected_user', isEqualTo: userDetails['userUid'])
             .where('category', isEqualTo: category)
             .where('document_name', isEqualTo: documentName)
             .where('user_domain', isEqualTo: userDomain)
@@ -697,6 +743,7 @@ class DocumentOperations {
           : await FirebaseFirestore.instance
           .collection('documents_$userDomainLowerCase')
           .where('owner', isEqualTo: userDetails['userUid'])
+          .where('selected_user', isEqualTo: userDetails['userUid'])
           .where('category', isEqualTo: category)
           .where('document_name', isEqualTo: documentName)
           .where('user_domain', isEqualTo: userDomain)
@@ -712,7 +759,8 @@ class DocumentOperations {
 
         await documentRef.update({
           "last_update": FieldValue.serverTimestamp(),
-          "is_new": false
+          "is_new": false,
+          "viewed": false
           // Add fields to update here as needed
         });
       } else {
@@ -726,6 +774,7 @@ class DocumentOperations {
           "user_name": userDetails['userName'],
           "user_email": userDetails['userEmail'],
           "owner": userDetails['userUid'],
+          "selected_user": userDetails['userUid'],
           "category": category,
           "user_domain": userDomain,
           "document_name": documentName,
@@ -736,6 +785,7 @@ class DocumentOperations {
           "deleted_at": null,
           "last_update": FieldValue.serverTimestamp(),
           "is_new": true,
+          "viewed": false
         });
       }
     } catch (e) {
@@ -782,7 +832,7 @@ class DocumentOperations {
       String documentNameOrig = filePathAbs.path.split('/').last;
       String extensionOrig = documentNameOrig.split('.').last;
       // Change the document name to a new one
-      String newDocumentName = "SolarPhotoDoc.$extensionOrig";
+      String newDocumentName = "SolarSnapshot.$extensionOrig";
       newDocumentName = addTimestampToDocumentName(newDocumentName);
       File renamedFile = changeDocumentName(filePathAbs, newDocumentName);
       await uploadDocuments(documentId, File(renamedFile.path), null, context);
@@ -828,6 +878,7 @@ class DocumentOperations {
       String userName = userDetails['userName'];
       String userEmail = userDetails['userEmail'];
       String token = userDetails['token'];
+      String role = userDetails['userRole'];
 
       // First Reset the Progress Bar
       _progressNotifierDict[documentId].value = 0.0;

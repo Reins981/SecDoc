@@ -13,6 +13,7 @@ class Document {
   final String owner;
   final Timestamp? lastUpdate;
   final bool isNew;
+  final bool viewed;
   final Timestamp? deletedAt;
   final String documentUrl;
   final String domain;
@@ -27,6 +28,7 @@ class Document {
     required this.owner,
     required this.lastUpdate,
     required this.isNew,
+    required this.viewed,
     required this.deletedAt,
     required this.documentUrl,
     required this.domain,

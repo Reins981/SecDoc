@@ -88,9 +88,18 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
     });
   }
 
-  void handleDownload(BuildContext context, Document document) async {
+  Future<Map<String, String>> updateDocumentViewedField(Document document, Map<String, dynamic> userDetails) async {
+    String documentId = document.id;
+
+    Map<String, String> result = await widget.documentOperations.updateDocumentFieldAsBool(userDetails, documentId, "viewed", true);
+    return result;
+  }
+
+  void handleDownload(BuildContext context, Document document, String category) async {
     final scaffoldContext = ScaffoldMessenger.of(context);
     String downloadPath = await widget.documentOperations.createDownloadPathForFile(document.name);
+    Map<String, dynamic> userDetails = await widget.helper.getCurrentUserDetails();
+    String userRole = userDetails['userRole'];
 
     if (downloadPath == "Failed") {
       widget.helper.showSnackBar(_selectedLanguage == 'German' ? documentLibraryDownloadErrorGerman : documentLibraryDownloadErrorEnglish, "Error", scaffoldContext);
@@ -99,11 +108,26 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
         if (status != "Success") {
           widget.helper.showSnackBar(status, "Error", scaffoldContext);
         } else {
-          String successMessage = _selectedLanguage == 'German' ? "Dokument ${document.name}$documentLibraryDeleteSuccessGerman" : "Document ${document.name}$documentLibraryDeleteSuccessEnglish";
+          // Update the 'viewed' field
+          Map<String, String> result = {
+            'status': 'Success',
+            'message': ""
+          };
+          // Update the viewable field only in client mode and for certain categories
+          if (immutableCategories.contains(category) && userRole == 'client') {
+            result = await updateDocumentViewedField(document, userDetails);
+            if (result['status'] == 'Error') {
+              String? errorMessage = result['message'];
+              // widget.helper.showSnackBar(errorMessage ?? "Default Error Message", 'Error', scaffoldContext);
+              print(errorMessage);
+            }
+          }
+
+          String successMessage = _selectedLanguage == 'German' ? "Dokument ${document.name}$documentLibraryDownloadSuccessGerman" : "Document ${document.name}$documentLibraryDownloadSuccessEnglish";
           await widget.helper.showCustomNotificationAndroid(
-              _selectedLanguage == 'German' ? documentLibraryDownloadNotificationGerman : documentLibraryDownloadNotificationEnglish, // Notification title
-              successMessage, // Notification content
-              downloadPath
+          _selectedLanguage == 'German' ? documentLibraryDownloadNotificationGerman : documentLibraryDownloadNotificationEnglish, // Notification title
+          successMessage, // Notification content
+          downloadPath
           );
         }
       });
@@ -306,7 +330,7 @@ class DocumentListWidget extends StatefulWidget {
   final Function(BuildContext) handleLogout;
   final TextEditingController searchController;
   final DocumentOperations documentOperations;
-  final void Function(BuildContext, Document) callbackDownload;
+  final void Function(BuildContext, Document, String) callbackDownload;
   final Future<String> Function(BuildContext, Document) callbackDelete;
   final void Function() onRefresh;
   final dynamic origStream;
@@ -509,7 +533,7 @@ class CustomListWidget extends StatelessWidget {
   final String language;
   final Map<String, Map<int, Map<String, Map<String, DocumentRepository>>>> groupedDocuments;
   final DocumentOperations documentOperations;
-  final void Function(BuildContext, Document) callbackDownload;
+  final void Function(BuildContext, Document, String) callbackDownload;
   final Future<String> Function(BuildContext, Document) callbackDelete;
   final bool isSearch;
   final bool isServerUpdate;
@@ -662,7 +686,7 @@ class CustomListWidget extends StatelessWidget {
                                         .start,
                                     children: [
                                       ListTile(
-                                        onTap: () {
+                                        onTap: () async {
                                           Navigator
                                               .push(
                                             context,
@@ -676,6 +700,9 @@ class CustomListWidget extends StatelessWidget {
                                                   ),
                                             ),
                                           );
+                                          // Update the viewed field
+                                          Map<String, dynamic> userDetails = await helper.getCurrentUserDetails();
+                                          await documentOperations.updateDocumentFieldAsBool(userDetails, document.id, "viewed", true);
                                         },
                                         title: Text(
                                           document.name,
@@ -739,6 +766,50 @@ class CustomListWidget extends StatelessWidget {
                                                 ),
                                               ),
                                             ),
+                                            Visibility(
+                                              visible: (userRole == "admin" || userRole == "super_admin") && immutableCategories.contains(category),
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  color: document
+                                                      .viewed
+                                                      ? Colors
+                                                      .orange
+                                                      : Colors
+                                                      .transparent,
+                                                  border: document
+                                                      .viewed
+                                                      ? Border
+                                                      .all(
+                                                    color: Colors
+                                                        .orange,
+                                                    // Border color
+                                                    width: 1.0, // Border width
+                                                  )
+                                                      : null,
+                                                  borderRadius: BorderRadius
+                                                      .circular(
+                                                      4.0), // Border radius
+                                                ),
+                                                child: Padding(
+                                                  padding: const EdgeInsets
+                                                      .all(
+                                                      4.0),
+                                                  // Add padding inside the box
+                                                  child: Text(
+                                                    "Viewed: ${document
+                                                        .viewed
+                                                        ? 'Yes'
+                                                        : 'No'}",
+                                                    style: GoogleFonts.lato(
+                                                      fontSize: 14,
+                                                      color: Colors.black,
+                                                      fontStyle: FontStyle.italic,
+                                                      letterSpacing: 1.0,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
                                           ],
                                         ),
                                       ),
@@ -749,7 +820,7 @@ class CustomListWidget extends StatelessWidget {
                                           ElevatedButton
                                               .icon(
                                             onPressed: () async {
-                                              callbackDownload(context, document);
+                                              callbackDownload(context, document, category);
                                             },
                                             icon: const Icon(
                                                 Icons
