@@ -62,10 +62,6 @@ class DocumentDetailScreen extends StatefulWidget {
   @override
   _DocumentDetailScreenState createState() => _DocumentDetailScreenState();
 
-  String getError() {
-    // Access the 'errorMessage' variable from the state
-    return (key as _DocumentDetailScreenState).errorMessage;
-  }
 }
 
 class _DocumentDetailScreenState extends State<DocumentDetailScreen> {

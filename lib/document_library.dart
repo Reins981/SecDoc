@@ -700,21 +700,18 @@ class CustomListWidget extends StatelessWidget {
                                                   context) => screen,
                                             ),
                                           );
-                                          // If there is no error, go ahead
-                                          if (screen.getError().isEmpty) {
-                                            // Update the viewed field
-                                            Map<String,
-                                                dynamic> userDetails = await helper
-                                                .getCurrentUserDetails();
-                                            Map<String,
-                                                String> result = await documentOperations
-                                                .updateDocumentFieldAsBool(
-                                                userDetails, document.id,
-                                                "viewed", true);
-                                            if (result['status'] == 'Error') {
-                                              String? errorMessage = result['message'];
-                                              print(errorMessage);
-                                            }
+                                          // Update the viewed field
+                                          Map<String,
+                                              dynamic> userDetails = await helper
+                                              .getCurrentUserDetails();
+                                          Map<String,
+                                              String> result = await documentOperations
+                                              .updateDocumentFieldAsBool(
+                                              userDetails, document.id,
+                                              "viewed", true);
+                                          if (result['status'] == 'Error') {
+                                            String? errorMessage = result['message'];
+                                            print(errorMessage);
                                           }
                                         },
                                         title: Text(
