@@ -687,22 +687,35 @@ class CustomListWidget extends StatelessWidget {
                                     children: [
                                       ListTile(
                                         onTap: () async {
+                                          DocumentDetailScreen screen = DocumentDetailScreen(
+                                            document: document,
+                                            docOperations: documentOperations,
+                                            helper: helper,
+                                          );
                                           Navigator
                                               .push(
                                             context,
                                             MaterialPageRoute(
                                               builder: (
-                                                  context) =>
-                                                  DocumentDetailScreen(
-                                                      document: document,
-                                                      docOperations: documentOperations,
-                                                      helper: helper
-                                                  ),
+                                                  context) => screen,
                                             ),
                                           );
-                                          // Update the viewed field
-                                          Map<String, dynamic> userDetails = await helper.getCurrentUserDetails();
-                                          await documentOperations.updateDocumentFieldAsBool(userDetails, document.id, "viewed", true);
+                                          // If there is no error, go ahead
+                                          if (screen.getError().isEmpty) {
+                                            // Update the viewed field
+                                            Map<String,
+                                                dynamic> userDetails = await helper
+                                                .getCurrentUserDetails();
+                                            Map<String,
+                                                String> result = await documentOperations
+                                                .updateDocumentFieldAsBool(
+                                                userDetails, document.id,
+                                                "viewed", true);
+                                            if (result['status'] == 'Error') {
+                                              String? errorMessage = result['message'];
+                                              print(errorMessage);
+                                            }
+                                          }
                                         },
                                         title: Text(
                                           document.name,

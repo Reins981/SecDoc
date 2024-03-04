@@ -61,10 +61,16 @@ class DocumentDetailScreen extends StatefulWidget {
 
   @override
   _DocumentDetailScreenState createState() => _DocumentDetailScreenState();
+
+  String getError() {
+    // Access the 'errorMessage' variable from the state
+    return (key as _DocumentDetailScreenState).errorMessage;
+  }
 }
 
 class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
   late Future<Map<String, dynamic>> _documentContent;
+  String errorMessage = "";
 
   String _selectedLanguage = 'German';
 
@@ -126,6 +132,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
             bool isTxt = data['isTxt'];
 
             if (content == null) {
+              errorMessage = "Content is null";
               return widget.helper.showStatus(_selectedLanguage == 'German' ? documentErrorShowGerman : documentErrorShowEnglish);
             }
 
@@ -137,6 +144,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                   pdfData: content,
                 );
               } catch (e) {
+                errorMessage = '$e';
                 return widget.helper.showStatus('$e');
               }
             } else if (isImg) {
@@ -146,6 +154,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                 return Image.memory(content);
               }
               catch (e) {
+                errorMessage = '$e';
                 return widget.helper.showStatus('$e');
               }
             } else if (isTxt) {
@@ -163,9 +172,11 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                 );
               }
               catch (e) {
+                errorMessage = '$e';
                 return widget.helper.showStatus('$e');
               }
             } else {
+              errorMessage = _selectedLanguage == 'German' ? documentErrorFormatGerman : documentErrorFormatEnglish;
               return widget.helper.showStatus(_selectedLanguage == 'German' ? documentErrorFormatGerman : documentErrorFormatEnglish);
             }
           }
