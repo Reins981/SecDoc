@@ -690,7 +690,7 @@ class CustomListWidget extends StatelessWidget {
                                           DocumentDetailScreen screen = DocumentDetailScreen(
                                             document: document,
                                             docOperations: documentOperations,
-                                            helper: helper,
+                                            helper: helper
                                           );
                                           Navigator
                                               .push(

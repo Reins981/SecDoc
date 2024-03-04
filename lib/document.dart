@@ -52,7 +52,7 @@ class DocumentDetailScreen extends StatefulWidget {
   final DocumentOperations docOperations;
   final Helper helper;
 
-  const DocumentDetailScreen({
+  DocumentDetailScreen({
     Key? key,
     required this.document,
     required this.docOperations,
@@ -66,7 +66,6 @@ class DocumentDetailScreen extends StatefulWidget {
 
 class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
   late Future<Map<String, dynamic>> _documentContent;
-  String errorMessage = "";
 
   String _selectedLanguage = 'German';
 
@@ -128,7 +127,6 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
             bool isTxt = data['isTxt'];
 
             if (content == null) {
-              errorMessage = "Content is null";
               return widget.helper.showStatus(_selectedLanguage == 'German' ? documentErrorShowGerman : documentErrorShowEnglish);
             }
 
@@ -140,7 +138,6 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                   pdfData: content,
                 );
               } catch (e) {
-                errorMessage = '$e';
                 return widget.helper.showStatus('$e');
               }
             } else if (isImg) {
@@ -150,7 +147,6 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                 return Image.memory(content);
               }
               catch (e) {
-                errorMessage = '$e';
                 return widget.helper.showStatus('$e');
               }
             } else if (isTxt) {
@@ -168,11 +164,9 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                 );
               }
               catch (e) {
-                errorMessage = '$e';
                 return widget.helper.showStatus('$e');
               }
             } else {
-              errorMessage = _selectedLanguage == 'German' ? documentErrorFormatGerman : documentErrorFormatEnglish;
               return widget.helper.showStatus(_selectedLanguage == 'German' ? documentErrorFormatGerman : documentErrorFormatEnglish);
             }
           }
