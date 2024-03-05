@@ -884,6 +884,7 @@ class DocumentOperations {
       String role = userDetails['userRole'];
 
       // First Reset the Progress Bar
+      setProgressNotifierDictValue(documentId);
       _progressNotifierDict[documentId].value = 0.0;
       double progress = 0.0;
 
@@ -918,7 +919,9 @@ class DocumentOperations {
                 } else {
                   progress = (totalBytesTransferred / totalBytes) * 100.0;
                 }
-                _progressNotifierDict[documentId].value = progress;
+                if (_progressNotifierDict.containsKey(documentId) && _progressNotifierDict[documentId] != null) {
+                  _progressNotifierDict[documentId]!.value = progress;
+                }
                 break;
               case TaskState.paused:
                 String errorMessage = "Upload task is paused for $documentName";
@@ -927,7 +930,9 @@ class DocumentOperations {
               case TaskState.success:
                 Map<String, String> result = await _addDocument(ref, userDetails, documentName, category!);
                 if (result['status'] == 'Error') {
-                  _progressNotifierDict[documentId].value = 0.0;
+                  if (_progressNotifierDict.containsKey(documentId) && _progressNotifierDict[documentId] != null) {
+                    _progressNotifierDict[documentId]!.value = 0.0;
+                  }
                   String? errorMessage = result['message'];
                   _helper.showSnackBar(errorMessage ?? "Default Error Message", 'Error', context);
                 } else {
