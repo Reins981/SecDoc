@@ -618,6 +618,8 @@ class CustomListWidget extends StatelessWidget {
               final categoryMap = yearMap[year]!;
               final categoryList = categoryMap.keys
                   .toList();
+              // Sort the categoryList alphabetically
+              categoryList.sort((a, b) => a.compareTo(b));
 
               return ExpansionTile(
                 initiallyExpanded: isSearch || isServerUpdate,
