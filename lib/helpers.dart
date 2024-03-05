@@ -43,6 +43,64 @@ class Helper {
     OpenFile.open(filePath);
   }
 
+  List<UserInstance> createUserInstanceTestData() {
+    List<UserInstance> users = [
+      UserInstance(
+        uid: '1',
+        email: 'reins981@gmail.com',
+        domain: 'PV-IBK',
+        userName: 'Rettung',
+        role: 'client',
+        disabled: false,
+        verified: true,
+      ),
+      UserInstance(
+        uid: '2',
+        email: 'james_dean@pv.com',
+        domain: 'PV-IBK',
+        userName: 'james',
+        role: 'admin',
+        disabled: false,
+        verified: true,
+      ),
+      UserInstance(
+        uid: '3',
+        email: 'default2402@gmail.com',
+        domain: 'PV-IBK-L',
+        userName: 'Polizei',
+        role: 'client',
+        disabled: false,
+        verified: true,
+      ),
+      UserInstance(
+        uid: '4',
+        email: 'user@mail.com',
+        domain: 'PV-EXT',
+        userName: 'user_test',
+        role: 'client',
+        disabled: false,
+        verified: false,
+      ),
+      UserInstance(
+        uid: '5',
+        email: 'john_doe@pv.com',
+        domain: 'PV-ALL',
+        userName: 'john',
+        role: 'super_admin',
+        disabled: false,
+        verified: true,
+      ),
+      // Add more test entries as needed
+    ];
+
+    // Use the 'users' list for testing purposes
+    for (var user in users) {
+      print(user.toJson());
+    }
+
+    return users;
+  }
+
   String getRandomString() {
     final rs = RandomString();
     return rs.getRandomString(
@@ -350,6 +408,16 @@ class Helper {
     }
   }
 
+  List<String> createDomainListFromUsers(List<UserInstance> users) {
+    List<String> domains = [];
+    for (UserInstance user in users) {
+      if (!domains.contains(user.domain)) {
+        domains.add(user.domain);
+      }
+    }
+    return domains;
+  }
+
   Future<List<Map<String, dynamic>>> getUserDetails(List<UserInstance> users) async {
 
     List<Map<String, dynamic>> userDetails = [];
@@ -357,21 +425,21 @@ class Helper {
       try {
         final userUid = user.uid;
         final userEmail = user.email;
-        //final userName = user['display_name'];
+        final userName = user.userName;
 
         final userRole = user.role;
         final userDomain = user.domain;
-        //final disabled = user['customClaims']['disabled'];
-        //final verified = user['customClaims']['verified'];
+        final disabled = user.disabled;
+        final verified = user.verified;
 
         userDetails.add( {
           'userUid': userUid,
           'userEmail': userEmail,
-          //'userName': userName,
+          'userName': userName,
           'userRole': userRole,
           'userDomain': userDomain,
-          //'disabled': disabled,
-          //'verified': verified
+          'disabled': disabled,
+          'verified': verified
         });
       } catch (e) {
         rethrow;

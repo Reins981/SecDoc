@@ -27,4 +27,16 @@ class UserInstance {
       verified: json['customClaims']['verified']
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'uid': uid,
+      'email': email,
+      'domain': domain,
+      'userName': userName,
+      'role': role,
+      'disabled': disabled,
+      'verified': verified,
+    };
+  }
 }
