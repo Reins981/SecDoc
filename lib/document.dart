@@ -11,6 +11,7 @@ class Document {
   final String id;
   final String name;
   final String owner;
+  final String selectedUser;
   final Timestamp? lastUpdate;
   final bool isNew;
   final bool viewed;
@@ -26,6 +27,7 @@ class Document {
     required this.id,
     required this.name,
     required this.owner,
+    required this.selectedUser,
     required this.lastUpdate,
     required this.isNew,
     required this.viewed,

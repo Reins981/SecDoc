@@ -494,6 +494,7 @@ class DocumentOperations {
       final userName = userRole == 'client' ? documentData['from_user_name'] : documentData['user_name'];
       final name = documentData['document_name'];
       final owner = documentData['owner'];
+      final selectedUser = documentData['selected_user'];
       final lastUpdate = documentData['last_update'];
       final isNew = documentData['is_new'];
       final viewed = documentData['viewed'];
@@ -529,6 +530,7 @@ class DocumentOperations {
           id: id,
           name: name,
           owner: owner,
+          selectedUser: selectedUser,
           lastUpdate: lastUpdate,
           isNew: isNew,
           viewed: viewed,
@@ -609,17 +611,18 @@ class DocumentOperations {
     String userName = document.userName;
     int year = document.year;
     String category = document.category;
-    String owner = document.owner;
+    String selectedUser = document.selectedUser;
     String documentName = document.name;
 
     String documentPath =
         '$userDomain/'
         '$category/'
         '$year/'
-        '$owner/'
+        '$selectedUser/'
         '$userName/'
         '$documentName';
-    print(documentPath);
+
+    print('Deleting $documentPath');
 
     try {
       final Reference ref = FirebaseStorage.instance.ref().child(documentPath);
