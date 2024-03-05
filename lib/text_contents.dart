@@ -51,7 +51,7 @@ String getTextContentGerman(String textContentType) {
     "dashboardDetailedDescriptionAdmin1": "Greifen Sie mühelos auf unsere umfassende Dokumentenbibliothek zu, laden Sie Dokumente herunter und navigieren Sie nahtlos durch sie. "
     "Damit können Sie Ihre wichtigen Dateien einfach und effizient verwalten.",
     "dashboardButtonText1": "Jetzt auf Dokumente zugreifen",
-    "dashboardTitle2": "Dokumente Hochladen",
+    "dashboardTitle2": "Dokument Upload",
     "dashboardDescription2": "Einfach, schnell",
     "dashboardDetailedDescription2": "Stärken Sie Ihre Planung für Solarmodule, indem Sie mühelos Ihre eigenen Dokumente in unsere Cloud hochladen. "
     "Damit legen Sie den Grundstein für eine maßgeschneiderte Solarmodulplanung, die auf Ihre spezifischen Bedürfnisse zugeschnitten ist.",
