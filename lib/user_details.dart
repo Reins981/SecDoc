@@ -20,12 +20,13 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
   List<UserInstance> users = [];
   List<String> domains = [];
   bool isLoading = true;
-  String? errorMessage;
   String _selectedLanguage = 'German';
   // Language related content
   String userDetailsTitleGerman = getTextContentGerman("userDetailsTitle");
   String userDetailsTitleEnglish = getTextContentEnglish("userDetailsTitle");
-  final ScrollController _scrollController = ScrollController();
+  // Search related
+  final TextEditingController searchController = TextEditingController();
+  bool _isSearch = false;
 
   @override
   void initState() {
@@ -62,20 +63,10 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
     Navigator.pushReplacementNamed(context, '/login');
   }
 
-  void _scrollToTop() {
-    _scrollController.animateTo(
-      0, // Scroll to the top
-      duration: Duration(seconds: 1),
-      curve: Curves.fastOutSlowIn,
-    );
-  }
-
-  void _scrollToBottom() {
-    _scrollController.animateTo(
-      _scrollController.position.maxScrollExtent,
-      duration: Duration(seconds: 1),
-      curve: Curves.fastOutSlowIn,
-    );
+  void onRefresh() {
+    setState(() {
+      widget.docOperations.clearProgressNotifierDict();
+    });
   }
 
   @override
@@ -98,14 +89,66 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
             },
             icon: const Icon(Icons.logout),
           ),
+          IconButton(
+            onPressed: () {
+              setState(() {
+                _isSearch = !_isSearch;
+              });
+            },
+            icon: const Icon(Icons.search),
+          ),
         ],
+        // Include the search bar when _isSearch is true
+        bottom: _isSearch
+            ? PreferredSize(
+          preferredSize: const Size.fromHeight(kToolbarHeight),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10.0),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(15.0),
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.5),
+                  spreadRadius: 1,
+                  blurRadius: 5,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: TextFormField(
+              controller: searchController,
+              style: const TextStyle(fontSize: 18.0),
+              decoration: InputDecoration(
+                labelText: 'Search by Email or Domain',
+                border: InputBorder.none,
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.refresh),
+                  onPressed: () {
+                    searchController.text = '';
+                    setState(() {
+                      _isSearch = false;
+                    });
+                    onRefresh();
+                  },
+                ),
+              ),
+              onChanged: (searchText) {
+                setState(() {
+                  _isSearch = searchText.isNotEmpty;
+                });
+                // Perform search logic here
+                // documentProvider.delaySearch(searchText, allDocumentsOrig, widget.userRole);
+              },
+            ),
+          ),
+        )
+            : null,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: isLoading
             ? const Center(child: CircularProgressIndicator())
-            : errorMessage != null
-            ? Center(child: Text(errorMessage!))
             : UsersList(users, domains, widget.docOperations, _selectedLanguage, widget.helper),
       ),
     );
@@ -181,26 +224,57 @@ class _UsersListState extends State<UsersList> {
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Role: ${user.role}'),
-                              Text('Email: ${user.email}'),
-                              Text('Disabled: ${user.disabled}'),
-                              Text('Verified: ${user.verified}'),
+                              Text(
+                                'Role: ${user.role}',
+                                style: GoogleFonts.lato(
+                                  fontSize: 14,
+                                  fontStyle: FontStyle.italic,
+                                  letterSpacing: 1.0,
+                                ),
+                              ),
+                              Text(
+                                'Email: ${user.email}',
+                                style: GoogleFonts.lato(
+                                  fontSize: 14,
+                                  fontStyle: FontStyle.italic,
+                                  letterSpacing: 1.0,
+                                ),
+                              ),
+                              Text(
+                                'Disabled: ${user.disabled}',
+                                style: GoogleFonts.lato(
+                                  fontSize: 14,
+                                  fontStyle: FontStyle.italic,
+                                  letterSpacing: 1.0,
+                                ),
+                              ),
+                              Text(
+                                'Verified: ${user.verified}',
+                                style: GoogleFonts.lato(
+                                fontSize: 14,
+                                fontStyle: FontStyle.italic,
+                                letterSpacing: 1.0,
+                              ),
+                              ),
                               // Add more subtitles as needed
                             ],
                           ),
-                          trailing: Checkbox(
-                            value: isSelected,
-                            onChanged: (value) {
-                              setState(() {
-                                if (value != null) {
-                                  if (value) {
-                                    selectedUsers.add(user);
-                                  } else {
-                                    selectedUsers.remove(user);
+                          trailing: Visibility(
+                            visible: !user.disabled && user.verified,
+                            child: RoundCheckbox(
+                              value: isSelected,
+                              onChanged: (value) {
+                                setState(() {
+                                  if (value != null) {
+                                    if (value) {
+                                      selectedUsers.add(user);
+                                    } else {
+                                      selectedUsers.remove(user);
+                                    }
                                   }
-                                }
-                              });
-                            },
+                                });
+                              },
+                            ),
                           ),
                         ),
                       ),
@@ -222,8 +296,8 @@ class _UsersListState extends State<UsersList> {
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.blue,
             padding: const EdgeInsets.symmetric(
-              vertical: 20,
-              horizontal: 40,
+              vertical: 10,
+              horizontal: 10,
             ),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
@@ -235,6 +309,47 @@ class _UsersListState extends State<UsersList> {
     );
   }
 }
+
+class RoundCheckbox extends StatelessWidget {
+  final bool value;
+  final ValueChanged<bool?>? onChanged;
+
+  RoundCheckbox({super.key, required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () {
+        if (onChanged != null) {
+          onChanged!(!value);
+        }
+      },
+      customBorder: const CircleBorder(),
+      child: SizedBox(
+        width: 40.0, // Adjust the width as needed
+        height: 40.0, // Adjust the height as needed
+        child: Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.blue),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(5.0),
+            child: value
+                ? const Icon(
+              Icons.check,
+              size: 20.0,
+              color: Colors.blue,
+            )
+                : Container(),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
 
 
 
