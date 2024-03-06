@@ -89,11 +89,11 @@ class DocumentProvider extends ChangeNotifier {
         .toLowerCase()
         .contains(searchText.toLowerCase())
         ||
-        doc['user_name']
+        doc['to_user_name']
             .toLowerCase()
             .contains(searchText.toLowerCase())
         ||
-        doc['user_email']
+        doc['to_email']
             .toLowerCase()
             .contains(searchText.toLowerCase())
         ||

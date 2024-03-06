@@ -663,8 +663,8 @@ class DocumentOperations {
       final domain = documentData['user_domain'];
       final category = documentData['category'];
       final year = documentData['year'];
-      final userMail = userRole == 'client' ? documentData['from_email'] : documentData['user_email'];
-      final userName = userRole == 'client' ? documentData['from_user_name'] : documentData['user_name'];
+      final userMail = userRole == 'client' ? documentData['from_email'] : documentData['to_email'];
+      final userName = userRole == 'client' ? documentData['from_user_name'] : documentData['to_user_name'];
       final name = documentData['document_name'];
       final owner = documentData['owner'];
       final selectedUser = documentData['selected_user'];
@@ -896,7 +896,7 @@ class DocumentOperations {
       Map<String, dynamic> userDetails,
       String documentName,
       String category,
-      String? owner,
+      Map<String, dynamic>? owner,
       ) async {
     String userDomain = userDetails['userDomain'];
     String userDomainLowerCase = userDomain.toLowerCase();
@@ -918,7 +918,7 @@ class DocumentOperations {
             .get()
           : await FirebaseFirestore.instance
           .collection('documents_$userDomainLowerCase')
-          .where('owner', isEqualTo: owner)
+          .where('owner', isEqualTo: owner['userUid'])
           .where('selected_user', isEqualTo: userDetails['userUid'])
           .where('category', isEqualTo: category)
           .where('document_name', isEqualTo: documentName)
@@ -944,12 +944,12 @@ class DocumentOperations {
         // Create a new document
         await FirebaseFirestore.instance.collection('documents_$userDomainLowerCase')
             .add({
-          "from_email": userDetails['userEmail'],
-          "from_user_name": userDetails['userName'],
-          "from_role": userDetails['userRole'],
-          "user_name": userDetails['userName'],
-          "user_email": userDetails['userEmail'],
-          "owner": userDetails['userUid'],
+          "from_email": owner == null ? userDetails['userEmail'] : owner['userEmail'],
+          "from_user_name": owner == null ? userDetails['userName'] : owner['userName'],
+          "from_role": owner == null ? userDetails['userRole'] : owner['userRole'],
+          "to_user_name": userDetails['userName'],
+          "to_email": userDetails['userEmail'],
+          "owner": owner == null ? userDetails['userUid'] : owner['userUid'],
           "selected_user": userDetails['userUid'],
           "category": category,
           "user_domain": userDomain,
@@ -1120,7 +1120,7 @@ class DocumentOperations {
                   break;
                 case TaskState.success:
                   Map<String, String> result = await _addDocument(
-                      ref, userDetails, documentName, category!, uploadTriggeredFrom == 'admin' ? currentUserDetails['userUid'] : null);
+                      ref, userDetails, documentName, category!, uploadTriggeredFrom == 'admin' ? currentUserDetails : null);
                   if (result['status'] == 'Error') {
                     if (_progressNotifierDict.containsKey(documentId) &&
                         _progressNotifierDict[documentId] != null) {
