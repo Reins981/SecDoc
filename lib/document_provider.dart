@@ -97,6 +97,14 @@ class DocumentProvider extends ChangeNotifier {
             .toLowerCase()
             .contains(searchText.toLowerCase())
         ||
+        doc['from_user_name']
+            .toLowerCase()
+            .contains(searchText.toLowerCase())
+        ||
+        doc['from_email']
+            .toLowerCase()
+            .contains(searchText.toLowerCase())
+        ||
         doc['category']
             .toLowerCase()
             .contains(searchText.toLowerCase())
