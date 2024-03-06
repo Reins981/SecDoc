@@ -471,7 +471,10 @@ class _UsersListState extends State<UsersList> {
             }
 
             // Show category selection menu
-            String? selectedCategory = await widget.helper.showCategorySelectionMenu(context);
+            String? selectedCategory = selectedMethod == 'Phone'
+                ? await widget.helper.showCategorySelectionMenu(context)
+                : 'Photos';
+
             if (selectedCategory != null) {
               setState(() {
                 isUploading = true;

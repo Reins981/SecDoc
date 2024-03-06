@@ -225,7 +225,7 @@ class Helper {
                   ),
                   onTap: () {
                     // Handle selection for Plans
-                    categoryCompleter.complete('Plans');
+                    categoryCompleter.complete(category);
                     Navigator.pop(context);
                   },
                 ),
@@ -896,9 +896,9 @@ class DocumentOperations {
       Map<String, dynamic> userDetails,
       String documentName,
       String category,
+      String? owner,
       ) async {
     String userDomain = userDetails['userDomain'];
-    String userRole = userDetails['userRole'];
     String userDomainLowerCase = userDomain.toLowerCase();
     DateTime expirationTime = DateTime.now().add(const Duration(days: 365)); // 1 year from now
     String downloadURL = await ref.getDownloadURL();
@@ -907,7 +907,7 @@ class DocumentOperations {
 
     try {
       // Check if the document exists
-      QuerySnapshot existingDocs = userRole == 'client'
+      QuerySnapshot existingDocs = owner == null
           ? await FirebaseFirestore.instance
             .collection('documents_$userDomainLowerCase')
             .where('owner', isEqualTo: userDetails['userUid'])
@@ -918,7 +918,7 @@ class DocumentOperations {
             .get()
           : await FirebaseFirestore.instance
           .collection('documents_$userDomainLowerCase')
-          .where('owner', isEqualTo: userDetails['userUid'])
+          .where('owner', isEqualTo: owner)
           .where('selected_user', isEqualTo: userDetails['userUid'])
           .where('category', isEqualTo: category)
           .where('document_name', isEqualTo: documentName)
@@ -940,7 +940,7 @@ class DocumentOperations {
           // Add fields to update here as needed
         });
       } else {
-        print('Adding new document: $documentName');
+        print("Adding new document: $documentName for $userDetails['userUid']");
         // Create a new document
         await FirebaseFirestore.instance.collection('documents_$userDomainLowerCase')
             .add({
@@ -1118,7 +1118,7 @@ class DocumentOperations {
                   break;
                 case TaskState.success:
                   Map<String, String> result = await _addDocument(
-                      ref, userDetails, documentName, category!);
+                      ref, userDetails, documentName, category!, uploadTriggeredFrom == 'admin' ? currentUserDetails['userUid'] : null);
                   if (result['status'] == 'Error') {
                     if (_progressNotifierDict.containsKey(documentId) &&
                         _progressNotifierDict[documentId] != null) {

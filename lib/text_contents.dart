@@ -2,8 +2,9 @@
 // of immutable categories
 String category1 = "Plans";
 String category2 = "Offers";
+String category3 = "Photos";
 
-List<String> immutableCategories = [category1, category2];
+List<String> immutableCategories = [category1, category2, category3];
 String solarAiUrl = "https://pvaustria.at/pv-rechner/";
 
 String getTextContentGerman(String textContentType) {
