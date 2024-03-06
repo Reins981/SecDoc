@@ -1018,6 +1018,7 @@ class DocumentOperations {
   Future<void> uploadDocuments(String? documentId, File? specificFile, String? category, List<Map<String, dynamic>>? userDetails, ScaffoldMessengerState context) async {
     Helper _helper = Helper();
     _loadLanguage();
+    Completer<void> uploadCompleter = Completer(); // Create a Completer
 
     // Upload a specific file or select the files for the upload routine
     List<File> files = [];
@@ -1041,23 +1042,24 @@ class DocumentOperations {
 
     String? errorMessage;
     if (files.isEmpty) {
+      uploadCompleter.complete();
       errorMessage = _selectedLanguage == 'German' ? docOperationsNoDocsGerman : docOperationsNoDocsEnglish;
       _helper.showSnackBar(errorMessage, 'Error', context);
-      return;
+      return uploadCompleter.future;
     }
 
     if (documentId == null) {
+      uploadCompleter.complete();
       errorMessage = "Document Id must not be null";
       _helper.showSnackBar(errorMessage, 'Error', context);
-      return;
+      return uploadCompleter.future;
     }
 
     int totalBytes = await _helper.getTotalBytes(files);
     int totalBytesTransferred = 0;
-
-    Completer<void> uploadCompleter = Completer(); // Create a Completer
     int filesCount = files.length; // Count the total number of files
     int uploadedFilesCount = 0; // Counter for uploaded files
+    bool uploadError = false;
 
     try {
       category ??= documentLibraryCategoryCustomerClientEnglish;
@@ -1114,7 +1116,7 @@ class DocumentOperations {
                   break;
                 case TaskState.paused:
                   String errorMessage = "Upload task is paused for $documentName";
-                  _helper.showSnackBar(errorMessage, 'Error', context);
+                  _helper.showSnackBar(errorMessage, 'Info', context);
                   break;
                 case TaskState.success:
                   Map<String, String> result = await _addDocument(
@@ -1140,24 +1142,36 @@ class DocumentOperations {
                   }
                   break;
                 case TaskState.canceled:
+                  uploadError = true;
+                  uploadCompleter.complete();
                   String errorMessage = "Upload task is cancelled for $documentName";
                   _helper.showSnackBar(errorMessage, 'Error', context);
                   break;
                 case TaskState.error:
+                  uploadError = true;
+                  uploadCompleter.complete();
                   String errorMessage = "Upload task produced and error for $documentName";
                   _helper.showSnackBar(errorMessage, 'Error', context);
                   break;
                 default:
+                  uploadError = true;
+                  uploadCompleter.complete();
                   String errorMessage = "Upload task produced and error for $documentName";
                   _helper.showSnackBar(errorMessage, 'Error', context);
                   break;
               }
             });
           } catch (e) {
+            uploadCompleter.complete();
             _helper.showSnackBar('$e', 'Error', context);
             return uploadCompleter.future;
           }
         }
+      }
+
+      // If an error occurred during the upload, skip the notification part
+      if (uploadError == true) {
+        return uploadCompleter.future;
       }
 
       // Notification Part
@@ -1179,7 +1193,7 @@ class DocumentOperations {
             }
           }
         } catch (e) {
-          print('$e');
+          _helper.showSnackBar('$e', 'Error', context);
           return uploadCompleter.future;
         }
       } else {
@@ -1197,7 +1211,7 @@ class DocumentOperations {
             await _helper.sendNotificationMail(
                 adminName, adminEmail, userEmail, userName);
           } catch (e) {
-            print('$e');
+            _helper.showSnackBar('$e', 'Error', context);
             return uploadCompleter.future;
           }
         }
