@@ -591,7 +591,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
         await file.writeAsBytes(await pdf.save());
 
         // Upload the PDF file
-        await widget.docOperations.uploadDocuments(documentId, file, null, context);
+        await widget.docOperations.uploadDocuments(documentId, file, null, null, context);
         if (mounted) {
           setState(() {
             isUploading = false; // This should be false after uploading
@@ -679,7 +679,7 @@ class _SolarDataFetcherState extends State<SolarDataFetcher> {
         await file.writeAsBytes(await pdf.save());
 
         // Upload the PDF file
-        await widget.docOperations.uploadDocuments(documentId, file, null, context);
+        await widget.docOperations.uploadDocuments(documentId, file, null, null, context);
 
         if (mounted) {
           setState(() {

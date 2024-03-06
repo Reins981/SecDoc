@@ -46,7 +46,7 @@ class Helper {
   List<UserInstance> createUserInstanceTestData() {
     List<UserInstance> users = [
       UserInstance(
-        uid: '1',
+        uid: 'yw9k4KL3X4XOH4b6ExQRusFcBPl2',
         email: 'reins981@gmail.com',
         domain: 'PV-IBK',
         userName: 'Rettung',
@@ -55,7 +55,7 @@ class Helper {
         verified: true,
       ),
       UserInstance(
-        uid: '2',
+        uid: 'P8pMj8V2pzRwEkaH4saHQu3csAr2',
         email: 'james_dean@pv.com',
         domain: 'PV-IBK',
         userName: 'james',
@@ -64,7 +64,7 @@ class Helper {
         verified: true,
       ),
       UserInstance(
-        uid: '3',
+        uid: 'pZUGWSazwtf8ybdzESh3tTyGSQ72',
         email: 'default2402@gmail.com',
         domain: 'PV-IBK-L',
         userName: 'Polizei',
@@ -73,7 +73,7 @@ class Helper {
         verified: true,
       ),
       UserInstance(
-        uid: '4',
+        uid: 'C7OLLRGheghFM4QTcrbHMOWD4au2',
         email: 'user@mail.com',
         domain: 'PV-EXT',
         userName: 'user_test',
@@ -82,7 +82,7 @@ class Helper {
         verified: false,
       ),
       UserInstance(
-        uid: '5',
+        uid: 'E7bMBQoiFMhWUkzBjfyHD97opXT2',
         email: 'john_doe@pv.com',
         domain: 'PV-ALL',
         userName: 'john',
@@ -372,6 +372,31 @@ class Helper {
     }
 
     return await user.getIdTokenResult();
+  }
+
+  List<Map<String, dynamic>> createUserDetailsForUserInstances(List<UserInstance> users) {
+    List<Map<String, dynamic>> userDetails = [];
+    for (UserInstance user in users) {
+      final userUid = user.uid;
+      final userEmail = user.email;
+      final userName = user.userName;
+      const token = null;
+      final userRole = user.role;
+      final userDomain = user.domain;
+      final disabled = user.disabled;
+      final verified = user.verified;
+      userDetails.add({
+        'userUid': userUid,
+        'userEmail': userEmail,
+        'userName': userName,
+        'userRole': userRole,
+        'userDomain': userDomain,
+        'token': token,
+        'disabled': disabled,
+        'verified': verified
+      });
+    }
+    return userDetails;
   }
 
   Future<Map<String, dynamic>> getCurrentUserDetails() async {
@@ -906,19 +931,32 @@ class DocumentOperations {
       String newDocumentName = "SolarSnapshot.$extensionOrig";
       newDocumentName = addTimestampToDocumentName(newDocumentName);
       File renamedFile = changeDocumentName(filePathAbs, newDocumentName);
-      await uploadDocuments(documentId, File(renamedFile.path), null, context);
+      await uploadDocuments(documentId, File(renamedFile.path), null, null, context);
     }
   }
 
-  Future<void> uploadDocuments(String? documentId, File? specificFile, String? category, ScaffoldMessengerState context) async {
+  Future<void> uploadDocuments(String? documentId, File? specificFile, String? category, List<Map<String, dynamic>>? userDetails, ScaffoldMessengerState context) async {
     Helper _helper = Helper();
     _loadLanguage();
 
+    // Upload a specific file or select the files for the upload routine
     List<File> files = [];
     if (specificFile == null) {
       files = await selectDocumentsForUpload();
     } else {
       files = [specificFile];
+    }
+
+    // Decide if the upload routine was triggered from a client or admin
+    List<Map<String, dynamic>> userDetailsList = [];
+    Map<String, dynamic> currentUserDetails = await _helper.getCurrentUserDetails();
+    late String uploadTriggeredFrom;
+    if (userDetails == null) {
+      userDetailsList.add(currentUserDetails);
+      uploadTriggeredFrom = 'client';
+    } else {
+      userDetailsList = userDetails;
+      uploadTriggeredFrom = 'admin';
     }
 
     String? errorMessage;
@@ -942,14 +980,8 @@ class DocumentOperations {
     int uploadedFilesCount = 0; // Counter for uploaded files
 
     try {
-      Map<String, dynamic> userDetails = await _helper.getCurrentUserDetails();
       category ??= documentLibraryCategoryCustomerClientEnglish;
       int year = DateTime.now().year;
-      String userDomain = userDetails['userDomain'].toLowerCase();
-      String userName = userDetails['userName'];
-      String userEmail = userDetails['userEmail'];
-      String token = userDetails['token'];
-      String role = userDetails['userRole'];
 
       // First Reset the Progress Bar
       setProgressNotifierDictValue(documentId);
@@ -958,94 +990,138 @@ class DocumentOperations {
 
       for (File file in files) {
         String documentName = file.path.split('/').last; // Get the document name
-        String documentPath =
-            '$userDomain/'
-            '$category/'
-            '$year/'
-            '${userDetails['userUid']}/'
-            '${userDetails['userName']}/'
-            '$documentName';
+        for (Map<String, dynamic> userDetails in userDetailsList) {
+          String userDomain = userDetails['userDomain'].toLowerCase();
+          String userName = userDetails['userName'];
+          String userUid = userDetails['userUid'];
+          String documentPath =
+              '$userDomain/'
+              '$category/'
+              '$year/'
+              '$userUid/'
+              '$userName/'
+              '$documentName';
+          print("Uploading Document for: $documentPath");
 
-        //Map<String, dynamic> result = await _helper.getSignedUrl(documentPath, token);
+          //Map<String, dynamic> result = await _helper.getSignedUrl(documentPath, token);
 
-        // TODO and use this instead of getDownloadURL
-        /*if (result['status'] == 'Failed') {
-          return result['error'];
-        }
-        signedUrl = result['signedUrl'];
-         */
+          // TODO and use this instead of getDownloadURL
+          /*if (result['status'] == 'Failed') {
+            return result['error'];
+          }
+          signedUrl = result['signedUrl'];
+           */
 
-        Reference ref = FirebaseStorage.instance.ref().child(documentPath);
-        try {
-          ref.putFile(file).snapshotEvents.listen((taskSnapshot) async {
-            switch (taskSnapshot.state) {
-              case TaskState.running:
-                totalBytesTransferred += taskSnapshot.bytesTransferred;
-                // Might happen if the event is triggered several times for the same file
-                if (totalBytesTransferred >= totalBytes) {
-                  progress = 100.0;
-                } else {
-                  progress = (totalBytesTransferred / totalBytes) * 100.0;
-                }
-                if (_progressNotifierDict.containsKey(documentId) && _progressNotifierDict[documentId] != null) {
-                  _progressNotifierDict[documentId]!.value = progress;
-                }
-                break;
-              case TaskState.paused:
-                String errorMessage = "Upload task is paused for $documentName";
-                _helper.showSnackBar(errorMessage, 'Error', context);
-                break;
-              case TaskState.success:
-                Map<String, String> result = await _addDocument(ref, userDetails, documentName, category!);
-                if (result['status'] == 'Error') {
-                  if (_progressNotifierDict.containsKey(documentId) && _progressNotifierDict[documentId] != null) {
-                    _progressNotifierDict[documentId]!.value = 0.0;
+          Reference ref = FirebaseStorage.instance.ref().child(documentPath);
+          try {
+            ref
+                .putFile(file)
+                .snapshotEvents
+                .listen((taskSnapshot) async {
+              switch (taskSnapshot.state) {
+                case TaskState.running:
+                  totalBytesTransferred += taskSnapshot.bytesTransferred;
+                  // Might happen if the event is triggered several times for the same file
+                  if (totalBytesTransferred >= totalBytes) {
+                    progress = 100.0;
+                  } else {
+                    progress = (totalBytesTransferred / totalBytes) * 100.0;
                   }
-                  String? errorMessage = result['message'];
-                  _helper.showSnackBar(errorMessage ?? "Default Error Message", 'Error', context);
-                } else {
-                  String successMessage = _selectedLanguage == 'German' ? "Dokument $documentName$docOperationsUploadSuccessGerman" : "Document $documentName$docOperationsUploadSuccessEnglish";
-                  _helper.showSnackBar(successMessage, 'Success', context);
-                }
-                uploadedFilesCount++;
-                if (uploadedFilesCount == filesCount) {
-                  uploadCompleter.complete();
-                }
-                break;
-              case TaskState.canceled:
-                String errorMessage = "Upload task is cancelled for $documentName";
-                _helper.showSnackBar(errorMessage, 'Error', context);
-                break;
-              case TaskState.error:
-                String errorMessage = "Upload task produced and error for $documentName";
-                _helper.showSnackBar(errorMessage, 'Error', context);
-                break;
-              default:
-                String errorMessage = "Upload task produced and error for $documentName";
-                _helper.showSnackBar(errorMessage, 'Error', context);
-                break;
-            }
-          });
-        } catch (e) {
-          _helper.showSnackBar('$e', 'Error', context);
-          return uploadCompleter.future;
-        }
-      }
-
-      try {
-        List<UserInstance> allUsers = await _helper.fetchUsersFromServer();
-
-        for (UserInstance user in allUsers) {
-          if (user.role == 'super_admin' || (user.role == 'admin' && user.domain.toLowerCase() == userDomain)) {
-            await _helper.sendPushNotificationRequestToServer(user.uid);
-            await _helper.sendNotificationMail(userName, userEmail, user.email, user.userName!);
+                  if (_progressNotifierDict.containsKey(documentId) &&
+                      _progressNotifierDict[documentId] != null) {
+                    _progressNotifierDict[documentId]!.value = progress;
+                  }
+                  break;
+                case TaskState.paused:
+                  String errorMessage = "Upload task is paused for $documentName";
+                  _helper.showSnackBar(errorMessage, 'Error', context);
+                  break;
+                case TaskState.success:
+                  Map<String, String> result = await _addDocument(
+                      ref, userDetails, documentName, category!);
+                  if (result['status'] == 'Error') {
+                    if (_progressNotifierDict.containsKey(documentId) &&
+                        _progressNotifierDict[documentId] != null) {
+                      _progressNotifierDict[documentId]!.value = 0.0;
+                    }
+                    String? errorMessage = result['message'];
+                    _helper.showSnackBar(
+                        errorMessage ?? "Default Error Message", 'Error',
+                        context);
+                  } else {
+                    String successMessage = _selectedLanguage == 'German'
+                        ? "Dokument $documentName$docOperationsUploadSuccessGerman"
+                        : "Document $documentName$docOperationsUploadSuccessEnglish";
+                    _helper.showSnackBar(successMessage, 'Success', context);
+                  }
+                  uploadedFilesCount++;
+                  if (uploadedFilesCount == filesCount) {
+                    uploadCompleter.complete();
+                  }
+                  break;
+                case TaskState.canceled:
+                  String errorMessage = "Upload task is cancelled for $documentName";
+                  _helper.showSnackBar(errorMessage, 'Error', context);
+                  break;
+                case TaskState.error:
+                  String errorMessage = "Upload task produced and error for $documentName";
+                  _helper.showSnackBar(errorMessage, 'Error', context);
+                  break;
+                default:
+                  String errorMessage = "Upload task produced and error for $documentName";
+                  _helper.showSnackBar(errorMessage, 'Error', context);
+                  break;
+              }
+            });
+          } catch (e) {
+            _helper.showSnackBar('$e', 'Error', context);
+            return uploadCompleter.future;
           }
         }
-      } catch (e) {
-        print('$e');
-        return uploadCompleter.future;
       }
 
+      // Notification Part
+      if (uploadTriggeredFrom == 'client') {
+        List<UserInstance> allUsers = await _helper.fetchUsersFromServer();
+        String userDomain = userDetailsList[0]['userDomain'].toLowerCase();
+        String userName = userDetailsList[0]['userName'];
+        String userEmail = userDetailsList[0]['userEmail'];
+
+        try {
+          for (UserInstance user in allUsers) {
+            // Search the corresponding super_admin or admin for the particular client based on its domain
+            if (user.role == 'super_admin' || (user.role == 'admin' &&
+                user.domain.toLowerCase() == userDomain)) {
+              print("Sending Push notification from $userEmail($userName) to ${user.email}(${user.userName})");
+              await _helper.sendPushNotificationRequestToServer(user.uid);
+              await _helper.sendNotificationMail(
+                  userName, userEmail, user.email, user.userName!);
+            }
+          }
+        } catch (e) {
+          print('$e');
+          return uploadCompleter.future;
+        }
+      } else {
+        String adminEmail = currentUserDetails['userEmail'];
+        String adminName = currentUserDetails['userName'];
+
+        for (Map<String, dynamic> userDetails in userDetailsList) {
+          String userName = userDetails['userName'];
+          String userEmail = userDetails['userEmail'];
+          String userUid = userDetails['userUid'];
+
+          print("Sending Push notification from $adminEmail($adminName) to $userEmail($userName)");
+          try {
+            await _helper.sendPushNotificationRequestToServer(userUid);
+            await _helper.sendNotificationMail(
+                adminName, adminEmail, userEmail, userName);
+          } catch (e) {
+            print('$e');
+            return uploadCompleter.future;
+          }
+        }
+      }
     } catch (e) {
       _helper.showSnackBar('$e', 'Error', context);
       return uploadCompleter.future;

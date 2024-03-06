@@ -170,128 +170,241 @@ class UsersList extends StatefulWidget {
 
 class _UsersListState extends State<UsersList> {
   List<UserInstance> selectedUsers = [];
+  bool isUploading = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: ListView.builder(
-        itemCount: widget.domainList.length,
-        itemBuilder: (context, index) {
-          String domain = widget.domainList[index];
-          List<UserInstance> usersInDomain = widget.users
-              .where((user) => user.domain == domain)
-              .toList();
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              itemCount: widget.domainList.length,
+              itemBuilder: (context, index) {
+                String domain = widget.domainList[index];
+                List<UserInstance> usersInDomain = widget.users
+                    .where((user) => user.domain == domain)
+                    .toList();
 
-          return Card(
-            elevation: 5.0,
-            color: Colors.white, // Set the default color for the domain card
-            margin: EdgeInsets.all(10.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Text(
-                    'Domain: $domain',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18.0,
-                    ),
-                  ),
-                ),
-                Column(
-                  children: usersInDomain.map((user) {
-                    bool isSelected = selectedUsers.contains(user);
-
-                    // Determine the color based on conditions
-                    Color userCardColor = user.disabled || !user.verified
-                        ? Colors.red // Set to red if disabled or not verified
-                        : Colors.white; // Set to white if conditions are not met
-
-                    return GestureDetector(
-                      onTap: user.disabled || !user.verified
-                          ? null // Disable onTap if conditions are met
-                          : () {
-                        // Handle tapping on the user tile
-                        print('Tapped on user: ${user.userName}');
-                      },
-                      child: Card(
-                        elevation: 3.0,
-                        margin: EdgeInsets.all(8.0),
-                        color: userCardColor,
-                        child: ListTile(
-                          title: Text(user.userName ?? user.email),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Role: ${user.role}',
-                                style: GoogleFonts.lato(
-                                  fontSize: 14,
-                                  fontStyle: FontStyle.italic,
-                                  letterSpacing: 1.0,
-                                ),
-                              ),
-                              Text(
-                                'Email: ${user.email}',
-                                style: GoogleFonts.lato(
-                                  fontSize: 14,
-                                  fontStyle: FontStyle.italic,
-                                  letterSpacing: 1.0,
-                                ),
-                              ),
-                              Text(
-                                'Disabled: ${user.disabled}',
-                                style: GoogleFonts.lato(
-                                  fontSize: 14,
-                                  fontStyle: FontStyle.italic,
-                                  letterSpacing: 1.0,
-                                ),
-                              ),
-                              Text(
-                                'Verified: ${user.verified}',
-                                style: GoogleFonts.lato(
-                                fontSize: 14,
-                                fontStyle: FontStyle.italic,
-                                letterSpacing: 1.0,
-                              ),
-                              ),
-                              // Add more subtitles as needed
-                            ],
-                          ),
-                          trailing: Visibility(
-                            visible: !user.disabled && user.verified,
-                            child: RoundCheckbox(
-                              value: isSelected,
-                              onChanged: (value) {
-                                setState(() {
-                                  if (value != null) {
-                                    if (value) {
-                                      selectedUsers.add(user);
-                                    } else {
-                                      selectedUsers.remove(user);
-                                    }
-                                  }
-                                });
-                              },
-                            ),
+                return Card(
+                  elevation: 5.0,
+                  color: Colors.white, // Set the default color for the domain card
+                  margin: EdgeInsets.all(10.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text(
+                          'Domain: $domain',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18.0,
                           ),
                         ),
                       ),
-                    );
-                  }).toList(),
-                ),
-              ],
+                      Column(
+                        children: usersInDomain.map((user) {
+                          bool isSelected = selectedUsers.contains(user);
+
+                          return GestureDetector(
+                            onTap: user.disabled || !user.verified
+                                ? () {
+                                ScaffoldMessengerState scaffoldContext = ScaffoldMessenger.of(context);
+                                widget.helper.showSnackBar("User '${user.userName}' is disabled or not verified!", 'Error', scaffoldContext);
+                            } // Disable onTap if conditions are met
+                                : () {
+                              // Handle tapping on the user tile
+                              print('Tapped on user: ${user.userName}');
+                            },
+                            child: Card(
+                              elevation: 3.0,
+                              margin: EdgeInsets.all(8.0),
+                              child: ListTile(
+                                title: Text(user.userName ?? user.email),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Role: ${user.role}',
+                                      style: GoogleFonts.lato(
+                                        fontSize: 14,
+                                        fontStyle: FontStyle.italic,
+                                        letterSpacing: 1.0,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Email: ${user.email}',
+                                      style: GoogleFonts.lato(
+                                        fontSize: 14,
+                                        fontStyle: FontStyle.italic,
+                                        letterSpacing: 1.0,
+                                      ),
+                                    ),
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: user
+                                            .disabled
+                                            ? Colors
+                                            .red
+                                            : Colors
+                                            .green,
+                                        border: user
+                                            .disabled
+                                            ? Border
+                                            .all(
+                                          color: Colors
+                                              .red,
+                                          // Border color
+                                          width: 1.0, // Border width
+                                        )
+                                            : Border
+                                            .all(
+                                          color: Colors
+                                              .green,
+                                          // Border color
+                                          width: 1.0, // Border width
+                                        ),
+                                        borderRadius: BorderRadius
+                                            .circular(
+                                            4.0), // Border radius
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets
+                                            .all(
+                                            4.0),
+                                        // Add padding inside the box
+                                        child: Text(
+                                          "Disabled: ${user
+                                              .disabled
+                                              ? 'Yes'
+                                              : 'No'}",
+                                          style: GoogleFonts.lato(
+                                            fontSize: 14,
+                                            color: Colors.black,
+                                            fontStyle: FontStyle.italic,
+                                            letterSpacing: 1.0,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: user
+                                            .verified
+                                            ? Colors
+                                            .green
+                                            : Colors
+                                            .red,
+                                        border: user
+                                            .verified
+                                            ? Border
+                                            .all(
+                                          color: Colors
+                                              .green,
+                                          // Border color
+                                          width: 1.0, // Border width
+                                        )
+                                            : Border
+                                            .all(
+                                          color: Colors
+                                              .red,
+                                          // Border color
+                                          width: 1.0, // Border width
+                                        ),
+                                        borderRadius: BorderRadius
+                                            .circular(
+                                            4.0), // Border radius
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets
+                                            .all(
+                                            4.0),
+                                        // Add padding inside the box
+                                        child: Text(
+                                          "Verified: ${user
+                                              .verified
+                                              ? 'Yes'
+                                              : 'No'}",
+                                          style: GoogleFonts.lato(
+                                            fontSize: 14,
+                                            color: Colors.black,
+                                            fontStyle: FontStyle.italic,
+                                            letterSpacing: 1.0,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    // Add more subtitles as needed
+                                  ],
+                                ),
+                                trailing: Visibility(
+                                  visible: !user.disabled && user.verified,
+                                  child: RoundCheckbox(
+                                    value: isSelected,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        if (value != null) {
+                                          if (value) {
+                                            selectedUsers.add(user);
+                                          } else {
+                                            selectedUsers.remove(user);
+                                          }
+                                        }
+                                      });
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
-          );
-        },
+          ),
+          const SizedBox(height: 20),
+          Visibility(
+            visible: isUploading,
+            child: Align(
+              alignment: Alignment.center,
+              child: LinearProgressIndicator(
+                minHeight: 4.0,
+                backgroundColor: Colors.grey.shade300,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+              ),
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: Container(
         padding: EdgeInsets.all(16.0),
         child: ElevatedButton(
-          onPressed: () {
+          onPressed: () async {
+            setState(() {
+              isUploading = true;
+            });
             // Handle the selected users
-            print('Selected Users: ${selectedUsers.map((user) => user.userName).toList()}');
+            print('Handle upload for selected Users: ${selectedUsers.map((user) => user.userName).toList()}');
+            if (selectedUsers.isEmpty) {
+              ScaffoldMessengerState scaffoldContext = ScaffoldMessenger.of(context);
+              widget.helper.showSnackBar("No Users have been selected for the Document Upload.", 'Error', scaffoldContext);
+            } else {
+              String documentId = "uploadDocIdDefaultAdmin";
+              widget.docOperations.setProgressNotifierDictValue(documentId);
+              List<Map<String, dynamic>> userDetails = widget.helper.createUserDetailsForUserInstances(selectedUsers);
+              await widget.docOperations.uploadDocuments(
+                  documentId, null, null, userDetails, ScaffoldMessenger.of(context));
+            }
+
+            if (mounted) {
+              setState(() {
+                isUploading = false;
+              });
+            }
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.blue,
@@ -318,16 +431,19 @@ class RoundCheckbox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return InkResponse(
       onTap: () {
         if (onChanged != null) {
           onChanged!(!value);
         }
       },
+      containedInkWell: true, // This property controls the splash containment
       customBorder: const CircleBorder(),
+      splashColor: Colors.blue.withOpacity(0.5),
+      splashFactory: InkRipple.splashFactory,
       child: SizedBox(
-        width: 40.0, // Adjust the width as needed
-        height: 40.0, // Adjust the height as needed
+        width: 50.0,
+        height: 50.0,
         child: Container(
           decoration: BoxDecoration(
             shape: BoxShape.circle,
@@ -348,6 +464,7 @@ class RoundCheckbox extends StatelessWidget {
     );
   }
 }
+
 
 
 

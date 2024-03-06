@@ -9,7 +9,7 @@ import 'language_service.dart';
 
 class DocumentUploadPage extends StatefulWidget {
   final Function(String?, ScaffoldMessengerState) cameraUpload;
-  final Function(String?, File?, String?, ScaffoldMessengerState) uploadDocuments;
+  final Function(String?, File?, String?, List<Map<String, dynamic>>?, ScaffoldMessengerState) uploadDocuments;
   final Function() clearProgressNotifier;
   final String documentId;
 
@@ -99,7 +99,7 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                 setState(() {
                   isUploading = true;
                 });
-                await widget.uploadDocuments(widget.documentId, null, null, ScaffoldMessenger.of(context));
+                await widget.uploadDocuments(widget.documentId, null, null, null, ScaffoldMessenger.of(context));
 
                 if (mounted) {
                   setState(() {

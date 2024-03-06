@@ -771,7 +771,7 @@ class CustomListWidget extends StatelessWidget {
                                                       : 'Updated'}",
                                                   style: GoogleFonts.lato(
                                                     fontSize: 14,
-                                                    color: Colors.black,
+                                                    color: document.isNew ? Colors.black : null,
                                                     fontStyle: FontStyle.italic,
                                                     letterSpacing: 1.0,
                                                   ),
@@ -785,7 +785,7 @@ class CustomListWidget extends StatelessWidget {
                                                   color: document
                                                       .viewed
                                                       ? Colors
-                                                      .orange
+                                                      .green
                                                       : Colors
                                                       .transparent,
                                                   border: document
@@ -793,7 +793,7 @@ class CustomListWidget extends StatelessWidget {
                                                       ? Border
                                                       .all(
                                                     color: Colors
-                                                        .orange,
+                                                        .green,
                                                     // Border color
                                                     width: 1.0, // Border width
                                                   )
@@ -814,7 +814,7 @@ class CustomListWidget extends StatelessWidget {
                                                         : 'No'}",
                                                     style: GoogleFonts.lato(
                                                       fontSize: 14,
-                                                      color: Colors.black,
+                                                      color: document.viewed ? Colors.black : null,
                                                       fontStyle: FontStyle.italic,
                                                       letterSpacing: 1.0,
                                                     ),
