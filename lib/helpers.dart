@@ -355,10 +355,10 @@ class Helper {
         final List<dynamic> usersJson = jsonDecode(response.body)['users'];
         return usersJson.map((json) => UserInstance.fromJson(json)).toList();
       } else {
-        throw 'Failed to fetch users: ${response.statusCode}';
+        throw 'Failed to fetch users from server: ${response.statusCode}';
       }
     } catch (e) {
-      throw '$e';
+      throw 'Failed to fetch users from server: $e';
     }
   }
 
@@ -1174,7 +1174,7 @@ class DocumentOperations {
         return uploadCompleter.future;
       }
 
-      // Notification Part
+      // Notification Sending Part
       if (uploadTriggeredFrom == 'client') {
         List<UserInstance> allUsers = await _helper.fetchUsersFromServer();
         String userDomain = userDetailsList[0]['userDomain'].toLowerCase();
