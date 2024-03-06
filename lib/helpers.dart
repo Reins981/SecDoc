@@ -158,6 +158,86 @@ class Helper {
     return totalBytes;
   }
 
+  Future<String?> showUploadMethodSelectionMenu(BuildContext context) async {
+    Completer<String?> categoryCompleter = Completer<String?>();
+
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          padding: EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: const Icon(
+                  Icons.camera,
+                  size: 40,
+                  color: Colors.black,
+                ),
+                onTap: () {
+                  // Handle selection for Plans
+                  categoryCompleter.complete('Camera');
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                title: const Icon(
+                  Icons.phone_android,
+                  size: 40,
+                  color: Colors.black,
+                ),
+                onTap: () {
+                  // Handle selection for Plans
+                  categoryCompleter.complete('Phone');
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    return categoryCompleter.future;
+  }
+
+  Future<String?> showCategorySelectionMenu(BuildContext context) async {
+    Completer<String?> categoryCompleter = Completer<String?>();
+
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          padding: EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (String category in immutableCategories)
+                ListTile(
+                  title: Text(
+                    category,
+                    style: GoogleFonts.lato(
+                      fontSize: 18.0,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                  onTap: () {
+                    // Handle selection for Plans
+                    categoryCompleter.complete('Plans');
+                    Navigator.pop(context);
+                  },
+                ),
+            ],
+          ),
+        );
+      },
+    );
+
+    return categoryCompleter.future;
+  }
+
   void showSnackBar(String message, String messageType, ScaffoldMessengerState context, {int duration = 4}) {
     Color backgroundColor = messageType == "Error" ? Colors.red : Colors.yellow;
     Color fontColor = messageType == "Error" ? Colors.white : Colors.black;
@@ -283,26 +363,26 @@ class Helper {
   }
 
   Future<void> sendNotificationMail(
-      String userName,
+      String userNameFrom,
       String fromEmailAddress,
       String toEmailAddress,
-      String adminUserName,
+      String userNameTo,
       ) async {
     Helper helper = Helper();
     // Replace "YOUR_API_KEY" with your actual SendGrid API key
     final sendgrid = Mailer(mailPassword);
 
-    final String name = "$userName $fromEmailAddress";
+    final String name = "$userNameFrom $fromEmailAddress";
     final fromAddress = Address(mailDefaultSender, name);
-    Address toAddress = Address(toEmailAddress, adminUserName);
+    Address toAddress = Address(toEmailAddress, userNameTo);
     Content htmlContent = Content('text/html', '''
       <html>
         <body style="font-family: Arial, sans-serif; margin: 0; padding: 0;">
         <div style="background-color: #f5f5f5;">
             <div style="background-color: #ffffff; margin: 0 auto; max-width: 600px;">
                 <div style="padding: 20px; text-align: center;">
-                    <h1 style="color: #333333;">Welcome back to PuraVida GmbH $adminUserName</h1>
-                    <p style="color: #555555;">Client "$name" has uploaded new document(s).</p>
+                    <h1 style="color: #333333;">Welcome back to PuraVida GmbH $userNameTo</h1>
+                    <p style="color: #555555;">"$name" has uploaded new document(s).</p>
                     <p style="color: #555555;">Please open your mobile App to access them.</p>
                 </div>
                 <div style="padding: 20px; background-color: #f5f5f5; text-align: center;">
@@ -315,7 +395,7 @@ class Helper {
       </html>
     ''');
 
-    final subject = 'New Document(s) from $userName';
+    final subject = 'New Document(s) from $userNameFrom';
     Personalization personalization = Personalization([toAddress]);
 
     final email = Email([personalization], fromAddress, subject, content: [htmlContent]);
@@ -918,7 +998,7 @@ class DocumentOperations {
   }
 
   // Function to open the camera and upload the photo to Firebase
-  Future<void> openCameraAndUpload(String? documentId, ScaffoldMessengerState context) async {
+  Future<void> openCameraAndUpload(String? documentId, String? category, List<Map<String, dynamic>>? userDetails, ScaffoldMessengerState context) async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.camera);
 
@@ -931,7 +1011,7 @@ class DocumentOperations {
       String newDocumentName = "SolarSnapshot.$extensionOrig";
       newDocumentName = addTimestampToDocumentName(newDocumentName);
       File renamedFile = changeDocumentName(filePathAbs, newDocumentName);
-      await uploadDocuments(documentId, File(renamedFile.path), null, null, context);
+      await uploadDocuments(documentId, File(renamedFile.path), category, userDetails, context);
     }
   }
 
@@ -1050,8 +1130,8 @@ class DocumentOperations {
                         context);
                   } else {
                     String successMessage = _selectedLanguage == 'German'
-                        ? "Dokument $documentName$docOperationsUploadSuccessGerman"
-                        : "Document $documentName$docOperationsUploadSuccessEnglish";
+                        ? "Dokument $documentName$docOperationsUploadSuccessGerman für '$userName'"
+                        : "Document $documentName$docOperationsUploadSuccessEnglish for '$userName'";
                     _helper.showSnackBar(successMessage, 'Success', context);
                   }
                   uploadedFilesCount++;

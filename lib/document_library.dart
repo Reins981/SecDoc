@@ -393,7 +393,7 @@ class _DocumentListWidgetState extends State<DocumentListWidget> {
               controller: widget.searchController,
               style: const TextStyle(fontSize: 18.0), // Adjust font size
               decoration: InputDecoration(
-                labelText: 'Document, Status, User, Email, Category, ..',
+                labelText: 'Search by Document, Status, User, Email, ..',
                 border: InputBorder.none,
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.refresh), // Reset filter icon

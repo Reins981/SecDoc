@@ -18,8 +18,9 @@ class UserDetailsScreen extends StatefulWidget {
 
 class _UserDetailsScreenState extends State<UserDetailsScreen> {
   List<UserInstance> users = [];
+  List<UserInstance> originalUsers = [];
   List<String> domains = [];
-  bool isLoading = true;
+  bool _isLoading = true;
   String _selectedLanguage = 'German';
   // Language related content
   String userDetailsTitleGerman = getTextContentGerman("userDetailsTitle");
@@ -34,8 +35,56 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
     _loadLanguage();
     // TodDo: Remove this if the server is running in the cloud!!!!
     users = widget.helper.createUserInstanceTestData();
+    originalUsers = List.from(users);
     domains = widget.helper.createDomainListFromUsers(users);
-    isLoading = false;
+    _isLoading = false;
+    _isSearch = false;
+    /*widget.helper.fetchUsersFromServer().then((fetchedUsers) {
+      setState(() {
+        users = fetchedUsers;
+        isLoading = false;
+      });
+    }).catchError((error) {
+      setState(() {
+        isLoading = false;
+        errorMessage = error.toString();
+      });
+    });*/
+  }
+
+  @override
+  void didChangeDependencies() {
+    print("Refresh user detail screen");
+    super.didChangeDependencies();
+    onRefresh();
+    // Perform actions that need to happen every time the dependencies change.
+    _loadLanguage();
+    // TodDo: Remove this if the server is running in the cloud!!!!
+    users = widget.helper.createUserInstanceTestData();
+    originalUsers = List.from(users);
+    domains = widget.helper.createDomainListFromUsers(users);
+    _isLoading = false;
+    _isSearch = false;
+    /*widget.helper.fetchUsersFromServer().then((fetchedUsers) {
+      setState(() {
+        users = fetchedUsers;
+        isLoading = false;
+      });
+    }).catchError((error) {
+      setState(() {
+        isLoading = false;
+        errorMessage = error.toString();
+      });
+    });*/
+  }
+
+  void fetchUsersFromFirebase() {
+    users = widget.helper.createUserInstanceTestData();
+    originalUsers = List.from(users);
+    domains = widget.helper.createDomainListFromUsers(users);
+    _isLoading = false;
+    _isSearch = false;
+
     /*widget.helper.fetchUsersFromServer().then((fetchedUsers) {
       setState(() {
         users = fetchedUsers;
@@ -69,6 +118,20 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
     });
   }
 
+  void restoreOriginalUsers() {
+    users = originalUsers;
+  }
+
+  List<UserInstance> searchUsersByEmailOrDomain(String searchString) {
+    List<UserInstance> filteredUsers = users
+        .where((user) =>
+    user.email.toLowerCase().contains(searchString.toLowerCase())
+        || user.domain.toLowerCase().contains(searchString.toLowerCase()))
+        .toList();
+
+    return filteredUsers;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -97,6 +160,15 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
             },
             icon: const Icon(Icons.search),
           ),
+          // New Refresh Button
+          IconButton(
+            onPressed: () {
+              setState(() {
+                fetchUsersFromFirebase();
+              });
+            },
+            icon: const Icon(Icons.refresh),
+          ),
         ],
         // Include the search bar when _isSearch is true
         bottom: _isSearch
@@ -119,26 +191,19 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
             child: TextFormField(
               controller: searchController,
               style: const TextStyle(fontSize: 18.0),
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Search by Email or Domain',
                 border: InputBorder.none,
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.refresh),
-                  onPressed: () {
-                    searchController.text = '';
-                    setState(() {
-                      _isSearch = false;
-                    });
-                    onRefresh();
-                  },
-                ),
               ),
               onChanged: (searchText) {
+                // First restore the original users
+                restoreOriginalUsers();
                 setState(() {
                   _isSearch = searchText.isNotEmpty;
                 });
                 // Perform search logic here
-                // documentProvider.delaySearch(searchText, allDocumentsOrig, widget.userRole);
+                List<UserInstance> filteredUsers = searchUsersByEmailOrDomain(searchText);
+                users = filteredUsers;
               },
             ),
           ),
@@ -147,7 +212,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: isLoading
+        child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : UsersList(users, domains, widget.docOperations, _selectedLanguage, widget.helper),
       ),
@@ -384,26 +449,49 @@ class _UsersListState extends State<UsersList> {
         padding: EdgeInsets.all(16.0),
         child: ElevatedButton(
           onPressed: () async {
-            setState(() {
-              isUploading = true;
-            });
+            ScaffoldMessengerState scaffoldContext = ScaffoldMessenger.of(
+                context);
             // Handle the selected users
-            print('Handle upload for selected Users: ${selectedUsers.map((user) => user.userName).toList()}');
+            print('Handle upload for selected Users: ${selectedUsers.map((
+            user) => user.userName).toList()}');
             if (selectedUsers.isEmpty) {
-              ScaffoldMessengerState scaffoldContext = ScaffoldMessenger.of(context);
-              widget.helper.showSnackBar("No Users have been selected for the Document Upload.", 'Error', scaffoldContext);
-            } else {
-              String documentId = "uploadDocIdDefaultAdmin";
-              widget.docOperations.setProgressNotifierDictValue(documentId);
-              List<Map<String, dynamic>> userDetails = widget.helper.createUserDetailsForUserInstances(selectedUsers);
-              await widget.docOperations.uploadDocuments(
-                  documentId, null, null, userDetails, ScaffoldMessenger.of(context));
+              widget.helper.showSnackBar(
+                  "No Users have been selected for the Document Upload.",
+                  'Error', scaffoldContext);
+              return;
             }
 
-            if (mounted) {
+            // Show upload method selection menu
+            String? selectedMethod = await widget.helper.showUploadMethodSelectionMenu(context);
+            if (selectedMethod == null) {
+              widget.helper.showSnackBar(
+                  "No upload method available!",
+                  'Error', scaffoldContext);
+              return;
+            }
+
+            // Show category selection menu
+            String? selectedCategory = await widget.helper.showCategorySelectionMenu(context);
+            if (selectedCategory != null) {
               setState(() {
-                isUploading = false;
+                isUploading = true;
               });
+
+              String documentId = "uploadDocIdDefaultAdmin";
+              widget.docOperations.setProgressNotifierDictValue(documentId);
+              List<Map<String, dynamic>> userDetails = widget.helper
+                  .createUserDetailsForUserInstances(selectedUsers);
+              selectedMethod == 'Phone'
+                  ? await widget.docOperations.uploadDocuments(
+                  documentId, null, selectedCategory, userDetails, scaffoldContext)
+                  : await widget.docOperations.openCameraAndUpload(
+                  documentId, selectedCategory, userDetails, scaffoldContext);
+
+              if (mounted) {
+                setState(() {
+                  isUploading = false;
+                });
+              }
             }
           },
           style: ElevatedButton.styleFrom(
