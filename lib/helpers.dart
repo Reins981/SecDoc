@@ -613,6 +613,10 @@ class DocumentOperations {
       'PV-IM',
       'PV-EXT',
     ];
+    final List<String> dataFields = [
+      "owner",
+      "selected_user"
+    ];
 
     // First fetch the documents based on the user domain for clients and domain admins
     // Fetch all documents regardless of the domain for super admins
@@ -622,19 +626,20 @@ class DocumentOperations {
 
       // Clients can only access their own documents, admins all of them
       if (userRole == 'client') {
-        // Create two separate streams for each query
-        Stream<QuerySnapshot> stream1 = documentsCollection.where('owner', isEqualTo: userUid).snapshots();
-        Stream<QuerySnapshot> stream2 = documentsCollection.where('selected_user', isEqualTo: userUid).snapshots();
+        List<Stream<QuerySnapshot>> userStreams = [];
 
-        // Combine the streams using merge
-        result = Rx.merge([stream1, stream2]);
+        // Create two separate streams for each query
+        for (String dataField in dataFields) {
+          userStreams.add(documentsCollection.where(
+              dataField, isEqualTo: userUid).snapshots());
+        }
+        result = userStreams;
       } else {
         result = documentsCollection
             .where('user_domain', isEqualTo: userDomain)
             .snapshots();
       }
     } else {
-
       List<Stream<QuerySnapshot>> domainStreams = [];
 
       for (String item in domainArray) {
