@@ -2,7 +2,7 @@
 // of immutable categories
 String category1 = "Plans";
 String category2 = "Offers";
-String category3 = "Photos";
+String category3 = "Images";
 
 List<String> immutableCategories = [category1, category2, category3];
 String solarAiUrl = "https://pvaustria.at/pv-rechner/";
@@ -123,6 +123,8 @@ String getTextContentGerman(String textContentType) {
     // User Details
     "userDetailsTitle": "Kunden und Administratoren",
     "userDetailsNoUserData": "Keine Benutzerdaten verfügbar",
+    "userDetailsErrorNoUsersSelected": "Es wurden keine Benutzer für den Upload ausgewählt.",
+    "userDetailsErrorNoUploadMethodSelected": "Keine Upload Methode verfügbar!",
 
     // Solar AI
     "solarDataTitle": "Sonnenenergiedaten",
@@ -337,6 +339,8 @@ String getTextContentEnglish(String textContentType) {
     // User Details
     "userDetailsTitle": "Customers and Admins",
     "userDetailsNoUserData": "No user data available",
+    "userDetailsErrorNoUsersSelected": "No Users have been selected for the Document Upload.",
+    "userDetailsErrorNoUploadMethodSelected": "No upload method available!",
 
     // Solar AI
     "solarDataTitle": "Solar Data",
@@ -425,6 +429,7 @@ String getTextContentEnglish(String textContentType) {
     "solarDataRadiationDatabaseDescription": 'Name of the radiation database. "PVGIS-SARAH" for Europe, Africa and Asia or "PVGIS-NSRDB" for the Americas between 60°N and 20°S, "PVGIS-ERA5" and "PVGIS-COSMO" for Europe (including high-latitudes).\n\n',
     "solarDataConsumptionPerDay": "Consumption Per Day (Wh)",
     "solarDataConsumptionPerDayDescription": 'Energy consumption of all the electrical equipment connected to the system during a 24 hour period (Wh).\n\n',
+
   };
 
   return textContents[textContentType] ?? "";

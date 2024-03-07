@@ -236,6 +236,10 @@ class UsersList extends StatefulWidget {
 class _UsersListState extends State<UsersList> {
   List<UserInstance> selectedUsers = [];
   bool isUploading = false;
+  String userDetailsErrorNoUsersSelectedGerman = getTextContentGerman("userDetailsErrorNoUsersSelected");
+  String userDetailsErrorNoUsersSelectedEnglish = getTextContentEnglish("userDetailsErrorNoUsersSelected");
+  String userDetailsErrorNoUploadMethodSelectedGerman = getTextContentGerman("userDetailsErrorNoUploadMethodSelected");
+  String userDetailsErrorNoUploadMethodSelectedEnglish = getTextContentEnglish("userDetailsErrorNoUploadMethodSelected");
 
   @override
   Widget build(BuildContext context) {
@@ -456,7 +460,7 @@ class _UsersListState extends State<UsersList> {
             user) => user.userName).toList()}');
             if (selectedUsers.isEmpty) {
               widget.helper.showSnackBar(
-                  "No Users have been selected for the Document Upload.",
+                  widget.language == 'German' ? userDetailsErrorNoUsersSelectedGerman : userDetailsErrorNoUsersSelectedEnglish,
                   'Error', scaffoldContext);
               return;
             }
@@ -465,7 +469,7 @@ class _UsersListState extends State<UsersList> {
             String? selectedMethod = await widget.helper.showUploadMethodSelectionMenu(context);
             if (selectedMethod == null) {
               widget.helper.showSnackBar(
-                  "No upload method available!",
+                  widget.language == 'German' ? userDetailsErrorNoUploadMethodSelectedGerman : userDetailsErrorNoUploadMethodSelectedEnglish,
                   'Error', scaffoldContext);
               return;
             }
@@ -473,7 +477,7 @@ class _UsersListState extends State<UsersList> {
             // Show category selection menu
             String? selectedCategory = selectedMethod == 'Phone'
                 ? await widget.helper.showCategorySelectionMenu(context)
-                : 'Photos';
+                : 'Images';
 
             if (selectedCategory != null) {
               setState(() {
