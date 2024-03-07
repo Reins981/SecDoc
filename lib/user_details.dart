@@ -240,6 +240,10 @@ class _UsersListState extends State<UsersList> {
   String userDetailsErrorNoUsersSelectedEnglish = getTextContentEnglish("userDetailsErrorNoUsersSelected");
   String userDetailsErrorNoUploadMethodSelectedGerman = getTextContentGerman("userDetailsErrorNoUploadMethodSelected");
   String userDetailsErrorNoUploadMethodSelectedEnglish = getTextContentEnglish("userDetailsErrorNoUploadMethodSelected");
+  String userDetailsNotVerifiedOrDisabledGerman = getTextContentGerman("userDetailsNotVerifiedOrDisabled");
+  String userDetailsNotVerifiedOrDisabledEnglish = getTextContentEnglish("userDetailsNotVerifiedOrDisabled");
+  String userDetailsVerifiedAndEnabledGerman = getTextContentGerman("userDetailsVerifiedAndEnabled");
+  String userDetailsVerifiedAndEnabledEnglish = getTextContentEnglish("userDetailsVerifiedAndEnabled");
 
   @override
   Widget build(BuildContext context) {
@@ -280,11 +284,16 @@ class _UsersListState extends State<UsersList> {
                             onTap: user.disabled || !user.verified
                                 ? () {
                                 ScaffoldMessengerState scaffoldContext = ScaffoldMessenger.of(context);
-                                widget.helper.showSnackBar("User '${user.userName}' is disabled or not verified!", 'Error', scaffoldContext);
+                                String message = widget.language == 'German' ? userDetailsNotVerifiedOrDisabledGerman : userDetailsNotVerifiedOrDisabledEnglish;
+                                widget.helper.showSnackBar(
+                                    "'${user.userName}' $message", 'Error', scaffoldContext, duration: 2);
                             } // Disable onTap if conditions are met
                                 : () {
+                              ScaffoldMessengerState scaffoldContext = ScaffoldMessenger.of(context);
+                              String message = widget.language == 'German' ? userDetailsVerifiedAndEnabledGerman : userDetailsVerifiedAndEnabledEnglish;
                               // Handle tapping on the user tile
-                              print('Tapped on user: ${user.userName}');
+                              widget.helper.showSnackBar(
+                                  "'${user.userName}' $message", "Info", scaffoldContext, duration: 2);
                             },
                             child: Card(
                               elevation: 3.0,

@@ -125,6 +125,8 @@ String getTextContentGerman(String textContentType) {
     "userDetailsNoUserData": "Keine Benutzerdaten verfügbar",
     "userDetailsErrorNoUsersSelected": "Es wurden keine Benutzer für den Upload ausgewählt.",
     "userDetailsErrorNoUploadMethodSelected": "Keine Upload Methode verfügbar!",
+    "userDetailsNotVerifiedOrDisabled": "deaktiviert oder nicht verifiziert!",
+    "userDetailsVerifiedAndEnabled": "aktiviert und verifiziert!",
 
     // Solar AI
     "solarDataTitle": "Sonnenenergiedaten",
@@ -341,6 +343,8 @@ String getTextContentEnglish(String textContentType) {
     "userDetailsNoUserData": "No user data available",
     "userDetailsErrorNoUsersSelected": "No Users have been selected for the Document Upload.",
     "userDetailsErrorNoUploadMethodSelected": "No upload method available!",
+    "userDetailsNotVerifiedOrDisabled": "is disabled or not verified!",
+    "userDetailsVerifiedAndEnabled": "is enabled and verified!",
 
     // Solar AI
     "solarDataTitle": "Solar Data",
