@@ -30,20 +30,24 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
   bool _isSearch = false;
 
   @override
-  Future<void> initState() async {
+  void initState() {
     super.initState();
     _loadLanguage();
-    await fetchUsersFromFirebase();
+    fetchUsersFromFirebase().then((_) {
+      print("Fetch users from firebase completed!");
+    });
   }
 
   @override
-  Future<void> didChangeDependencies() async {
+  void didChangeDependencies() {
     print("Refresh user detail screen");
     super.didChangeDependencies();
     onRefresh();
     // Perform actions that need to happen every time the dependencies change.
     _loadLanguage();
-    await fetchUsersFromFirebase();
+    fetchUsersFromFirebase().then((_) {
+      print("Fetch users from firebase completed!");
+    });
   }
 
   Future<void> fetchUsersFromFirebase() async {
