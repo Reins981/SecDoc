@@ -147,8 +147,11 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
           // New Refresh Button
           IconButton(
             onPressed: () {
-              setState(() async {
-                await fetchUsersFromFirebase();
+              fetchUsersFromFirebase().then((_) {
+                setState(() {
+                  // Update your state or perform any UI-related changes
+                  print("Fetch users from firebase completed!");
+                });
               });
             },
             icon: const Icon(Icons.refresh),
