@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,6 +7,7 @@ import 'helpers.dart';
 import 'text_contents.dart';
 import 'language_service.dart';
 
+/// Class representing the Authentication Screen
 class AuthenticatedScreen extends StatefulWidget {
   @override
   _AuthenticatedScreenState createState() => _AuthenticatedScreenState();
@@ -30,6 +32,10 @@ class _AuthenticatedScreenState extends State<AuthenticatedScreen> {
   String biometricAuthEnglish = getTextContentEnglish("biometricAuth");
   String welcomeTextGerman = getTextContentGerman("welcomeText");
   String welcomeTextEnglish = getTextContentEnglish("welcomeText");
+  String handleLoginError2German = getTextContentGerman("handleLoginError2");
+  String handleLoginError2English = getTextContentEnglish("handleLoginError2");
+  String handleLoginError3German = getTextContentGerman("handleLoginError3");
+  String handleLoginError3English = getTextContentEnglish("handleLoginError3");
 
   @override
   void initState() {
@@ -37,6 +43,7 @@ class _AuthenticatedScreenState extends State<AuthenticatedScreen> {
     _loadLanguage();
   }
 
+  /// Load the stored language setting
   Future<void> _loadLanguage() async {
     final selectedLanguage = await LanguageService.getLanguage();
     setState(() {
@@ -44,11 +51,19 @@ class _AuthenticatedScreenState extends State<AuthenticatedScreen> {
     });
   }
 
+  /// Perform a delayed operation
+  ///
+  /// - [seconds] delay in seconds [int]
   Future<void> delay(int seconds) async {
     // Sleep for x seconds
     await Future.delayed(Duration(seconds: seconds));
   }
 
+  /// Check if the biometric feature is available on this phone
+  ///
+  /// - [context] current context [ScaffoldMessengerState]
+  ///
+  /// Returns: true or false [bool]
   Future<bool> _checkBiometric(ScaffoldMessengerState context) async {
     bool canCheckBiometric = false;
 
@@ -65,6 +80,11 @@ class _AuthenticatedScreenState extends State<AuthenticatedScreen> {
     return canCheckBiometric;
   }
 
+  /// Get the available biometric features on this phone
+  ///
+  /// - [context] current context [ScaffoldMessengerState]
+  ///
+  /// Returns: true or false [bool]
   Future<bool> _getAvailableBiometric(ScaffoldMessengerState context) async {
     bool success = false;
 
@@ -78,6 +98,11 @@ class _AuthenticatedScreenState extends State<AuthenticatedScreen> {
     return success;
   }
 
+  /// Authenticate a user using the biometric fingerprint feature if available
+  ///
+  /// - [context] current context [ScaffoldMessengerState]
+  ///
+  /// Returns: true or false [bool]
   Future<bool> _authenticate(BuildContext context) async {
     final scaffoldContext = ScaffoldMessenger.of(context);
 
@@ -86,6 +111,14 @@ class _AuthenticatedScreenState extends State<AuthenticatedScreen> {
     }
 
     if (!await _getAvailableBiometric(scaffoldContext)) {
+      return false;
+    }
+
+    try {
+      Map<String, dynamic> _ = await _helper.getCurrentUserDetails(
+          forceRefresh: true);
+    } catch(e) {
+      _helper.showSnackBar(e.toString(), 'Error', scaffoldContext);
       return false;
     }
 

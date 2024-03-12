@@ -10,11 +10,13 @@ import 'text_contents.dart';
 import 'language_service.dart';
 
 
+/// Generates a RNG version 4 UUID for a chat message
 String generateMessageId() {
   var uuid = Uuid();
   return uuid.v4(); // Generates a version 4 UUID
 }
 
+/// Class representing the chat window and its functionality
 class ChatWindow extends StatefulWidget {
   final DocumentOperations docOperations;
 
@@ -72,13 +74,16 @@ class _ChatWindowState extends State<ChatWindow> with SingleTickerProviderStateM
     });
   }
 
-  void _initializeUser() async {
+  /// Initialize the user id, email, role and domain from the id token result of the current user in firebase
+  Future<bool> _initializeUser() async {
     var currentUser = FirebaseAuth.instance.currentUser;
-    Map<String, dynamic> userDetails = await helper.getCurrentUserDetails();
+    Map<String, dynamic> userDetails = {};
     try {
+      userDetails = await helper.getCurrentUserDetails(forceRefresh: true);
       allUsers = await helper.fetchUsersFromServer();
     } catch (e) {
       print('$e');
+      return false;
     }
 
     setState(() {
@@ -87,6 +92,7 @@ class _ChatWindowState extends State<ChatWindow> with SingleTickerProviderStateM
       userRole = userDetails['userRole'];
       userDomain = userDetails['userDomain'];
     });
+    return true;
   }
 
   @override
@@ -95,6 +101,10 @@ class _ChatWindowState extends State<ChatWindow> with SingleTickerProviderStateM
     super.dispose();
   }
 
+  /// Send a chat message
+  ///
+  /// - [context] current context [ScaffoldMessengerState]
+  ///
   Future<void> _sendMessage(ScaffoldMessengerState context) async {
     if (_messageController.text.isNotEmpty) {
       User? currentUser = _auth.currentUser;
@@ -135,6 +145,10 @@ class _ChatWindowState extends State<ChatWindow> with SingleTickerProviderStateM
     }
   }
 
+  /// Send a chat message reply
+  ///
+  /// - [context] current context [ScaffoldMessengerState]
+  ///
   Future<void> _sendReply(
       String message,
       String? senderId,
@@ -252,6 +266,7 @@ class _ChatWindowState extends State<ChatWindow> with SingleTickerProviderStateM
   }
 }
 
+/// Class for storing chat messages for a particular user
 class MessageList extends StatefulWidget {
   final String language;
   final Helper helper;
@@ -294,6 +309,13 @@ class _MessageListState extends State<MessageList> {
   String chatWindowReplyHintTextGerman = getTextContentGerman("chatWindowReplyHintText");
   String chatWindowReplyHintTextEnglish = getTextContentEnglish("chatWindowReplyHintText");
 
+  /// Get the correct label for the current user,
+  /// if the user is also the destination of the message
+  ///
+  /// - [message] snapshot message object [QueryDocumentSnapshot]
+  /// - [senderEmail] sender email address [String]
+  ///
+  /// Returns: label [String] or [null] if the condition was not met
   String? getLabelText(QueryDocumentSnapshot<Object?> message, String senderEmail) {
     // Message recipient
     if (message['destinationUserId'] == widget.currentUserId) {
@@ -490,6 +512,10 @@ class _MessageListState extends State<MessageList> {
     );
   }
 
+  /// Delete a message from firestore
+  ///
+  /// - [messageId] the message id [String]
+  /// - [context] current context [BuildContext]
   void _deleteMessage(String messageId, BuildContext context) {
     widget.firestore.collection('messages').doc(messageId)
         .delete()
@@ -502,6 +528,7 @@ class _MessageListState extends State<MessageList> {
   }
 }
 
+/// Class for the message reply screen
 class ReplyScreen extends StatefulWidget {
   final String language;
   final String? newSenderId;

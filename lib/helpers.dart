@@ -443,15 +443,24 @@ class Helper {
     }
   }
 
-  Future<IdTokenResult> getIdTokenResult(User? thisUser) async {
-    final User? user = thisUser ?? FirebaseAuth.instance.currentUser;
+  Future<IdTokenResult> getIdTokenResult(User? thisUser, {bool forceRefresh=false}) async {
+    User? user = thisUser ?? FirebaseAuth.instance.currentUser;
     if (user == null) {
       _loadLanguage();
       String errorMessage = _selectedLanguage == 'German' ? helperUserNotSignedInGerman: helperUserNotSignedInEnglish;
       throw Exception(errorMessage);
     }
 
-    return await user.getIdTokenResult();
+    if (forceRefresh == true) {
+      try {
+        await user.reload();
+        user = FirebaseAuth.instance.currentUser;
+      } catch (e) {
+        throw Exception(e);
+      }
+    }
+
+    return await user!.getIdTokenResult();
   }
 
   List<Map<String, dynamic>> createUserDetailsForUserInstances(List<UserInstance> users) {
@@ -479,10 +488,10 @@ class Helper {
     return userDetails;
   }
 
-  Future<Map<String, dynamic>> getCurrentUserDetails() async {
+  Future<Map<String, dynamic>> getCurrentUserDetails({bool forceRefresh=false}) async {
 
     try {
-      IdTokenResult idTokenResult = await getIdTokenResult(null);
+      IdTokenResult idTokenResult = await getIdTokenResult(null, forceRefresh: forceRefresh);
 
       FirebaseAuth auth = FirebaseAuth.instance;
       User? user = auth.currentUser;
@@ -626,14 +635,18 @@ class DocumentOperations {
 
       // Clients can only access their own documents, admins all of them
       if (userRole == 'client') {
-        List<Stream<QuerySnapshot>> userStreams = [];
+          List<Stream<QuerySnapshot>> userStreams = [];
 
-        // Create two separate streams for each query
-        for (String dataField in dataFields) {
-          userStreams.add(documentsCollection.where(
-              dataField, isEqualTo: userUid).snapshots());
-        }
-        result = userStreams;
+          // Create two separate streams for each query
+          for (String dataField in dataFields) {
+            Stream<QuerySnapshot> stream = documentsCollection.where(
+                dataField, isEqualTo: userUid).snapshots();
+            // Add the stream to the set if it's not already present
+            if (!userStreams.contains(stream)) {
+              userStreams.add(stream);
+            }
+          }
+          result = userStreams;
       } else {
         result = documentsCollection
             .where('user_domain', isEqualTo: userDomain)
@@ -766,7 +779,7 @@ class DocumentOperations {
     return pdfExtensions.any((ext) => lowerCaseUrl.endsWith(ext));
   }
 
-  Future<String> deleteDocument(String documentId, Document document, String collectionPath) async {
+  Future<String> deleteDocument(String documentId, Document document, String collectionPath, String userRole) async {
     try {
       final CollectionReference collectionReference =
       FirebaseFirestore.instance.collection(collectionPath);
@@ -774,7 +787,7 @@ class DocumentOperations {
       // Delete the document
       await collectionReference.doc(documentId).delete();
 
-      String status = await deleteFileFromStorage(document);
+      String status = await deleteFileFromStorage(document, userRole);
 
       return status == 'Success' ? 'Success' : status;
     } catch (e) {
@@ -783,13 +796,13 @@ class DocumentOperations {
     }
   }
 
-  Future<String> deleteFileFromStorage(Document document) async {
+  Future<String> deleteFileFromStorage(Document document, String userRole) async {
 
     String userDomain = document.domain.toLowerCase();
     String userName = document.userName;
     int year = document.year;
     String category = document.category;
-    String selectedUser = document.selectedUser;
+    String selectedUser = userRole == 'client' ? document.owner : document.selectedUser == "EqualToOwner" ? document.owner : document.selectedUser;
     String documentName = document.name;
 
     String documentPath =
@@ -916,7 +929,7 @@ class DocumentOperations {
           ? await FirebaseFirestore.instance
             .collection('documents_$userDomainLowerCase')
             .where('owner', isEqualTo: userDetails['userUid'])
-            .where('selected_user', isEqualTo: userDetails['userUid'])
+            .where('selected_user', isEqualTo: "EqualToOwner")
             .where('category', isEqualTo: category)
             .where('document_name', isEqualTo: documentName)
             .where('user_domain', isEqualTo: userDomain)
@@ -955,7 +968,7 @@ class DocumentOperations {
           "to_user_name": userDetails['userName'],
           "to_email": userDetails['userEmail'],
           "owner": owner == null ? userDetails['userUid'] : owner['userUid'],
-          "selected_user": userDetails['userUid'],
+          "selected_user": owner == null ? 'EqualToOwner' : userDetails['userUid'],
           "category": category,
           "user_domain": userDomain,
           "document_name": documentName,
@@ -1035,7 +1048,16 @@ class DocumentOperations {
 
     // Decide if the upload routine was triggered from a client or admin
     List<Map<String, dynamic>> userDetailsList = [];
-    Map<String, dynamic> currentUserDetails = await _helper.getCurrentUserDetails();
+    Map<String, dynamic> currentUserDetails = {};
+    try {
+      currentUserDetails =
+      await _helper.getCurrentUserDetails(forceRefresh: true);
+    } catch(e) {
+      uploadCompleter.complete();
+      _helper.showSnackBar(e.toString(), 'Error', context);
+      return uploadCompleter.future;
+    }
+
     late String uploadTriggeredFrom;
     if (userDetails == null) {
       userDetailsList.add(currentUserDetails);

@@ -30,7 +30,7 @@ class _DetailedDashboardPageState extends State<DetailedDashboardPage> {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<Map<String, dynamic>>(
-        future: widget.helper.getCurrentUserDetails(),
+        future: widget.helper.getCurrentUserDetails(forceRefresh: true),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());

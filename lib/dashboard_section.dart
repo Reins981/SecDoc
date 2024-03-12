@@ -128,6 +128,7 @@ class _DashboardSectionState extends State<DashboardSection> with SingleTickerPr
     });
   }
 
+  /// Initialize the user name from the current user in firebase
   void _initializeUser() {
     var currentUser = FirebaseAuth.instance.currentUser;
     setState(() {
@@ -200,6 +201,8 @@ class _DashboardSectionState extends State<DashboardSection> with SingleTickerPr
   }
 
 
+  /// Build a user badge widget that consists of a welcome message inclusive user name
+  /// and a chat window
   Widget _buildUserBadge() {
     return Container(
       padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),

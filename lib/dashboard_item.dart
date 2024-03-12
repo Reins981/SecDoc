@@ -27,6 +27,9 @@ class DashboardItem {
     required this.itemType
   });
 
+  /// Return the IconData from the DashboardItem as Icon with default color blue and size 128
+  ///
+  /// Returns: [Icon]
   Icon getIcon() {
     return Icon(
       icon, // Replace with the desired Google default icon

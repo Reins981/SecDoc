@@ -98,8 +98,17 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
   void handleDownload(BuildContext context, Document document, String category) async {
     final scaffoldContext = ScaffoldMessenger.of(context);
     String downloadPath = await widget.documentOperations.createDownloadPathForFile(document.name);
-    Map<String, dynamic> userDetails = await widget.helper.getCurrentUserDetails();
-    String userRole = userDetails['userRole'];
+    Map<String, dynamic> userDetails = {};
+    late String userRole;
+
+    try {
+      userDetails =
+      await widget.helper.getCurrentUserDetails(forceRefresh: true);
+      userRole = userDetails['userRole'];
+    } catch(e) {
+      widget.helper.showSnackBar(e.toString(), 'Error', scaffoldContext);
+      return;
+    }
 
     if (downloadPath == "Failed") {
       widget.helper.showSnackBar(_selectedLanguage == 'German' ? documentLibraryDownloadErrorGerman : documentLibraryDownloadErrorEnglish, "Error", scaffoldContext);
@@ -134,12 +143,12 @@ class _DocumentLibraryScreenState extends State<DocumentLibraryScreen> {
     }
   }
 
-  Future<String> handleDelete(BuildContext context, Document document) async {
+  Future<String> handleDelete(BuildContext context, Document document, String userRole) async {
     final scaffoldContext = ScaffoldMessenger.of(context);
     String collectionPath = 'documents_${document.domain.toLowerCase()}';
 
     try {
-      String status = await widget.documentOperations.deleteDocument(document.id, document, collectionPath);
+      String status = await widget.documentOperations.deleteDocument(document.id, document, collectionPath, userRole);
       if (status != "Success") {
         widget.helper.showSnackBar(status, "Error", scaffoldContext);
         return 'Failed';
@@ -331,7 +340,7 @@ class DocumentListWidget extends StatefulWidget {
   final TextEditingController searchController;
   final DocumentOperations documentOperations;
   final void Function(BuildContext, Document, String) callbackDownload;
-  final Future<String> Function(BuildContext, Document) callbackDelete;
+  final Future<String> Function(BuildContext, Document, String) callbackDelete;
   final void Function() onRefresh;
   final dynamic origStream;
   final Helper helper;
@@ -534,7 +543,7 @@ class CustomListWidget extends StatelessWidget {
   final Map<String, Map<int, Map<String, Map<String, DocumentRepository>>>> groupedDocuments;
   final DocumentOperations documentOperations;
   final void Function(BuildContext, Document, String) callbackDownload;
-  final Future<String> Function(BuildContext, Document) callbackDelete;
+  final Future<String> Function(BuildContext, Document, String) callbackDelete;
   final bool isSearch;
   final bool isServerUpdate;
   final DocumentProvider documentProvider;
@@ -851,7 +860,7 @@ class CustomListWidget extends StatelessWidget {
                                             onPressed: () async {
                                               // Avoid uninitialized groupedDocuments from the Provider
                                               documentProvider.setGroupedDocuments(groupedDocuments);
-                                              String status = await callbackDelete(context, document);
+                                              String status = await callbackDelete(context, document, userRole);
                                               if (status == 'Success') {
                                                 documentProvider
                                                     .removeDocumentWithId(
