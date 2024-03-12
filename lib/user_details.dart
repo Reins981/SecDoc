@@ -30,56 +30,28 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
   bool _isSearch = false;
 
   @override
-  void initState() {
+  Future<void> initState() async {
     super.initState();
     _loadLanguage();
-    // TodDo: Remove this if the server is running in the cloud!!!!
-    users = widget.helper.createUserInstanceTestData();
-    originalUsers = List.from(users);
-    domains = widget.helper.createDomainListFromUsers(users);
-    _isLoading = false;
-    _isSearch = false;
-    /*widget.helper.fetchUsersFromServer().then((fetchedUsers) {
-      setState(() {
-        users = fetchedUsers;
-        isLoading = false;
-      });
-    }).catchError((error) {
-      setState(() {
-        isLoading = false;
-        errorMessage = error.toString();
-      });
-    });*/
+    await fetchUsersFromFirebase();
   }
 
   @override
-  void didChangeDependencies() {
+  Future<void> didChangeDependencies() async {
     print("Refresh user detail screen");
     super.didChangeDependencies();
     onRefresh();
     // Perform actions that need to happen every time the dependencies change.
     _loadLanguage();
-    // TodDo: Remove this if the server is running in the cloud!!!!
-    users = widget.helper.createUserInstanceTestData();
-    originalUsers = List.from(users);
-    domains = widget.helper.createDomainListFromUsers(users);
-    _isLoading = false;
-    _isSearch = false;
-    /*widget.helper.fetchUsersFromServer().then((fetchedUsers) {
-      setState(() {
-        users = fetchedUsers;
-        isLoading = false;
-      });
-    }).catchError((error) {
-      setState(() {
-        isLoading = false;
-        errorMessage = error.toString();
-      });
-    });*/
+    await fetchUsersFromFirebase();
   }
 
-  void fetchUsersFromFirebase() {
+  Future<void> fetchUsersFromFirebase() async {
+    // TodDo: Remove this if the server is running in the cloud!!!!
     users = widget.helper.createUserInstanceTestData();
+    Map<String, dynamic> userDetails = await widget.helper.getCurrentUserDetails();
+    String adminDomain = userDetails['userDomain'];
+    users = filterUsersByAdminDomain(adminDomain);
     originalUsers = List.from(users);
     domains = widget.helper.createDomainListFromUsers(users);
     _isLoading = false;
@@ -132,6 +104,14 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
     return filteredUsers;
   }
 
+  List<UserInstance> filterUsersByAdminDomain(String adminDomain) {
+    List<UserInstance> filteredUsers = adminDomain != 'PV-ALL' ? users
+        .where((user) => user.domain.toLowerCase() == adminDomain.toLowerCase())
+        .toList() : users;
+
+    return filteredUsers;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -163,8 +143,8 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
           // New Refresh Button
           IconButton(
             onPressed: () {
-              setState(() {
-                fetchUsersFromFirebase();
+              setState(() async {
+                await fetchUsersFromFirebase();
               });
             },
             icon: const Icon(Icons.refresh),
